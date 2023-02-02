@@ -132,6 +132,7 @@ private:
             glfwPollEvents();
             drawFrame();
         }
+        vkDeviceWaitIdle(device);
     }
 
     void cleanup() {
@@ -697,6 +698,22 @@ private:
         if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
+
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = signalSemaphores;
+
+        VkSwapchainKHR swapChains[] = { swapChain };
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapChains;
+
+
+        presentInfo.pImageIndices = &imageIndex;
+
+
+        vkQueuePresentKHR(presentQueue, &presentInfo);
     }
     
     VkShaderModule createShaderModule(const std::vector<char>& code) {
