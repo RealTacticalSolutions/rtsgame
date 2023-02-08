@@ -1,3 +1,0 @@
-C:/Users/robin/Desktop/Projects/DesktopApps/rtsgame/sageengine/CMakeFiles/SageEngine.dir
-C:/Users/robin/Desktop/Projects/DesktopApps/rtsgame/sageengine/CMakeFiles/ALL_BUILD.dir
-C:/Users/robin/Desktop/Projects/DesktopApps/rtsgame/sageengine/CMakeFiles/ZERO_CHECK.dir
