@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Admin\Documents\rtsgame\sageengine\CMakeFiles\c8bf514ca5c18bb324deb44f1d52f6cd\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{49F3D698-EB69-3E6D-BBF4-A6A19432CB1F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
