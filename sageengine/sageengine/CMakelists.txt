@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.0)
+
+project(SageEngine)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+find_library(LIBS NAMES glfw3 PATHS libs)
+find_package(Vulkan REQUIRED)
+
+file(GLOB subdir_sources src/*.cpp)
+
+add_executable(SageEngine ${subdir_sources})
+
+target_link_libraries(SageEngine PUBLIC ${LIBS} Vulkan::Vulkan)
+target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(SageEngine PUBLIC ${Vulkan_INCLUDE_DIRS})
