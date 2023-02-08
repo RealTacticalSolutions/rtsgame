@@ -409,6 +409,11 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+
+/out
+
+
 Footer
 © 2023 GitHub, Inc.
 Footer navigation
