@@ -2,17 +2,17 @@
 
 class window;
 
-class program {
+class application {
 private:
 	int WIDTH = 800;
 	int HEIGHT = 600;
-	std::unique_ptr<window> programWindow;
+	std::unique_ptr<window> program;
 
 public:
-	program()
+	application()
 	{
 	};
-	~program()
+	~application()
 	{
 	};
 
