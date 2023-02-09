@@ -4,8 +4,8 @@ class window;
 
 class application {
 private:
-	int WIDTH = 800;
-	int HEIGHT = 600;
+	const uint32_t WIDTH = 800;
+	const uint32_t HEIGHT = 600;
 	std::unique_ptr<window> program;
 
 public:
@@ -17,5 +17,8 @@ public:
 	};
 
 	
-	void run();
+	
+	void initWindow();
+	void mainLoop();
+	void cleanup();
 };

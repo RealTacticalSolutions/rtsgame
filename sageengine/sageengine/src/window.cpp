@@ -15,9 +15,10 @@ void window::initWindow(int width, int height)
 	std::cout << extensionCount << " extensions supported\n";
 }
 
-void window::cleanup()
+void window::cleanupGLFW()
 {
 	glfwDestroyWindow(mainWindow);
 
 	glfwTerminate();
+	std::cout << "cleanupGLFW";
 }

@@ -3,7 +3,7 @@
 int main() {
     std::unique_ptr<application> program = std::make_unique<application>();
 
-    program->run();
+    program->mainLoop();
 
     
     return 0;

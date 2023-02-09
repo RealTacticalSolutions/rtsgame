@@ -3,12 +3,21 @@
 
 
 
-void application::run()
+void application::mainLoop()
 {
-	program = std::make_unique<window>(WIDTH, HEIGHT);
-
+	initWindow();
 	while (!program->shouldClose())
 	{
 		glfwPollEvents();
 	}
+}
+
+void application::initWindow()
+{
+	program = std::make_unique<window>(WIDTH, HEIGHT);
+
+}
+
+void application::cleanup()
+{
 }

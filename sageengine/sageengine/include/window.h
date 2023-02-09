@@ -11,7 +11,7 @@ private:
 
 	void initWindow(int width, int height);
 
-	void cleanup();
+	void cleanupGLFW();
 
 public:
 	window(int width, int height) : WIDTH(width), HEIGHT(height)
@@ -20,7 +20,7 @@ public:
 	};
 	~window() 
 	{
-		cleanup();
+		cleanupGLFW();
 	};
 
 	bool shouldClose() { return glfwWindowShouldClose(mainWindow); };
