@@ -1,9 +1,9 @@
 #include "pch.h"
 
 int main() {
-    std::unique_ptr<program> program;
+    std::unique_ptr<program> programWindow = std::make_unique<program>();
 
-    program->run();
+    programWindow->run();
 
     return 0;
 }

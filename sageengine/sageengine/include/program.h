@@ -4,11 +4,18 @@ class window;
 
 class program {
 private:
-	
-	//std::unique_ptr<window> programWindow;
+	int WIDTH = 800;
+	int HEIGHT = 600;
+	std::unique_ptr<window> programWindow;
 
 public:
-	int WIDTH;
-	int HEIGHT;
+	program()
+	{
+	};
+	~program()
+	{
+	};
+
+	
 	void run();
 };

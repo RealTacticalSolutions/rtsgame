@@ -5,12 +5,10 @@
 
 void program::run()
 {
-	WIDTH = 800;
-	HEIGHT = 600;
-	//programWindow = std::make_unique<window>(WIDTH, HEIGHT);
+	programWindow = std::make_unique<window>(WIDTH, HEIGHT);
 
-	//while (!programWindow->shouldClose())
-	//{
-	//	glfwPollEvents();
-	//}
+	while (!programWindow->shouldClose())
+	{
+		glfwPollEvents();
+	}
 }
