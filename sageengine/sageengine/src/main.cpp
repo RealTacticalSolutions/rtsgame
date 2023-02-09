@@ -5,6 +5,5 @@ int main() {
 
     program->mainLoop();
 
-    
     return 0;
 }

@@ -5,7 +5,10 @@
 
 void application::mainLoop()
 {
+	std::unique_ptr<renderer> vulkanrenderer = std::make_unique<renderer>();
+
 	initWindow();
+	vulkanrenderer->initVulkan();
 	while (!program->shouldClose())
 	{
 		glfwPollEvents();

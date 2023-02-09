@@ -9,10 +9,6 @@ void window::initWindow(int width, int height)
 
 	mainWindow = glfwCreateWindow(width, height, "Vulkan window", nullptr, nullptr);
 
-	uint32_t extensionCount = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-	std::cout << extensionCount << " extensions supported\n";
 }
 
 void window::cleanupGLFW()
@@ -20,5 +16,5 @@ void window::cleanupGLFW()
 	glfwDestroyWindow(mainWindow);
 
 	glfwTerminate();
-	std::cout << "cleanupGLFW";
+	std::cout << "cleanupGLFW" << std::endl;
 }
