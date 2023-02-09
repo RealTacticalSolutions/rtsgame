@@ -10,7 +10,7 @@ find_package(Vulkan REQUIRED)
 
 file(GLOB subdir_sources src/*.cpp)
 
-add_executable(SageEngine ${subdir_sources} "include/pch.h")
+add_executable(SageEngine ${subdir_sources} "include/pch.h" "include/program.h" "include/window.h" "src/window.cpp" "src/program.cpp")
 
 target_link_libraries(SageEngine PUBLIC ${LIBS} Vulkan::Vulkan)
 target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include")
