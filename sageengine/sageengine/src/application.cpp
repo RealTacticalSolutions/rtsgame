@@ -5,10 +5,6 @@
 
 void application::mainLoop()
 {
-	std::unique_ptr<renderer> vulkanrenderer = std::make_unique<renderer>();
-
-	initWindow();
-	vulkanrenderer->initVulkan(std::move(windowObject));
 	while (!windowObject->shouldClose())
 	{
 		glfwPollEvents();
@@ -17,7 +13,10 @@ void application::mainLoop()
 
 void application::initWindow()
 {
+	vulkanrenderer = std::make_unique<renderer>();
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT);
+	
+	vulkanrenderer->initVulkan(std::move(windowObject));
 
 }
 
