@@ -18,3 +18,8 @@ void window::cleanupGLFW()
 	glfwTerminate();
 	std::cout << "cleanupGLFW" << std::endl;
 }
+
+GLFWwindow* window::getWindow()
+{ 
+	return mainWindow;
+}

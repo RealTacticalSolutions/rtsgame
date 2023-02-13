@@ -27,26 +27,29 @@ private:
 	
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> presentFamily;
 
 		bool isComplete() {
-			return graphicsFamily.has_value();
+			return graphicsFamily.has_value() && presentFamily.has_value();
 		}
 	};
 
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
+	VkSurfaceKHR surface;
 	
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 
 	VkQueue graphicsQueue;
-
+	VkQueue presentQueue;
 
 	void cleanupVulkan();
 	void createInstance();
 	bool checkValidationLayerSupport();
 	std::vector<const char*> getRequiredExtensions();
 	void setupDebugMessenger();
+	void createSurface(GLFWwindow* window);
 	void pickPhysicalDevice();
 	void createLogicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
@@ -68,6 +71,6 @@ public:
 		cleanupVulkan();
 		std::cout << "cleanupVulkan" << std::endl;
 	}
-	void initVulkan();
+	void initVulkan(std::unique_ptr<window>& windowObject);
 	
 };

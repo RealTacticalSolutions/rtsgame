@@ -12,6 +12,8 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <set>
+
 
 #include "application.h"
 #include "window.h"

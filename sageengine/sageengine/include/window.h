@@ -25,5 +25,6 @@ public:
 
 	bool shouldClose() { return glfwWindowShouldClose(mainWindow); };
 
+	GLFWwindow* getWindow();
 	
 };
