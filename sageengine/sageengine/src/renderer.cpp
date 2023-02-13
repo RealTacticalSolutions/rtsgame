@@ -109,7 +109,8 @@ void renderer::pickPhysicalDevice()
 bool renderer::isDeviceSuitable(VkPhysicalDevice device)
 {
     QueueFamilyIndices indices = findQueueFamilies(device);
-    return true;
+    
+    return indices.isComplete();
 }
 
 renderer::QueueFamilyIndices renderer::findQueueFamilies(VkPhysicalDevice device) {
