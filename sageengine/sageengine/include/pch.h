@@ -13,6 +13,7 @@
 #include <vector>
 #include <optional>
 #include <set>
+#include <algorithm>
 
 
 #include "application.h"

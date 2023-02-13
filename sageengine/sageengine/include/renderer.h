@@ -13,6 +13,10 @@ private:
 		"VK_LAYER_KHRONOS_validation"
 	};
 
+	const std::vector<const char*> deviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 		VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -34,6 +38,17 @@ private:
 		}
 	};
 
+	struct SwapChainSupportDetails {
+		VkSurfaceCapabilitiesKHR capabilities;
+		std::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkPresentModeKHR> presentModes;
+	};
+
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
+
+
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkSurfaceKHR surface;
@@ -44,16 +59,26 @@ private:
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 
+	VkSwapchainKHR swapChain;
+
 	void cleanupVulkan();
 	void createInstance();
+	void createSwapChain(GLFWwindow* window);
 	bool checkValidationLayerSupport();
-	std::vector<const char*> getRequiredExtensions();
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();
 	void createSurface(GLFWwindow* window);
 	void pickPhysicalDevice();
 	void createLogicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
+
+	std::vector<const char*> getRequiredExtensions();
+	
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
 
 
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
