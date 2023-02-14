@@ -17,6 +17,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createLogicalDevice();
     createSwapChain(windowObject->getWindow());
     createImageViews();
+    createGraphicsPipeline();
 }
 
 void renderer::cleanupVulkan()
@@ -246,6 +247,11 @@ void renderer::createImageViews()
 
         VK_CHECK(vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]));
     }
+}
+
+void renderer::createGraphicsPipeline()
+{
+
 }
 
 

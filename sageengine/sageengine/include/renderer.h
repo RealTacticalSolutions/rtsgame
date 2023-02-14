@@ -67,6 +67,7 @@ private:
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
 	void createImageViews();
+	void createGraphicsPipeline();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();
