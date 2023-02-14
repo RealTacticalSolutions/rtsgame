@@ -20,12 +20,15 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
 
 void renderer::cleanupVulkan()
 {
+    vkDestroySwapchainKHR(device, swapChain, nullptr);
+
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers) {
         DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
     
+
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
@@ -205,9 +208,8 @@ void renderer::createSwapChain(GLFWwindow* window) {
 
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create swap chain!");
-    }
+    VK_CHECK(vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain));
+  
 
     vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
     swapChainImages.resize(imageCount);
