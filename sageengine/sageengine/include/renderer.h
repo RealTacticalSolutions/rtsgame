@@ -45,6 +45,8 @@ private:
 	};
 
 	std::vector<VkImage> swapChainImages;
+	std::vector<VkImageView> swapChainImageViews;
+
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 
@@ -64,6 +66,7 @@ private:
 	void cleanupVulkan();
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
+	void createImageViews();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();
