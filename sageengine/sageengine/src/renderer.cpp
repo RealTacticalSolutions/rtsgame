@@ -253,8 +253,8 @@ void renderer::createImageViews()
 
 void renderer::createGraphicsPipeline()
 {
-    auto vertShaderCode = readFile("shaders/vert.spv");
-    auto fragShaderCode = readFile("shaders/frag.spv");
+    auto vertShaderCode = readFile("../../../shaders/vert.spv");
+    auto fragShaderCode = readFile("../../../shaders/frag.spv");
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
