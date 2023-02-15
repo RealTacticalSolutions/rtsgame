@@ -62,6 +62,8 @@ private:
 	VkQueue presentQueue;
 
 	VkSwapchainKHR swapChain;
+	VkPipelineLayout pipelineLayout;
+
 
 	void cleanupVulkan();
 	void createInstance();
@@ -77,7 +79,7 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice device);
 
 	std::vector<const char*> getRequiredExtensions();
-
+	std::vector<char> readFile(const std::string& filename);
 	
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
