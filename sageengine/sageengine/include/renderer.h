@@ -64,6 +64,7 @@ private:
 	VkSwapchainKHR swapChain;
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipeline;
 
 
 	void cleanupVulkan();
