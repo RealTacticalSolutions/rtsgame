@@ -62,6 +62,7 @@ private:
 	VkQueue presentQueue;
 
 	VkSwapchainKHR swapChain;
+	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 
 
@@ -69,6 +70,7 @@ private:
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
 	void createImageViews();
+	void createRenderPass();
 	void createGraphicsPipeline();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
