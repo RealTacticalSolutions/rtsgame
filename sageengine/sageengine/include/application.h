@@ -23,5 +23,6 @@ public:
 	
 	void initWindow();
 	void mainLoop();
+	void drawFrame();
 	void cleanup();
 };

@@ -8,7 +8,13 @@ void application::mainLoop()
 	while (!windowObject->shouldClose())
 	{
 		glfwPollEvents();
+		drawFrame();
 	}
+}
+
+void application::drawFrame()
+{
+	vulkanrenderer->renderer::drawFrame();
 }
 
 void application::initWindow()

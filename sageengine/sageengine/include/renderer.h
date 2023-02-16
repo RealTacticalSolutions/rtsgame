@@ -70,6 +70,10 @@ private:
 	VkCommandPool commandPool;
 	VkCommandBuffer commandBuffer;
 
+	VkSemaphore imageAvailableSemaphore;
+	VkSemaphore renderFinishedSemaphore;
+	VkFence inFlightFence;
+
 	void cleanupVulkan();
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
@@ -80,6 +84,8 @@ private:
 	void createCommandPool();
 	void createCommandBuffer();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void createSyncObjects();
+	void drawFrame();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();
