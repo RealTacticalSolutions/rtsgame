@@ -85,7 +85,6 @@ private:
 	void createCommandBuffer();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createSyncObjects();
-	void drawFrame();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();
@@ -120,5 +119,7 @@ public:
 		std::cout << "cleanupVulkan" << std::endl;
 	}
 	void initVulkan(std::unique_ptr<window>& windowObject);
-	
+	void drawFrame();
+
+	VkDevice getDevice();
 };

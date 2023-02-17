@@ -19,6 +19,11 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createImageViews();
     createRenderPass();
     createGraphicsPipeline();
+    createFramebuffers();
+    createCommandPool();
+    createCommandBuffer();
+    createSyncObjects();
+
 }
 
 void renderer::cleanupVulkan()
@@ -785,4 +790,9 @@ void renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
     if (func != nullptr) {
         func(instance, debugMessenger, pAllocator);
     }
+}
+
+VkDevice renderer::getDevice()
+{
+    return device;
 }

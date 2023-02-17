@@ -10,6 +10,7 @@ void application::mainLoop()
 		glfwPollEvents();
 		drawFrame();
 	}
+	vkDeviceWaitIdle(vulkanrenderer->getDevice());
 }
 
 void application::drawFrame()
