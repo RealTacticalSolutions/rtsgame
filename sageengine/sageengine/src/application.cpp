@@ -2,7 +2,6 @@
 #include "application.h"
 
 
-
 void application::mainLoop()
 {
 	while (!windowObject->shouldClose())
