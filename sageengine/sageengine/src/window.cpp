@@ -14,7 +14,7 @@ void window::initWindow(int width, int height)
 
 
 	mainWindow = glfwCreateWindow(width, height, "Vulkan window", nullptr, nullptr);
-	glfwSetWindowUserPointer(mainWindow, this);
+	glfwSetWindowUserPointer(mainWindow, m_vulkanrenderer);
 	glfwSetFramebufferSizeCallback(mainWindow, framebufferResizeCallback);
 
 }

@@ -8,13 +8,14 @@ private:
 	const int HEIGHT;
 
 	GLFWwindow* mainWindow;
+	renderer* m_vulkanrenderer;
 
 	void initWindow(int width, int height);
 
 	void cleanupGLFW();
 
 public:
-	window(int width, int height) : WIDTH(width), HEIGHT(height)
+	window(int width, int height, renderer* vulkanrenderer) : WIDTH(width), HEIGHT(height), m_vulkanrenderer(vulkanrenderer)
 	{
 		initWindow(width, height);
 	};
@@ -26,5 +27,7 @@ public:
 	bool shouldClose() { return glfwWindowShouldClose(mainWindow); };
 
 	GLFWwindow* getWindow();
+
+
 	
 };

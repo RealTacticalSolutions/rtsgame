@@ -20,7 +20,7 @@ void application::drawFrame()
 void application::initWindow()
 {
 	vulkanrenderer = std::make_unique<renderer>();
-	windowObject = std::make_unique<window>(WIDTH, HEIGHT);
+	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 	
 	vulkanrenderer->initVulkan(std::move(windowObject));
 
