@@ -79,7 +79,11 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 
+	
+
 	void cleanupVulkan();
+	void cleanupSwapChain();
+	void recreateSwapChain(GLFWwindow* window);
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
 	void createImageViews();
@@ -123,8 +127,12 @@ public:
 		cleanupVulkan();
 		std::cout << "cleanupVulkan" << std::endl;
 	}
+
+	bool framebufferResized = false;
+
+
 	void initVulkan(std::unique_ptr<window>& windowObject);
-	void drawFrame();
+	void drawFrame(GLFWwindow* window);
 
 	VkDevice getDevice();
 };

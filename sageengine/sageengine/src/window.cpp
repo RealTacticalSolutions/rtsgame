@@ -1,6 +1,12 @@
 #include "pch.h"
 #include "window.h"
 
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	// TODO: maybe use this to also cast pointer to the renderer class instead of passing it through functions?
+	auto app = reinterpret_cast<renderer*>(glfwGetWindowUserPointer(window));
+	app->framebufferResized = true;
+}
+
 void window::initWindow(int width, int height)
 {
 	glfwInit();
@@ -8,6 +14,8 @@ void window::initWindow(int width, int height)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	mainWindow = glfwCreateWindow(width, height, "Vulkan window", nullptr, nullptr);
+	glfwSetWindowUserPointer(mainWindow, this);
+	glfwSetFramebufferSizeCallback(mainWindow, framebufferResizeCallback);
 
 }
 
@@ -23,3 +31,4 @@ GLFWwindow* window::getWindow()
 { 
 	return mainWindow;
 }
+

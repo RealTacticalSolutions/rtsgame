@@ -14,7 +14,7 @@ void application::mainLoop()
 
 void application::drawFrame()
 {
-	vulkanrenderer->renderer::drawFrame();
+	vulkanrenderer->renderer::drawFrame(windowObject->getWindow());
 }
 
 void application::initWindow()
