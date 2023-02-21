@@ -56,7 +56,15 @@ private:
 	const std::vector<Vertex> vertices = {
 	{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
 	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+
+	{{0.7f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{0.71f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{0.71f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+
+	{{0.7f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{0.71f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{0.7f, 0.5f}, {0.0f, 0.0f, 1.0f}},
 	};
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -131,7 +139,9 @@ private:
 	void createGraphicsPipeline();
 	void createFramebuffers();
 	void createCommandPool();
-	void createVertexbuffers();
+	void createVertexbuffer(); 
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createSyncObjects();
