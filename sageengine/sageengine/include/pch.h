@@ -17,8 +17,7 @@
 #include <algorithm>
 #include <fstream>
 #include <array>
-
-
+#include <string>
 
 #include "application.h"
 #include "window.h"

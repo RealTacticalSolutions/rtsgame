@@ -4,12 +4,30 @@
 
 void application::mainLoop()
 {
-	while (!windowObject->shouldClose())
-	{
-		glfwPollEvents();
-		drawFrame();
-	}
-	vkDeviceWaitIdle(vulkanrenderer->getDevice());
+    double lastFrameTime = glfwGetTime();
+    double lastSecondTime = lastFrameTime;
+    int fps = 0;
+    char windowTitle[256];
+
+    while (!windowObject->shouldClose())
+    {
+        double currentFrameTime = glfwGetTime();
+        double delta = currentFrameTime - lastFrameTime;
+        lastFrameTime = currentFrameTime;
+
+        glfwPollEvents();
+        drawFrame();
+
+        fps++;
+        if (currentFrameTime - lastSecondTime >= 1.0)
+        {
+            snprintf(windowTitle, 256, "FPS: %d", fps);
+            glfwSetWindowTitle(windowObject->getWindow(), windowTitle);
+            fps = 0;
+            lastSecondTime = currentFrameTime;
+        }
+    }
+    vkDeviceWaitIdle(vulkanrenderer->getDevice());
 }
 
 void application::drawFrame()
