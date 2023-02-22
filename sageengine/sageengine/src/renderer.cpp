@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "renderer.h"
 
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <STB/stb_image.h>
 
@@ -13,6 +14,7 @@ if(result != VK_SUCCESS)                                \
 
 void renderer::initVulkan(std::unique_ptr<window>& windowObject)
 {
+    setupvertices();
     createInstance();
     setupDebugMessenger();
     createSurface(windowObject->getWindow());
@@ -118,6 +120,85 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
     createFramebuffers();
 }
 
+std::vector<renderer::Vertex> renderer::GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize) 
+{
+    std::vector<Vertex> vertices;
+
+    float halfGridSizeX = (float)xCells * cellSize * 0.5f;
+    float halfGridSizeY = (float)yCells * cellSize * 0.5f;
+
+    for (uint32_t y = 0; y <= yCells; y++)
+    {
+        for (uint32_t x = 0; x <= xCells; x++)
+        {
+            float xPos = (float)x * cellSize - halfGridSizeX;
+            float yPos = (float)y * cellSize - halfGridSizeY;
+
+            vertices.push_back({ {xPos, yPos, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} });
+        }
+    }
+
+    //vertices.push_back({ {0,0,0}, {1.0f,1.0f,0.0f},{0.0f,0.0f} });
+    //vertices.push_back({ {1,0,0}, {1.0f,1.0f,1.0f},{0.0f,0.0f} });
+    //vertices.push_back({ {0,1,0}, {1.0f,1.0f,1.0f},{0.0f,0.0f} });
+    return vertices;
+}
+
+std::vector<uint16_t> renderer::GenerateGridIndices(uint32_t xCells, uint32_t yCells) 
+{
+    std::vector<uint16_t> indices;
+    for (uint32_t y = 0; y < yCells; y++)
+    {
+        for (uint32_t x = 0; x < xCells; x++)
+        {
+            uint32_t vertexIndex = y * (xCells + 1) + x;
+
+            indices.push_back(vertexIndex);
+            indices.push_back(vertexIndex + 1);
+            indices.push_back(vertexIndex + xCells + 1);
+
+            indices.push_back(vertexIndex + xCells + 1);
+            indices.push_back(vertexIndex + 1);
+            indices.push_back(vertexIndex + xCells + 2);
+        }
+    }
+    //indices.push_back(0);
+    //indices.push_back(1);
+    //indices.push_back(2);
+
+    return indices;
+}
+void renderer::setupvertices()
+{
+    int XCELL = 5;
+    int YCELL = 5;
+    float GRIDSIZE = 1.0f;
+
+    vertices = GenerateGridVertices(XCELL, YCELL, GRIDSIZE);
+    indices = GenerateGridIndices(XCELL, YCELL);
+
+    /*vertices = {
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+    };*/
+    //vertices = {
+    //{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // bottom left
+    //{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // bottom right
+    //{{ 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // top right
+    //{{-0.5f,  0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},  // top left
+    //{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},  // bottom left
+    //{{ 1.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // bottom right
+    //{{ 1.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  // top right
+    //{{ 0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}   // top left
+    //};
+}
 
 void renderer::createInstance()
 {
@@ -463,7 +544,7 @@ void renderer::createGraphicsPipeline()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
