@@ -20,6 +20,8 @@
 #include <array>
 #include <string>
 
+#include "camera.h"
 #include "application.h"
 #include "window.h"
 #include "renderer.h"
+

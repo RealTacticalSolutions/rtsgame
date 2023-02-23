@@ -10,6 +10,8 @@ private:
 	const bool enableValidationLayers = true;
 #endif
 
+	Camera& camera;
+
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	uint32_t currentFrame = 0;
@@ -188,8 +190,9 @@ private:
 
 public:
 
-	renderer()
+	renderer(Camera& mainCamera) : camera(mainCamera)
 	{
+		
 	}
 
 	~renderer()

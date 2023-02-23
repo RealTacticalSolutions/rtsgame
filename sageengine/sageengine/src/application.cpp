@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "application.h"
 
-
 void application::mainLoop()
 {
     double lastFrameTime = glfwGetTime();
@@ -37,9 +36,10 @@ void application::drawFrame()
 
 void application::initWindow()
 {
-	vulkanrenderer = std::make_unique<renderer>();
+	vulkanrenderer = std::make_unique<renderer>(camera);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
-	
+    
+
 	vulkanrenderer->initVulkan(std::move(windowObject));
 
 }

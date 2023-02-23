@@ -29,7 +29,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
-
+    
 }
 
 void renderer::cleanupVulkan()
@@ -73,6 +73,7 @@ void renderer::cleanupVulkan()
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
+
 void renderer::cleanupSwapChain() {
     for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
         vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
@@ -100,6 +101,8 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
     createSwapChain(window);
     createImageViews();
     createFramebuffers();
+    camera.aspectRatio = swapChainExtent.width / (float)swapChainExtent.height;
+
 }
 
 
@@ -285,6 +288,7 @@ void renderer::createSwapChain(GLFWwindow* window) {
 
     swapChainImageFormat = surfaceFormat.format;
     swapChainExtent = extent;
+    camera.aspectRatio = swapChainExtent.width / (float)swapChainExtent.height;
 }
 
 void renderer::createImageViews()
@@ -800,9 +804,8 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
 
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    ubo.view = camera.getView();
+    ubo.proj = camera.getProjection();
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
