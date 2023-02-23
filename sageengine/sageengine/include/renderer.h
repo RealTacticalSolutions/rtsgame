@@ -58,6 +58,10 @@ private:
 		glm::mat4 proj;
 	};
 
+	struct StorageBufferObject {
+		glm::mat4 model;
+	};
+
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
 	};
@@ -161,6 +165,9 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
+	VkBuffer storageBuffer;
+	VkDeviceMemory storageBufferMemory;
+
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -201,6 +208,7 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	void createVertexbuffer(); 
 	void createIndexBuffer();
+	void createStorageBuffer();
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
