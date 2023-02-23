@@ -17,8 +17,9 @@ private:
 	uint32_t currentFrame = 0;
 
 	struct Vertex {
-		glm::vec2 pos;
+		glm::vec3 pos;
 		glm::vec3 color;
+		glm::vec2 texCoord;
 
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription{};
@@ -29,18 +30,23 @@ private:
 			return bindingDescription;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
+			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 
 			attributeDescriptions[0].binding = 0;
 			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 			attributeDescriptions[1].binding = 0;
 			attributeDescriptions[1].location = 1;
 			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+			attributeDescriptions[2].binding = 0;
+			attributeDescriptions[2].location = 2;
+			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+			attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
 			return attributeDescriptions;
 		}
@@ -60,16 +66,35 @@ private:
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
-	const std::vector<Vertex> vertices = {
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-	};
+	//const std::vector<Vertex> vertices = {
+	//{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	//{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	//{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	//{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-	const std::vector<uint16_t> indices = {
-		0, 1, 2, 2, 3, 0
-	};
+	//{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+	//{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+	//{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+	//{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+	//};
+
+	//const std::vector<uint16_t> indices = {
+	//	0, 1, 2, 2, 3, 0,
+	//	4, 5, 6, 6, 7, 4
+	//};
+
+	const int num_rows = 10; // number of rows in the grid
+	const int num_cols = 10; // number of columns in the grid
+	const float spacing = 0.1f; // spacing between grid points
+
+	// Create the vertex grid
+	std::vector<Vertex> vertices;
+
+
+	// Create the index buffer for the grid
+	std::vector<uint16_t> indices;
+	std::vector<Vertex> GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize);
+	std::vector<uint16_t> GenerateGridIndices(uint32_t xCells, uint32_t yCells);
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -141,7 +166,17 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 
-	
+	VkImage textureImage;
+	VkDeviceMemory textureImageMemory;
+
+	VkImageView textureImageView;
+	VkSampler textureSampler;
+
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
+
+	void setupvertices();
 
 	void cleanupVulkan();
 	void cleanupSwapChain();
@@ -149,11 +184,21 @@ private:
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
 	void createImageViews();
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 	void createRenderPass();
 	void createDescriptorSetLayout();
 	void createGraphicsPipeline();
 	void createFramebuffers();
+	void createDepthResources();
 	void createCommandPool();
+	void createTextureImage();
+	void createTextureImageView();
+	void createTextureSampler();
+	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+	VkCommandBuffer beginSingleTimeCommands();
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	void createVertexbuffer(); 
 	void createIndexBuffer();
 	void createUniformBuffers();
@@ -172,6 +217,7 @@ private:
 	void pickPhysicalDevice();
 	void createLogicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
+	bool hasStencilComponent(VkFormat format);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	std::vector<const char*> getRequiredExtensions();
@@ -183,6 +229,8 @@ private:
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
 	VkShaderModule createShaderModule(const std::vector<char>& code);
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	VkFormat findDepthFormat();
 
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);

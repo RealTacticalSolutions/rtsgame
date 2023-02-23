@@ -28,6 +28,4 @@ public:
 
 	GLFWwindow* getWindow();
 
-
-	
 };
