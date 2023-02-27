@@ -1177,19 +1177,18 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
+    uint32_t totalindex = 0;
     for (int i = 0; i < objectCount; i++) {
         int offset = i * MAX_FRAMES_IN_FLIGHT;
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
 
-
         // Compute the offset for the current object
-        uint32_t indexOffset = i * static_cast<uint32_t>(gameObjects[i].indices.size());
         uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].indices.size());
-
-        vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, 0, 0);
+        
+        vkCmdDrawIndexed(commandBuffer, indexCount, 1, totalindex, 0, 0);
         //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
+        totalindex += indexCount;
     }
 
     vkCmdEndRenderPass(commandBuffer);
