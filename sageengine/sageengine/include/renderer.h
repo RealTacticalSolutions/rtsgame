@@ -13,6 +13,7 @@ private:
 	Camera& camera;
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
+	int objectCount = 2;
 
 	uint32_t currentFrame = 0;
 

@@ -6,7 +6,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
 } ubo;
 
-layout(binding = 2) buffer StorageBufferObject {
+layout(set = 0, binding = 2) buffer StorageBufferObject {
     mat4 model;
 } sbo;
 

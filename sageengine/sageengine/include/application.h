@@ -14,7 +14,7 @@ private:
 	Camera camera;
 
 public:
-	application() : camera(glm::vec3(3.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(45.0f), 0.1f, 10.0f) {}
+	application() : camera(glm::vec3(0.0f, 3.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(45.0f), 0.1f, 10.0f) {}
 	~application()
 	{
 	};
