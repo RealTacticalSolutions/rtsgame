@@ -127,7 +127,7 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
 
 }
 
-std::vector<renderer::Vertex> renderer::GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize) 
+std::vector<Vertex> renderer::GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize) 
 {
     std::vector<Vertex> vertices;
 
@@ -903,7 +903,13 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 
 void renderer::createVertexbuffer()
 {
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    sizeof(Vertex);
+    for (int i = 0; i < objectCount; i++) {
+        vertices.insert(vertices.end(), gameObjects[i].vertices.begin(), gameObjects[i].vertices.end());
+    }
+
+    VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -924,7 +930,12 @@ void renderer::createVertexbuffer()
 
 void renderer::createIndexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    
+    for (int i = 0; i < objectCount; i++) {
+        indices.insert(indices.end(), gameObjects[i].indices.begin(), gameObjects[i].indices.end());
+    }
+
+    VkDeviceSize bufferSize = sizeof(uint16_t) * indices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -945,18 +956,19 @@ void renderer::createIndexBuffer()
 
 void renderer::createStorageBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(StorageBufferObject) * 2;
+    VkDeviceSize bufferSize = sizeof(glm::mat4) * objectCount;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, storageBuffer, storageBufferMemory);
 
-    glm::mat4 matrices[2];
+    std::vector<glm::mat4> matrices(objectCount);
 
-    matrices[0] = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    matrices[1] = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    for (int i = 0; i < objectCount; i++) {
+        matrices[i] = gameObjects[i].transform;
+    }
 
     void* data;
     vkMapMemory(device, storageBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, &matrices, bufferSize);
+    memcpy(data, matrices.data(), bufferSize);
    
 }
 
@@ -1008,56 +1020,52 @@ void renderer::createDescriptorSets()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT * objectCount; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
-
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = textureImageView;
-        imageInfo.sampler = textureSampler;
-
-        VkDescriptorBufferInfo storageBufferInfo{};
-        storageBufferInfo.buffer = storageBuffer;
-        storageBufferInfo.range = sizeof(StorageBufferObject);
-
-        if (i >= MAX_FRAMES_IN_FLIGHT) {
-            bufferInfo.buffer = uniformBuffers[i - objectCount];
-            storageBufferInfo.offset = 0;
-        }
-        else {
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        for (size_t j = 0; j < objectCount; j++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(UniformBufferObject);
             bufferInfo.buffer = uniformBuffers[i];
-            storageBufferInfo.offset = sizeof(StorageBufferObject);
+
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = textureImageView;
+            imageInfo.sampler = textureSampler;
+
+            VkDescriptorBufferInfo storageBufferInfo{};
+            storageBufferInfo.buffer = storageBuffer;
+            storageBufferInfo.range = sizeof(glm::mat4);
+            storageBufferInfo.offset = sizeof(glm::mat4) * j;
+
+            std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+
+            descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[0].dstSet = descriptorSets[i];
+            descriptorWrites[0].dstBinding = 0;
+            descriptorWrites[0].dstArrayElement = 0;
+            descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[0].descriptorCount = 1;
+            descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+            descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[1].dstSet = descriptorSets[i];
+            descriptorWrites[1].dstBinding = 1;
+            descriptorWrites[1].dstArrayElement = 0;
+            descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrites[1].descriptorCount = 1;
+            descriptorWrites[1].pImageInfo = &imageInfo;
+
+            descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[2].dstSet = descriptorSets[i];
+            descriptorWrites[2].dstBinding = 2;
+            descriptorWrites[2].dstArrayElement = 0;
+            descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            descriptorWrites[2].descriptorCount = 1;
+            descriptorWrites[2].pBufferInfo = &storageBufferInfo;
+
+            vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
-
-        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
-
-        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[0].dstSet = descriptorSets[i];
-        descriptorWrites[0].dstBinding = 0;
-        descriptorWrites[0].dstArrayElement = 0;
-        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrites[0].descriptorCount = 1;
-        descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[1].dstSet = descriptorSets[i];
-        descriptorWrites[1].dstBinding = 1;
-        descriptorWrites[1].dstArrayElement = 0;
-        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &imageInfo;
-
-        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[2].dstSet = descriptorSets[i];
-        descriptorWrites[2].dstBinding = 2;
-        descriptorWrites[2].dstArrayElement = 0;
-        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        descriptorWrites[2].descriptorCount = 1;
-        descriptorWrites[2].pBufferInfo = &storageBufferInfo;
-                         
-        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        
     }
 }
 
@@ -1170,10 +1178,10 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < objectCount; i++) {
         int offset = i * MAX_FRAMES_IN_FLIGHT;
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame + offset], 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
     }

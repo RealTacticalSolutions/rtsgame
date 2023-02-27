@@ -10,7 +10,7 @@ find_package(Vulkan REQUIRED)
 
 file(GLOB subdir_sources src/*.cpp)
 
-add_executable(SageEngine ${subdir_sources} "include/pch.h" "include/application.h" "include/window.h" "src/window.cpp" "src/application.cpp" "include/renderer.h" "src/renderer.cpp" "src/camera.cpp" "include/camera.h" "include/STB/stb_image.h")
+add_executable(SageEngine ${subdir_sources} "include/pch.h" "include/application.h" "include/window.h" "src/window.cpp" "src/application.cpp" "include/renderer.h" "src/renderer.cpp" "src/camera.cpp" "include/camera.h" "include/STB/stb_image.h" "src/gameObject.cpp" "include/gameObject.h" "src/vertex.cpp" "include/vertex.h")
 
 target_link_libraries(SageEngine PUBLIC ${LIBS} Vulkan::Vulkan)
 target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include")

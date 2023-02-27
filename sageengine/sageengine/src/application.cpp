@@ -34,9 +34,52 @@ void application::drawFrame()
 	vulkanrenderer->renderer::drawFrame(windowObject->getWindow());
 }
 
+std::vector<GameObject> application::constructGameobjects(int objectCount)
+{
+    std::vector<GameObject> gameObjects;
+
+    gameObjects.push_back(GameObject(
+        { { {-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+        { {0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f} },
+        { {0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { {-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} } },
+
+        {  0, 1, 2, 2, 3, 0  },
+
+        glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+    ));
+
+    gameObjects.push_back(GameObject(
+        { { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+        { {0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f} },
+        { {0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { {-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} } },
+
+        {4, 5, 6, 6, 7, 4},
+
+        glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+    ));
+
+    gameObjects.push_back(GameObject(
+        { { {-0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+        { {0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f} },
+        { {0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { {-0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} } },
+
+        { 8, 9, 10, 10, 11, 8 },
+
+        glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+    ));
+
+
+    return gameObjects;
+}
+
 void application::initWindow()
 {
-	vulkanrenderer = std::make_unique<renderer>(camera);
+    int objectCount = 3;
+    std::vector gameObjects = constructGameobjects(objectCount);
+	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
     
 
