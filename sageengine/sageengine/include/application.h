@@ -20,7 +20,7 @@ public:
 	};
 
 	
-	std::vector<GameObject> constructGameobjects(int objectCount);
+	std::vector<GameObject> constructGameobjects();
 	void initWindow();
 	void mainLoop();
 	void drawFrame();

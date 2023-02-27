@@ -34,7 +34,7 @@ void application::drawFrame()
 	vulkanrenderer->renderer::drawFrame(windowObject->getWindow());
 }
 
-std::vector<GameObject> application::constructGameobjects(int objectCount)
+std::vector<GameObject> application::constructGameobjects()
 {
     std::vector<GameObject> gameObjects;
 
@@ -72,13 +72,15 @@ std::vector<GameObject> application::constructGameobjects(int objectCount)
     ));
 
 
+
     return gameObjects;
 }
 
 void application::initWindow()
 {
-    int objectCount = 3;
-    std::vector gameObjects = constructGameobjects(objectCount);
+    
+    std::vector gameObjects = constructGameobjects();
+    int objectCount = gameObjects.size();
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
     

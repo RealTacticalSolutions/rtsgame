@@ -1040,7 +1040,7 @@ void renderer::createDescriptorSets()
             std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[0].dstSet = descriptorSets[i];
+            descriptorWrites[0].dstSet = descriptorSets[i * objectCount + j];
             descriptorWrites[0].dstBinding = 0;
             descriptorWrites[0].dstArrayElement = 0;
             descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1048,7 +1048,7 @@ void renderer::createDescriptorSets()
             descriptorWrites[0].pBufferInfo = &bufferInfo;
 
             descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[1].dstSet = descriptorSets[i];
+            descriptorWrites[1].dstSet = descriptorSets[i * objectCount + j];
             descriptorWrites[1].dstBinding = 1;
             descriptorWrites[1].dstArrayElement = 0;
             descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1056,7 +1056,7 @@ void renderer::createDescriptorSets()
             descriptorWrites[1].pImageInfo = &imageInfo;
 
             descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[2].dstSet = descriptorSets[i];
+            descriptorWrites[2].dstSet = descriptorSets[i * objectCount + j];
             descriptorWrites[2].dstBinding = 2;
             descriptorWrites[2].dstArrayElement = 0;
             descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -1183,7 +1183,13 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
 
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
+
+        // Compute the offset for the current object
+        uint32_t indexOffset = i * static_cast<uint32_t>(gameObjects[i].indices.size());
+        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].indices.size());
+
+        vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, 0, 0);
+        //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
     }
 
     vkCmdEndRenderPass(commandBuffer);
