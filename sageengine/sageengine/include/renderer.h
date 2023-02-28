@@ -31,7 +31,7 @@ private:
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
-	std::vector<GameObject> gameObjects;
+	std::vector<GameObject>& gameObjects;
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indices;
 
@@ -110,6 +110,7 @@ private:
 	VkDeviceMemory indexBufferMemory;
 	VkBuffer storageBuffer;
 	VkDeviceMemory storageBufferMemory;
+	void* storageBufferHandle;
 
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -169,6 +170,7 @@ private:
 	void createLogicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool hasStencilComponent(VkFormat format);
+	void updateStorageBuffer();
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	std::vector<const char*> getRequiredExtensions();
@@ -189,7 +191,7 @@ private:
 
 public:
 
-	renderer(Camera& mainCamera, int objectCount, std::vector<GameObject> gameObjects) : camera(mainCamera), objectCount(objectCount), gameObjects(gameObjects)
+	renderer(Camera& mainCamera, int objectCount, std::vector<GameObject>& gameObjects) : camera(mainCamera), objectCount(objectCount), gameObjects(gameObjects)
 	{
 		
 	}

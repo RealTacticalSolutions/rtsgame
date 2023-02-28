@@ -8,6 +8,7 @@ layout(binding = 0) uniform UniformBufferObject {
 
 layout(set = 0, binding = 2) buffer StorageBufferObject {
     mat4 model;
+    vec3 color;
 } sbo;
 
 layout(location = 0) in vec3 inPosition;
@@ -19,6 +20,6 @@ layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * sbo.model * vec4(inPosition, 1.0);
-    fragColor = inColor;
+    fragColor = sbo.color;
     fragTexCoord = inTexCoord;
 }

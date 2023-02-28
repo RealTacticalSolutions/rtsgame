@@ -703,7 +703,7 @@ void renderer::createCommandPool()
 
 void renderer::createTextureImage() {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("../../../textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load("../../../textures/crossroadtexture1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
@@ -956,19 +956,19 @@ void renderer::createIndexBuffer()
 
 void renderer::createStorageBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(glm::mat4) * objectCount;
+    VkDeviceSize bufferSize = sizeof(Properties) * objectCount;
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, storageBuffer, storageBufferMemory);
 
-    std::vector<glm::mat4> matrices(objectCount);
+    std::vector<Properties> properties(objectCount);
 
     for (int i = 0; i < objectCount; i++) {
-        matrices[i] = gameObjects[i].transform;
+        properties[i] = gameObjects[i].properties;
     }
 
     void* data;
-    vkMapMemory(device, storageBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, matrices.data(), bufferSize);
+    vkMapMemory(device, storageBufferMemory, 0, bufferSize, 0, &storageBufferHandle);
+    memcpy(storageBufferHandle, properties.data(), bufferSize);
    
 }
 
@@ -1034,8 +1034,8 @@ void renderer::createDescriptorSets()
 
             VkDescriptorBufferInfo storageBufferInfo{};
             storageBufferInfo.buffer = storageBuffer;
-            storageBufferInfo.range = sizeof(glm::mat4);
-            storageBufferInfo.offset = sizeof(glm::mat4) * j;
+            storageBufferInfo.range = sizeof(Properties);
+            storageBufferInfo.offset = sizeof(Properties) * j;
 
             std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
@@ -1237,6 +1237,18 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
+void renderer::updateStorageBuffer()
+{
+    // TODO: really light flickering of black 
+    std::vector<Properties> props(objectCount);
+    for (size_t i = 0; i < objectCount; i++)
+    {
+        props[i].color = gameObjects[i].properties.color;
+        props[i].transform = gameObjects[i].properties.transform;
+
+    }
+    memcpy(storageBufferHandle, props.data(), sizeof(Properties) * objectCount);
+}
 
 void renderer::drawFrame(GLFWwindow* window)
 {
@@ -1253,7 +1265,9 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
+    updateStorageBuffer();
     updateUniformBuffer(currentFrame);
+
 
     // Only reset the fence if we are submitting work
     vkResetFences(device, 1, &inFlightFences[currentFrame]);

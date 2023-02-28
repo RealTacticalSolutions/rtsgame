@@ -24,6 +24,7 @@
 
 
 #include "vertex.h"
+#include "properties.h"
 #include "gameObject.h"
 #include "shapetool.h"
 #include "camera.h"
