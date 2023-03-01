@@ -1,8 +1,27 @@
 #include "pch.h"
 #include "application.h"
+#include "CROSSROAD/pchroads.h"
+#include "color.h"
+
+std::mutex g_mutex;
+std::condition_variable g_conditionVariable;
+bool g_serverReady = false;
+
 
 void application::mainLoop()
 {
+ 
+    char* IP = "192.168.178.52";
+    char* PORT = "27015";
+    char* SERVER_PORT = "27015";
+
+    client myClient(IP, PORT);
+    server myServer(SERVER_PORT, message);
+
+    std::thread serverThread(&server::startServer, &myServer);
+    std::thread clientThread(&client::startClient, &myClient);
+
+
     double lastFrameTime = glfwGetTime();
     double lastSecondTime = lastFrameTime;
     int fps = 0;
@@ -13,11 +32,10 @@ void application::mainLoop()
         double currentFrameTime = glfwGetTime();
         double delta = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
-
-        //updateColor(1, glm::vec3(1.0f,1.0f,1.0f));
-        updateColorAddition(1, glm::vec3(0.0001f, 0.0001f, 0.0001f));
-        updateColorAddition(3, glm::vec3(0.0001f, 0.0001f, 0.0001f));
-        updateColorAddition(4, glm::vec3(0.0001f, 0.0001f, 0.0001f));
+        for (auto m : message)
+        {
+            updateColor(m.id, getColor(m.color));
+        }
         glfwPollEvents();
         drawFrame();
 
@@ -31,6 +49,9 @@ void application::mainLoop()
         }
     }
     vkDeviceWaitIdle(vulkanrenderer->getDevice());
+
+    serverThread.join();
+    clientThread.join();
 }
 
 void application::drawFrame()

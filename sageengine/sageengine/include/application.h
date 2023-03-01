@@ -13,6 +13,7 @@ private:
 
 	Camera camera;
 	std::vector<GameObject> gameObjects;
+	std::vector<messageObject> message;
 
 
 	void updateColor(int index, glm::vec3 color);

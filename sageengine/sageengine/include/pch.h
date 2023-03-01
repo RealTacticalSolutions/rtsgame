@@ -22,7 +22,7 @@
 #include <string>
 
 
-
+#include "messageObject.h"
 #include "vertex.h"
 #include "properties.h"
 #include "gameObject.h"
