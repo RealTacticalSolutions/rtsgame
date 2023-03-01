@@ -78,69 +78,57 @@ void server::startServer()
     }
     std::cout << "Socket Accept Succeeded " << std::endl;
 
-    //// Receive data from the client
-    //char recvBuffer[4096];
-    //int bytesReceived = recv(clientSocket, recvBuffer, sizeof(recvBuffer) - 1, 0); // subtract 1 from buffer size to leave space for null terminator
+    // // Receive data from the client
+    //char recvBuf[4096];
+    //int bytesReceived = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0); // subtract 1 from buffer size to leave space for null terminator
     //if (bytesReceived == SOCKET_ERROR) {
     //    std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
     //    closesocket(clientSocket);
-    //    closesocket(listenSocket);
     //    WSACleanup();
     //    return;
     //}
-
     //// Add null terminator to received data
-    //recvBuffer[bytesReceived] = '\0';
+    //recvBuf[bytesReceived] = '\0';
 
-    //// Convert the received data to a JSON object
-    //nlohmann::json receivedJson;
-    //try {
-    //    receivedJson = nlohmann::json::parse(recvBuffer);
-    //}
-    //catch (nlohmann::json::parse_error& e) {
-    //    std::cout << "JSON parse error: " << e.what() << std::endl;
-    //    closesocket(clientSocket);
-    //    closesocket(listenSocket);
-    //    WSACleanup();
-    //    return;
+
+    //// Parse the JSON data into a vector of TrafficObjects
+
+    //nlohmann::json data = nlohmann::json::parse(recvBuf);
+    //for (const auto& obj : data) {
+    //    message.push_back({ obj["id"], obj["color"] });
+    //    // Print the received data to the console
+    //    std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
+
     //}
 
-    //// Convert the JSON object to a struct
-    //JSON_Object receivedJSON;
-    //try {
-    //    receivedJSON.id = receivedJson["id"];
-    //    receivedJSON.weight = receivedJson["weight"];
-    //}
-    //catch (nlohmann::json::exception& e) {
-    //    std::cout << "JSON access error: " << e.what() << std::endl;
-    //    closesocket(clientSocket);
-    //    closesocket(listenSocket);
-    //    WSACleanup();
-    //    return;
-    //}
+    while (server_running) {
+        // Receive data from the client
+        char recvBuf[4096];
+        int bytesReceived = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0); // subtract 1 from buffer size to leave space for null terminator
+        if (bytesReceived == SOCKET_ERROR) {
+            std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
+        // Add null terminator to received data
+        recvBuf[bytesReceived] = '\0';
 
+        // Check if the received message is empty
+        if (strlen(recvBuf) == 0) {
+            continue; // If the message is empty, wait for the next one
+        }
 
-     // Receive data from the client
-    char recvBuf[4096];
-    int bytesReceived = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0); // subtract 1 from buffer size to leave space for null terminator
-    if (bytesReceived == SOCKET_ERROR) {
-        std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
-        closesocket(clientSocket);
-        WSACleanup();
-        return;
-    }
-    // Add null terminator to received data
-    recvBuf[bytesReceived] = '\0';
+        // Parse the JSON data into a vector of TrafficObjects
+        nlohmann::json data = nlohmann::json::parse(recvBuf);
+        for (const auto& obj : data) {
+            message.push_back({ obj["id"], obj["color"] });
+            // Print the received data to the console
+            std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
+        }
 
-
-    // Parse the JSON data into a vector of TrafficObjects
-
-    nlohmann::json data = nlohmann::json::parse(recvBuf);
-    for (const auto& obj : data) {
-        message.push_back({ obj["id"], obj["color"] });
-        // Print the received data to the console
-        std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
-
+        // Clean message and fill it with new data
+        message.clear();
     }
 
     // Close the client and server sockets and clean up Winsock

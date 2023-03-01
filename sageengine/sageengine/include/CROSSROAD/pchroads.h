@@ -17,5 +17,7 @@
 extern std::mutex g_mutex;
 extern bool g_serverReady;
 extern std::condition_variable g_conditionVariable;
+extern bool server_running;
+extern bool client_running;
 
 

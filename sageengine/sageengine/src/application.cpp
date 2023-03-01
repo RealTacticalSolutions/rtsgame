@@ -6,7 +6,8 @@
 std::mutex g_mutex;
 std::condition_variable g_conditionVariable;
 bool g_serverReady = false;
-
+bool server_running = true;
+bool client_running = true;
 
 void application::mainLoop()
 {
@@ -48,8 +49,10 @@ void application::mainLoop()
             lastSecondTime = currentFrameTime;
         }
     }
-    vkDeviceWaitIdle(vulkanrenderer->getDevice());
 
+    vkDeviceWaitIdle(vulkanrenderer->getDevice());
+    server_running = false;
+    client_running = false;
     serverThread.join();
     clientThread.join();
 }
@@ -89,22 +92,19 @@ std::vector<GameObject> application::constructGameobjects()
     float yOffset = 0.17f;
     float zOffset = 1;
     uint32_t indicesoffset = gameObjects[0].vertices.size();
-    glm::vec3 color = glm::vec3(0.0f, 1.0f, 1.0f);
+    glm::vec3 color = getColor(RED);
     gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset,color));
     indicesoffset += gameObjects[1].vertices.size();
     xOffset = -0.28f;
     yOffset = -0.15f;
-    color = glm::vec3(1.0f, 1.0f, 1.0f);
     gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
     indicesoffset += gameObjects[2].vertices.size();
     xOffset = 0.17f;
     yOffset = 0.05f;
-    color = glm::vec3(1.0f, 0.0f, 1.0f);
     gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
     indicesoffset += gameObjects[3].vertices.size();
     xOffset = 0.05f;
     yOffset = -0.28f;
-    color = glm::vec3(1.0f, 1.0f, 0.0f);
     gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
 
 

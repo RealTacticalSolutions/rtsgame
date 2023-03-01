@@ -1,6 +1,10 @@
 #include "pchroads.h"
 #include "client.h"
+#include <random>
 
+std::random_device rd; // obtain a random number from hardware
+std::mt19937 gen(rd()); // seed the generator
+std::uniform_int_distribution<> distr(0, 2); // define the range
 
 void client::startClient()
 {
@@ -60,20 +64,35 @@ void client::startClient()
     //    {{"id", 123},{"weight", 45.6}},
     //    {{"id", 63},{"weight", 75.6}}
     //};
-    std::vector<trafficObject> message = { { 1, 0 }, {2, 1} };
+    int id1 = 1;
+    int id2 = 2;
+    int id3 = 3;
+    int id4 = 4;
 
-    nlohmann::json data;
-    client::to_json(data, message);
-
-    // Send the JSON data to the server
-    std::string dataStr = data.dump(); // Convert the JSON object to a string
-    const char* sendData = dataStr.c_str();
-    int bytesSent = send(clientSocket, sendData, strlen(sendData), 0);
-    if (bytesSent == SOCKET_ERROR) {
-        std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
-        closesocket(clientSocket);
-        WSACleanup();
-        return;
+    int color1 = 0;
+    int color2 = 0;
+    int color3 = 0;
+    int color4 = 0;
+    while (client_running) {
+        // Send the message to the server
+        std::vector<trafficObject> message = { { id1, color1 }, {id2, color2}, {id3, color3}, {id4, color4} };
+        nlohmann::json data;
+        client::to_json(data, message);
+        std::string dataStr = data.dump(); // Convert the JSON object to a string
+        const char* sendData = dataStr.c_str();
+        int bytesSent = send(clientSocket, sendData, strlen(sendData), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
+        color1 = distr(gen);
+        color2 = distr(gen);
+        color3 = distr(gen);
+        color4 = distr(gen);
+        // Wait for 3.5 seconds before sending the next message
+        Sleep(3500);
     }
 
     // Close the socket and clean up Winsock
@@ -82,12 +101,12 @@ void client::startClient()
     return;
 }
 void client::to_json(nlohmann::json& j, const trafficObject& s) {
-    j = nlohmann::json{ { {"id", s.id}, {"color", s.weight}} };
+    j = nlohmann::json{ { {"id", s.id}, {"color", s.color}} };
 }
 
 void client::to_json(nlohmann::json& j, const std::vector<trafficObject>& objects) {
     j = nlohmann::json::array();
     for (const auto& obj : objects) {
-        j.push_back(nlohmann::json{ {"id", obj.id}, {"color", obj.weight} });
+        j.push_back(nlohmann::json{ {"id", obj.id}, {"color", obj.color} });
     }
 }

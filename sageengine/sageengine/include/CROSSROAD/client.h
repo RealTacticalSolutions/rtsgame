@@ -4,7 +4,7 @@ class client {
 private:
 	struct trafficObject {
 		int id;
-		double weight;
+		int color;
 	};
 	const char* IP;
 	const char* PORT;
