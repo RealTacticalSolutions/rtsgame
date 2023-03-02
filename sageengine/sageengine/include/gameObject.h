@@ -7,7 +7,10 @@ public:
 	const std::vector<uint16_t> indices;
 	Properties properties;
 
-	GameObject(std::vector<Vertex> vertices, std::vector<uint16_t> indices, glm::mat4 transform, glm::vec3 color) : vertices(vertices), indices(indices), properties{transform, color} {
+	GameObject(std::vector<Vertex> vertices, std::vector<uint16_t> indices, glm::mat4 transform, glm::vec3 color) : vertices(vertices), indices(indices), properties{ transform, color } {
+
+	};
+	GameObject(glm::mat4 transform, glm::vec3 color) :  properties{ transform, color } {
 
 	};
 	

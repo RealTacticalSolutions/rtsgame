@@ -106,10 +106,18 @@ std::vector<GameObject> application::constructGameobjects()
     xOffset = 0.05f;
     yOffset = -0.28f;
     gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
+    indicesoffset += gameObjects[4].vertices.size();
 
 
+    float cellsize = 0.2f;
+    glm::vec3 origin(0.0f, 0.0f, 1.0f);
+    std::vector<std::vector<glm::vec3>> test =  Grid::generate_grid(3,3 ,cellsize, origin);
+    glm::mat4 transform(1.0f);
+    glm::vec3 color2(1.0f, 1.0f, 0.0f);
+    //gameObjects.push_back(Grid::createGrid(origin,indicesoffset, transform,color2));
+    indicesoffset = Grid::generateGrid(gameObjects,test, cellsize, indicesoffset, transform, color2);
 
-
+    int a = 5;
     /*gameObjects.push_back(GameObject(
         { { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
         { {0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f} },

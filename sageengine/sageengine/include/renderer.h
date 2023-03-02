@@ -93,6 +93,7 @@ private:
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
+	VkPipeline graphicsPipelineLINE;
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
