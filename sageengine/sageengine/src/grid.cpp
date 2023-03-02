@@ -10,7 +10,7 @@ std::vector<std::vector<glm::vec3>> Grid::generate_grid(int x, int y, float cell
     float y_offset = (float)(y - 1) / 2.0f * cellsizeincreased;
     for (int i = 0; i < x; i++) {
         for (int j = 0; j < y; j++) {
-            grid[i][j] = { origin.x + (i * cellsizeincreased) - x_offset, origin.y + (j * cellsizeincreased) - y_offset, origin.z };
+            grid[i][j] = { origin.x + (i * cellsizeincreased), origin.y + (j * cellsizeincreased), origin.z };
         }
     }
     return grid;
@@ -54,8 +54,6 @@ std::vector<uint16_t> Grid:: createBoxIndices(uint32_t offSet)
 
 GameObject Grid::createGrid(glm::vec3 origin, float cellsize, uint32_t offSet, glm::mat4 transform, glm::vec3 color)
 {
-    if (offSet == 20)
-    {
         GameObject gameObject(
             createBoxVertices(origin, cellsize),
             createBoxIndices(offSet),
@@ -63,40 +61,6 @@ GameObject Grid::createGrid(glm::vec3 origin, float cellsize, uint32_t offSet, g
             color
         );
         return gameObject;
-    }
-    else if (offSet == 24)
-    {
-        GameObject gameObject(
-            createBoxVertices(origin, cellsize),
-            createBoxIndices(offSet),
-            transform,
-            glm::vec3(0.0f, 0.3f, 1.0f)
-        );
-        return gameObject;
-    }
-    else if (offSet == 28)
-    {
-        GameObject gameObject(
-            createBoxVertices(origin, cellsize),
-            createBoxIndices(offSet),
-            transform,
-            glm::vec3(0.3f, 0.0f, 1.0f)
-        );
-        return gameObject;
-    }
-    else
-    {
-        GameObject gameObject(
-            createBoxVertices(origin, cellsize),
-            createBoxIndices(offSet),
-            transform,
-            glm::vec3(0.0f,0.0f,1.0f)
-        );
-        return gameObject;
-    }
-
-
-    
 }
 
 uint32_t Grid::generateGrid(std::vector<GameObject>& gameObjects,std::vector<std::vector<glm::vec3>>& grid, float cellsize, uint32_t offSet, glm::mat4 transform, glm::vec3 color)
