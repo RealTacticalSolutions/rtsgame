@@ -93,29 +93,32 @@ std::vector<GameObject> application::constructGameobjects()
     float zOffset = 1;
     uint32_t indicesoffset = gameObjects[0].vertices.size();
     glm::vec3 color = getColor(RED);
-    gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset,color));
-    indicesoffset += gameObjects[1].vertices.size();
-    xOffset = -0.28f;
-    yOffset = -0.15f;
-    gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
-    indicesoffset += gameObjects[2].vertices.size();
-    xOffset = 0.17f;
-    yOffset = 0.05f;
-    gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
-    indicesoffset += gameObjects[3].vertices.size();
-    xOffset = 0.05f;
-    yOffset = -0.28f;
-    gameObjects.push_back(ShapeTool::generateGrid(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indicesoffset, color));
-    indicesoffset += gameObjects[4].vertices.size();
+    glm::mat4 transform(1.0f);
+
+    glm::vec3 origin (-0.15f, 0.17f, 1.0f);
+    Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
+    origin = glm::vec3(- 0.28f, -0.15f, 1.0f);
+    Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
+    origin = glm::vec3(0.17f, 0.05f, 1.0f);
+    Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
+    origin = glm::vec3(0.05f, -0.28f, 1.0f);
+    Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
+    origin = glm::vec3(0.17f, 0.05f, 1.0f);
+    Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
 
 
     float cellsize = 0.25f;
-    glm::vec3 origin(-1.25f,-1.25f, 1.0f);
-    std::vector<std::vector<glm::vec3>> test =  Grid::generate_grid(6,6 ,cellsize, origin);
-    glm::mat4 transform(1.0f);
+    //glm::vec3 origin(-1.25f,-1.25f, 1.0f);
+    glm::vec3 origin2(0.0f, 0.0f, 1.0f);
+    
     glm::vec3 color2(1.0f, 1.0f, 1.0f);
+    float width = 0.5f;
+    float height = 0.250f;
+
+    Grid::createRectangle(gameObjects, origin2, width, height, indicesoffset, transform, color2);
+    //std::vector<std::vector<glm::vec3>> test =  Grid::generate_grid(6,6 ,cellsize, origin);
     //gameObjects.push_back(Grid::createGrid(origin,indicesoffset, transform,color2));
-    indicesoffset = Grid::generateGrid(gameObjects,test, cellsize, indicesoffset, transform, color2);
+    //indicesoffset = Grid::generateGrid(gameObjects,test, cellsize, indicesoffset, transform, color2);
 
     int a = 5;
     /*gameObjects.push_back(GameObject(

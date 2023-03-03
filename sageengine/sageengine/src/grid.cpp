@@ -2,7 +2,16 @@
 #include "grid.h"
 
 
-// Todo: draws the grid from up to down, and then right to left not optimal, change to be from left to right up down.
+/**
+ * Generate a 2D grid of points with the specified dimensions, cell size, and origin point.
+ *
+ * @param x The number of cells in the x direction of the grid.
+ * @param y The number of cells in the y direction of the grid.
+ * @param cellsize The size of each cell in the grid.
+ * @param origin The center point of the grid.
+ *
+ * @return A 2D vector of glm::vec3 points representing the grid.
+ */
 std::vector<std::vector<glm::vec3>> Grid::generate_grid(int x, int y, float cellsize, glm::vec3 origin) {
     std::vector<std::vector<glm::vec3>> grid(x, std::vector<glm::vec3>(y));
     float cellsizeincreased = cellsize * 2;
@@ -16,63 +25,110 @@ std::vector<std::vector<glm::vec3>> Grid::generate_grid(int x, int y, float cell
     return grid;
 }
 
-std::vector<Vertex> Grid::createBoxVertices(glm::vec3 origin, float cellsize)
-{
-    std::vector<Vertex> vertices(4);
-    // Bottom Left
-    vertices[0].pos.x = (origin.x + cellsize);
-    vertices[0].pos.y = (origin.y + cellsize);
-
-    // Bottom right
-    vertices[1].pos.x = (origin.x - cellsize);
-    vertices[1].pos.y = (origin.y + cellsize);
-
-    // Top Left
-    vertices[2].pos.x = (origin.x + cellsize);
-    vertices[2].pos.y = (origin.y - cellsize);
-
-    // Top Right
-    vertices[3].pos.x = (origin.x - cellsize);
-    vertices[3].pos.y = (origin.y - cellsize);
-
-    return vertices;
-}
-
-std::vector<uint16_t> Grid:: createBoxIndices(uint32_t offSet)
-{
-    std::vector<uint16_t> indices;
-    indices.push_back(0 + offSet);
-    indices.push_back(1 + offSet);
-    indices.push_back(2 + offSet);
-
-    indices.push_back(2 + offSet);
-    indices.push_back(1 + offSet);
-    indices.push_back(3 + offSet);
-
-    return indices;
-};
-
-GameObject Grid::createGrid(glm::vec3 origin, float cellsize, uint32_t offSet, glm::mat4 transform, glm::vec3 color)
+/**
+* Construct a game object representing a square grid with the given origin, cell size, offset, transform and color.
+* 
+* @param origin The position of the center of the grid.
+* @param cellsize The size of each cell of the grid.
+* @param offSet The offset for the vertex indices of the square grid.
+* @param transform The transformation matrix for the grid.
+* @param color The color of the grid.
+* 
+* @return A game object representing a square grid.
+*/
+GameObject Grid::constructSquare(glm::vec3 origin, float cellsize, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
         GameObject gameObject(
-            createBoxVertices(origin, cellsize),
-            createBoxIndices(offSet),
+            ShapeTool::createSquareVertices(origin, cellsize),
+            ShapeTool::createSquareIndices(offSet),
             transform,
             color
         );
         return gameObject;
 }
 
-uint32_t Grid::generateGrid(std::vector<GameObject>& gameObjects,std::vector<std::vector<glm::vec3>>& grid, float cellsize, uint32_t offSet, glm::mat4 transform, glm::vec3 color)
+/**
+* Generates a grid of GameObjects based on a 2D vector of points and a set of parameters.
+* 
+* @param gameObjects - a reference to a vector of GameObjects to store the generated grid.
+* @param grid - a 2D vector of points representing the grid.
+* @param cellsize - a float value representing the size of each cell in the grid.
+* @param offSet - an integer value representing the offset to be used when generating the indices for each GameObject.
+* @param transform - a 4x4 transformation matrix to be applied to each GameObject.
+* @param color - a vec3 value representing the color to be used for each GameObject.
+* 
+* @return the total number of GameObjects generated.
+*/
+void Grid::generateGrid(std::vector<GameObject>& gameObjects,std::vector<std::vector<glm::vec3>>& grid, float cellsize, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
     for (size_t i = 0; i < grid.size(); i++)
     {
         for (size_t j = 0; j < grid[i].size(); j++)
         {
-            gameObjects.push_back(createGrid(grid[i][j],cellsize, offSet, transform, color));
+            gameObjects.push_back(constructSquare(grid[i][j],cellsize, offSet, transform, color));
             offSet += 4;
         }
     }
 
-    return offSet;
 }
+
+/**
+* Creates a square GameObject and adds it to the provided vector of GameObjects.
+* 
+* @param gameObjects A vector of GameObjects to which the newly created square will be added.
+* @param origin The position of the square's center.
+* @param size The size of the square.
+* @param offSet The offset value used to generate indices for the square's vertices.
+* @param transform The transformation matrix for the square.
+* @param color The color of the square.
+* 
+*/
+void Grid::creatSquare(std::vector<GameObject>& gameObjects, glm::vec3 origin, float size, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+{
+    gameObjects.push_back(constructSquare(origin, size, offSet, transfrom, color));
+    offSet += 4;
+};
+
+/**
+* Constructs and adds a rectangle made up of two triangles to a vector of GameObjects.
+* 
+* @param gameObjects a vector of GameObjects to add the rectangle to
+* @param origin the origin point of the rectangle
+* @param width the width of the rectangle
+* @param height the height of the rectangle
+* @param offSet an offset value used to calculate the index of each vertex
+* @param transform the transformation matrix to apply to the rectangle
+* @param color the color to apply to the rectangle
+* 
+*/
+void Grid::createRectangle(std::vector<GameObject>& gameObjects,glm::vec3 origin, float width, float height, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
+{
+
+    gameObjects.push_back(constructRectangle(origin, width, height, offSet, transform, color));
+
+    offSet += 4;
+}
+
+/**
+* Constructs a rectangle GameObject using the given parameters.
+* 
+* @param origin The bottom-left position of the rectangle.
+* @param width The width of the rectangle.
+* @param height The height of the rectangle.
+* @param offSet The offset used for indexing vertices.
+* @param transform The transformation matrix of the rectangle.
+* @param color The color of the rectangle.
+* 
+* @return A GameObject representing the rectangle.
+*/
+GameObject Grid::constructRectangle(glm::vec3 origin, float width, float height, uint32_t offSet, glm::mat4 transform, glm::vec3 color)
+{
+    GameObject gameObject(
+        ShapeTool::createRectangleVertices(origin, width, height),
+        ShapeTool::createSquareIndices(offSet),
+        transform,
+        color
+    );
+    return gameObject;
+};
+
