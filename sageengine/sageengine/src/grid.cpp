@@ -91,6 +91,8 @@ void Grid::creatSquare(std::vector<GameObject>& gameObjects, glm::vec3 origin, f
 
 /**
 * Constructs and adds a rectangle made up of two triangles to a vector of GameObjects.
+* using the provided origin, width, height, transformation matrix, and color.
+* Automatically computes the indices and updates the given offset.
 * 
 * @param gameObjects a vector of GameObjects to add the rectangle to
 * @param origin the origin point of the rectangle
@@ -104,7 +106,28 @@ void Grid::creatSquare(std::vector<GameObject>& gameObjects, glm::vec3 origin, f
 void Grid::createRectangle(std::vector<GameObject>& gameObjects,glm::vec3 origin, float width, float height, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
 
-    gameObjects.push_back(constructRectangle(origin, width, height, offSet, transform, color));
+    gameObjects.push_back(constructRectangle(origin, width,height, RECTANGLE, offSet, transform, color));
+
+    offSet += 4;
+}
+
+/**
+* Constructs and adds a rectangle GameObject to the given vector of GameObjects,
+* using the provided vertices, transformation matrix, and color.
+* Automatically computes the indices and updates the given offset.
+*
+* @param gameObjects A vector of GameObjects to add the new rectangle to.
+* @param vertices A vector of vertices defining the rectangle.
+* @param offSet An offset value used to compute the indices for the new rectangle.
+*               The value is updated to account for the added vertices.
+* @param transform A 4x4 transformation matrix to apply to the rectangle vertices.
+* @param color The color to use for the rectangle vertices.
+* 
+*/
+void Grid::createRectangle(std::vector<GameObject>& gameObjects, std::vector<Vertex> vertices, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
+{
+
+    gameObjects.push_back(constructRectangle(vertices, RECTANGLE, offSet, transform, color));
 
     offSet += 4;
 }
@@ -115,20 +138,43 @@ void Grid::createRectangle(std::vector<GameObject>& gameObjects,glm::vec3 origin
 * @param origin The bottom-left position of the rectangle.
 * @param width The width of the rectangle.
 * @param height The height of the rectangle.
-* @param offSet The offset used for indexing vertices.
+* @param offSet The offset used for indexing indices.
 * @param transform The transformation matrix of the rectangle.
 * @param color The color of the rectangle.
 * 
 * @return A GameObject representing the rectangle.
 */
-GameObject Grid::constructRectangle(glm::vec3 origin, float width, float height, uint32_t offSet, glm::mat4 transform, glm::vec3 color)
+GameObject Grid::constructRectangle(glm::vec3 origin, float width, float height, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
     GameObject gameObject(
         ShapeTool::createRectangleVertices(origin, width, height),
         ShapeTool::createSquareIndices(offSet),
+        collisiontype,
         transform,
         color
     );
     return gameObject;
 };
 
+/**
+* Constructs a rectangle GameObject from the provided vertices and other parameters.
+* 
+* @param vertices The vertices of the rectangle.
+* @param collisiontype The collision type of the rectangle.
+* @param offSet A reference to an offset value that will be incremented by the number of vertices in the rectangle.
+* @param transform The transform matrix to apply to the rectangle vertices.
+* @param color The color to use for the rectangle.
+* 
+* @return A new GameObject representing the rectangle.
+*/
+GameObject Grid::constructRectangle(std::vector<Vertex> vertices, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
+{
+    GameObject gameObject(
+        vertices,
+        ShapeTool::createSquareIndices(offSet),
+        collisiontype,
+        transform,
+        color
+    );
+    return gameObject;
+}

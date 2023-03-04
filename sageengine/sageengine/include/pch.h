@@ -25,11 +25,12 @@
 #include "messageObject.h"
 #include "vertex.h"
 #include "properties.h"
+#include "collisionType.h"
 #include "gameObject.h"
+#include "intersection.h"
 #include "shapetool.h"
 #include "camera.h"
 #include "application.h"
 #include "window.h"
 #include "renderer.h"
 #include "grid.h"
-

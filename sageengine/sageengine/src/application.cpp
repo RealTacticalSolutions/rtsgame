@@ -95,27 +95,31 @@ std::vector<GameObject> application::constructGameobjects()
     glm::vec3 color = getColor(RED);
     glm::mat4 transform(1.0f);
 
-    glm::vec3 origin (-0.15f, 0.17f, 1.0f);
+    glm::vec3 origin (-0.15f, 0.17f, 2.0f);
     Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
-    origin = glm::vec3(- 0.28f, -0.15f, 1.0f);
+    origin = glm::vec3(- 0.28f, -0.15f, 2.0f);
     Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
-    origin = glm::vec3(0.17f, 0.05f, 1.0f);
+    origin = glm::vec3(0.17f, 0.05f, 2.0f);
     Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
-    origin = glm::vec3(0.05f, -0.28f, 1.0f);
+    origin = glm::vec3(0.05f, -0.28f, 2.0f);
     Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
-    origin = glm::vec3(0.17f, 0.05f, 1.0f);
+    origin = glm::vec3(0.17f, 0.05f, 2.0f);
     Grid::creatSquare(gameObjects, origin, cellSize, indicesoffset, transform, color);
 
 
     float cellsize = 0.25f;
     //glm::vec3 origin(-1.25f,-1.25f, 1.0f);
-    glm::vec3 origin2(0.0f, 0.0f, 1.0f);
+    glm::vec3 origin2(2.4f, 1.2f, 1.0f);
     
     glm::vec3 color2(1.0f, 1.0f, 1.0f);
     float width = 0.5f;
     float height = 0.250f;
 
     Grid::createRectangle(gameObjects, origin2, width, height, indicesoffset, transform, color2);
+    origin2 = glm::vec3(2.0f, 1.0f, 1.0f);
+    Grid::createRectangle(gameObjects, origin2, width, height, indicesoffset, transform, color2);
+    //bool test = Intersection::intersection(gameObjects[6], gameObjects[7]);
+    Intersection::intersectionRectangle(gameObjects, indicesoffset,gameObjects[6], gameObjects[7]);
     //std::vector<std::vector<glm::vec3>> test =  Grid::generate_grid(6,6 ,cellsize, origin);
     //gameObjects.push_back(Grid::createGrid(origin,indicesoffset, transform,color2));
     //indicesoffset = Grid::generateGrid(gameObjects,test, cellsize, indicesoffset, transform, color2);
