@@ -38,6 +38,7 @@ void application::mainLoop()
             updateColor(m.id, getColor(m.color));
         }
         glfwPollEvents();
+        updateObject();
         drawFrame();
 
         fps++;
@@ -72,7 +73,7 @@ void application::updateColorAddition(int index, glm::vec3 color)
 
 std::vector<GameObject> application::constructGameobjects()
 {
-    std::vector<GameObject> gameObjects;
+    
 
     gameObjects.push_back(GameObject(
         { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
@@ -109,20 +110,25 @@ std::vector<GameObject> application::constructGameobjects()
 
     float cellsize = 0.25f;
     //glm::vec3 origin(-1.25f,-1.25f, 1.0f);
-    glm::vec3 origin2(2.4f, 1.2f, 1.0f);
+    glm::vec3 origin2(-0.1f, 1.0f, 1.0f);
     
-    glm::vec3 color2(1.0f, 1.0f, 1.0f);
+    glm::vec3 color2(0.0f, 0.0f, 1.0f);
     float width = 0.5f;
-    float height = 0.250f;
+    float height = 1.0f;
 
     Grid::createRectangle(gameObjects, origin2, width, height, indicesoffset, transform, color2);
-    origin2 = glm::vec3(2.0f, 1.0f, 1.0f);
-    Grid::createRectangle(gameObjects, origin2, width, height, indicesoffset, transform, color2);
-    //bool test = Intersection::intersection(gameObjects[6], gameObjects[7]);
-    Intersection::intersectionRectangle(gameObjects, indicesoffset,gameObjects[6], gameObjects[7]);
-    //std::vector<std::vector<glm::vec3>> test =  Grid::generate_grid(6,6 ,cellsize, origin);
-    //gameObjects.push_back(Grid::createGrid(origin,indicesoffset, transform,color2));
-    //indicesoffset = Grid::generateGrid(gameObjects,test, cellsize, indicesoffset, transform, color2);
+
+    bool test = Intersection::intersection(gameObjects[1], gameObjects[6]);
+    glm::vec3 target(-0.1f, -1.2f, 1.0f);
+    glm::vec3 target_color(1.0f, 0.0f, 0.0f);
+    Grid::createRectangle(gameObjects, target, 0.2, 0.2, indicesoffset, transform, target_color);
+    
+
+
+
+
+
+
 
     int a = 5;
     /*gameObjects.push_back(GameObject(
@@ -167,4 +173,58 @@ void application::initWindow()
 
 void application::cleanup()
 {
+}
+
+glm::vec3 application::moveToTarget(glm::vec3 origin, glm::vec3 target, float velocity)
+{
+    glm::vec3 direction = glm::normalize(target - origin);
+    glm::vec3 displacement = direction * velocity;
+    glm::vec3 newOrigin = origin + displacement;
+
+    return newOrigin;
+}
+
+//void application::updateObject()
+//{
+//    float velocity = 0.001f;
+//    glm::vec3 target(-0.1f, -1.2f, 1.0f);
+//
+//    glm::mat4 test = gameObjects[6].properties.transform;
+//    glm::vec3 origin(test[0].x, test[0].r, test[0].s);
+//
+//    glm::vec3 new_pos = moveToTarget(origin,target,velocity);
+//    
+//    glm::mat4 new_pos_mat4(1.0f);
+//  
+//    new_pos_mat4[0][0] = new_pos.x; // Assign the x component of the vector to the first element of the first column
+//    new_pos_mat4[0][1] = new_pos.y; // Assign the y component of the vector to the second element of the first column
+//    new_pos_mat4[0][2] = new_pos.z;
+//    new_pos_mat4[0][3] = 1.0f;
+//    gameObjects[6].properties.transform = new_pos_mat4;
+//};
+
+void application::updateObject()
+{
+    if (!Intersection::intersection(gameObjects[6], gameObjects[1]))
+    {
+
+        float velocity = 0.00001f;
+        glm::vec3 target(-0.1f, -1.2f, 1.0f);
+
+        // Get the current position of the object
+        glm::mat4 transform = gameObjects[6].properties.transform;
+        glm::vec3 position(transform[3].x, transform[3].y, transform[3].z);
+
+        // Calculate the direction from the current position to the target position
+        glm::vec3 direction = glm::normalize(target - position);
+
+        // Calculate the new position based on the direction and velocity
+        glm::vec3 new_pos = position + direction * velocity;
+        // Update the position of the object using glm::translate
+        glm::mat4 new_transform = glm::translate(glm::mat4(1.0f), new_pos);
+        gameObjects[6].properties.transform = new_transform;
+    }
+    else
+    {
+    }
 }

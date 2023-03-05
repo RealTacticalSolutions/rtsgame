@@ -54,6 +54,7 @@ void Intersection::intersectionRectangle(std::vector<GameObject>& gameObjects, u
 */
 bool Intersection::rectanglesIntersect(const std::vector<Vertex> rect1, const std::vector<Vertex> rect2)
 {
+    // Todo: for some reason if we want to use [2]topleft and [1]bottomright it doenst work. but this does?!
     glm::vec2 min1 = glm::vec2(rect1[0].pos.x, rect1[0].pos.y);
     glm::vec2 max1 = glm::vec2(rect1[3].pos.x, rect1[3].pos.y);
     glm::vec2 min2 = glm::vec2(rect2[0].pos.x, rect2[0].pos.y);
