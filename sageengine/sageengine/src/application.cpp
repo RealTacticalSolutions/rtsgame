@@ -121,6 +121,7 @@ void application::initWindow()
     
     gameObjects = constructGameobjects();
     int objectCount = gameObjects.size();
+    camera.setPosition(glm::vec3(0.0f, -2.0f, 4.0f));
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
     
