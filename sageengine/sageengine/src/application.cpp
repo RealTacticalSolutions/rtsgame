@@ -71,30 +71,30 @@ std::vector<GameObject> application::constructGameobjects()
     glm::mat4 transform1(1.0f);
     transform1[3] = glm::vec4(position1, 1.0f);
 
-    gameObjects.push_back(ShapeTool::creatSquare(cellSize, offSet,transform1,color));
+    gameObjects.push_back(ShapeTool::createSquare(cellSize, offSet,transform1,color));
  
     color = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 position2(-0.22f, -0.10f, 1.0f);
     glm::mat4 transform2(1.0f);
     transform2[3] = glm::vec4(position2, 1.0f);
-    gameObjects.push_back(ShapeTool::creatSquare(cellSize,offSet,transform2,color));
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform2,color));
 
     color = glm::vec3(1.0f, 0.0f, 1.0f);
     glm::vec3 position3(0.22f, 0.10f, 1.0f);
     glm::mat4 transform3(1.0f);
     transform3[3] = glm::vec4(position3, 1.0f);
-    gameObjects.push_back(ShapeTool::creatSquare(cellSize,offSet,transform3,color));
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform3,color));
 
     color = glm::vec3(1.0f, 1.0f, 0.0f);
     glm::vec3 position4(0.10f, -0.22f, 1.0f);
     glm::mat4 transform4(1.0f);
     transform4[3] = glm::vec4(position4, 1.0f);
-    gameObjects.push_back(ShapeTool::creatSquare(cellSize,offSet,transform4,color));
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform4,color));
 
     glm::vec3 newPosition(0.0f, 1.0f, 1.0f);
     glm::mat4 transform(1.0f);
     transform[3] = glm::vec4(newPosition, 1.0f);
-    gameObjects.push_back(ShapeTool::creatSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
+    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
 
    
 
