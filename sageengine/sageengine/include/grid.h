@@ -4,9 +4,9 @@ class Grid
 {
 private:
 
-    static GameObject constructSquare(glm::vec3 origin, float cellsize, uint32_t& Offset, glm::mat4 transform, glm::vec3 color);
-    static GameObject constructRectangle(glm::vec3 origin, float width, float height, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color);
-    static GameObject constructRectangle(std::vector<Vertex> vertices, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color);
+    static void constructSquare(glm::vec3 origin, float cellsize, uint32_t& Offset, glm::mat4 transform, glm::vec3 color);
+    static void constructRectangle(glm::vec3 origin, float width, float height, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color);
+    static void constructRectangle(std::vector<Vertex> vertices, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color);
     
 public:
     static std::vector<std::vector<glm::vec3>> generate_grid(int x, int y, float cellsize, glm::vec3 origin);

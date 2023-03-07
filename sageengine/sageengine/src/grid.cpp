@@ -36,15 +36,10 @@ std::vector<std::vector<glm::vec3>> Grid::generate_grid(int x, int y, float cell
 * 
 * @return A game object representing a square grid.
 */
-GameObject Grid::constructSquare(glm::vec3 origin, float cellsize, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
+void Grid::constructSquare(glm::vec3 origin, float cellsize, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
-        GameObject gameObject(
-            ShapeTool::createSquareVertices(origin, cellsize),
-            ShapeTool::createSquareIndices(offSet),
-            transform,
-            color
-        );
-        return gameObject;
+    // Todo: make this function
+
 }
 
 /**
@@ -65,7 +60,8 @@ void Grid::generateGrid(std::vector<GameObject>& gameObjects,std::vector<std::ve
     {
         for (size_t j = 0; j < grid[i].size(); j++)
         {
-            gameObjects.push_back(constructSquare(grid[i][j],cellsize, offSet, transform, color));
+            // Todo: fix this function
+            //gameObjects.push_back(constructSquare(grid[i][j],cellsize, offSet, transform, color));
             offSet += 4;
         }
     }
@@ -85,7 +81,8 @@ void Grid::generateGrid(std::vector<GameObject>& gameObjects,std::vector<std::ve
 */
 void Grid::creatSquare(std::vector<GameObject>& gameObjects, glm::vec3 origin, float size, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
 {
-    gameObjects.push_back(constructSquare(origin, size, offSet, transfrom, color));
+    // Todo: fix this function
+    //gameObjects.push_back(constructSquare(origin, size, offSet, transfrom, color));
     offSet += 4;
 };
 
@@ -105,8 +102,8 @@ void Grid::creatSquare(std::vector<GameObject>& gameObjects, glm::vec3 origin, f
 */
 void Grid::createRectangle(std::vector<GameObject>& gameObjects,glm::vec3 origin, float width, float height, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
-
-    gameObjects.push_back(constructRectangle(origin, width,height, RECTANGLE, offSet, transform, color));
+    // Todo: fix this function
+    //gameObjects.push_back(constructRectangle(origin, width,height, RECTANGLE, offSet, transform, color));
 
     offSet += 4;
 }
@@ -126,8 +123,8 @@ void Grid::createRectangle(std::vector<GameObject>& gameObjects,glm::vec3 origin
 */
 void Grid::createRectangle(std::vector<GameObject>& gameObjects, std::vector<Vertex> vertices, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
-
-    gameObjects.push_back(constructRectangle(vertices, RECTANGLE, offSet, transform, color));
+    // Todo: fix this function
+    //gameObjects.push_back(constructRectangle(vertices, RECTANGLE, offSet, transform, color));
 
     offSet += 4;
 }
@@ -144,16 +141,10 @@ void Grid::createRectangle(std::vector<GameObject>& gameObjects, std::vector<Ver
 * 
 * @return A GameObject representing the rectangle.
 */
-GameObject Grid::constructRectangle(glm::vec3 origin, float width, float height, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
+void Grid::constructRectangle(glm::vec3 origin, float width, float height, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
-    GameObject gameObject(
-        ShapeTool::createRectangleVertices(origin, width, height),
-        ShapeTool::createSquareIndices(offSet),
-        collisiontype,
-        transform,
-        color
-    );
-    return gameObject;
+    // Todo: make this function
+
 };
 
 /**
@@ -167,14 +158,11 @@ GameObject Grid::constructRectangle(glm::vec3 origin, float width, float height,
 * 
 * @return A new GameObject representing the rectangle.
 */
-GameObject Grid::constructRectangle(std::vector<Vertex> vertices, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
+void Grid::constructRectangle(std::vector<Vertex> vertices, CollisionType collisiontype, uint32_t& offSet, glm::mat4 transform, glm::vec3 color)
 {
+    // Todo: make this function
     GameObject gameObject(
-        vertices,
-        ShapeTool::createSquareIndices(offSet),
-        collisiontype,
-        transform,
-        color
+   
     );
-    return gameObject;
+
 }

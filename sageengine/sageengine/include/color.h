@@ -7,7 +7,7 @@ enum Color
 	ORANGE
 };
 
-glm::vec3 getColor(Color color)
+static glm::vec3 getColor(Color color)
 {
 	Color c = color;
 	switch (c)
@@ -21,7 +21,7 @@ glm::vec3 getColor(Color color)
 	}
 };
 
-glm::vec3 getColor(int color)
+static glm::vec3 getColor(int color)
 {
 	int c = color;
 	switch (c)
