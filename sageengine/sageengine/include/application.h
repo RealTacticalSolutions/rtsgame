@@ -32,4 +32,5 @@ public:
 	void mainLoop();
 	void drawFrame();
 	void cleanup();
+	void updateTest();
 };

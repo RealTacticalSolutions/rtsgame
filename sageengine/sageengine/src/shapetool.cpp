@@ -2,51 +2,6 @@
 #include "shapetool.h"
 
 
-//void ShapeTool::setupvertices(std::vector<GameObject>& object)
-//{
-//    int XCELL = 2;
-//    int YCELL = 2;
-//    float GRIDSIZE = 1.0f;
-//    glm::vec3 green = { 0.0f,1.0f,0.0f };
-//    glm::vec3 black = { 0.0f,0.0f,0.0f };
-//
-//    vertices = GenerateGridVertices(XCELL, YCELL, GRIDSIZE, 1, 1, 0, green);
-//    indices = GenerateGridIndices(XCELL, YCELL, 0);
-//
-//
-//    glm::vec3 red = { 1.0f,0.0f,0.0f };
-//    std::vector<Vertex> vertices2 = GenerateGridVertices(XCELL, YCELL, GRIDSIZE, -3.0f, 1.0f, 0.0f, red);
-//
-//     Calculate offset for second grid's indices
-//    uint16_t offset = static_cast<uint16_t>(vertices.size());
-//
-//    std::vector<uint16_t> indices2 = GenerateGridIndices(XCELL, YCELL, offset);
-//
-//     Append the second grid's vertices and indices to the existing vectors
-//    vertices.insert(vertices.end(), vertices2.begin(), vertices2.end());
-//    indices.insert(indices.end(), indices2.begin(), indices2.end());
-//
-//    vertices2 = GenerateGridVertices(XCELL, YCELL, GRIDSIZE, 1.0f, -3.0f, 0.0f, red);
-//
-//    offset = static_cast<uint16_t>(vertices.size());
-//
-//    indices2 = GenerateGridIndices(XCELL, YCELL, offset);
-//
-//     Append the second grid's vertices and indices to the existing vectors
-//    vertices.insert(vertices.end(), vertices2.begin(), vertices2.end());
-//    indices.insert(indices.end(), indices2.begin(), indices2.end());
-//
-//    vertices2 = GenerateGridVertices(XCELL, YCELL, GRIDSIZE, -3.0f, -3.0f, 0.0f, red);
-//
-//    offset = static_cast<uint16_t>(vertices.size());
-//
-//    indices2 = GenerateGridIndices(XCELL, YCELL, offset);
-//
-//     Append the second grid's vertices and indices to the existing vectors
-//    vertices.insert(vertices.end(), vertices2.begin(), vertices2.end());
-//    indices.insert(indices.end(), indices2.begin(), indices2.end());
-//}
-
 GameObject ShapeTool::generateGrid(uint32_t xCells, uint32_t yCells, float cellSize, float xOffset, float yOffset, float zOffset, uint32_t indicesoffset, glm::vec3 color)
 {
     // Generate the vertices for the grid
@@ -104,3 +59,44 @@ std::vector<Vertex> ShapeTool::GenerateGridVertices(uint32_t xCells, uint32_t yC
 
     return vertices;
 }
+
+std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
+{
+    std::vector<Vertex> vertices(4);
+
+    vertices[0].pos = glm::vec3(-width, -width, 0.0f);
+    vertices[1].pos = glm::vec3(width, -width, 0.0f);
+    vertices[2].pos = glm::vec3(-width, width, 0.0f);
+    vertices[3].pos = glm::vec3(width, width, 0.0f);
+
+    return vertices;
+}
+
+std::vector<uint16_t> ShapeTool::generateSquareIndicies(uint32_t& offSet) 
+{
+
+    std::vector<uint16_t> indices;
+
+    indices.push_back(0 + offSet);
+    indices.push_back(1 + offSet);
+    indices.push_back(2 + offSet);
+
+    indices.push_back(2 + offSet);
+    indices.push_back(1 + offSet);
+    indices.push_back(3 + offSet);
+
+    offSet += 4;
+    return indices;
+}
+GameObject ShapeTool::creatSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+{
+
+    GameObject gameObject(
+        generateSquareVertices(width),
+        generateSquareIndicies(offSet),
+        transfrom, 
+        color);
+
+    return gameObject;
+}
+

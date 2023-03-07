@@ -10,6 +10,7 @@ public:
 	GameObject(std::vector<Vertex> vertices, std::vector<uint16_t> indices, glm::mat4 transform, glm::vec3 color) : vertices(vertices), indices(indices), properties{transform, color} {
 
 	};
+
 	
 private:
 
