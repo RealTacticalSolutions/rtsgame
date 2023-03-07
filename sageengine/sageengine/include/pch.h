@@ -22,12 +22,19 @@
 #include <string>
 
 
+<<<<<<< HEAD
 #include "messageObject.h"
+=======
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
 #include "vertex.h"
 #include "properties.h"
 #include "collisionType.h"
 #include "gameObject.h"
 #include "intersection.h"
+<<<<<<< HEAD
+=======
+
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
 #include "shapetool.h"
 #include "camera.h"
 #include "application.h"

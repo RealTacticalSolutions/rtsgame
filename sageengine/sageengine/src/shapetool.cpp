@@ -2,6 +2,7 @@
 #include "shapeTool.h"
 
 
+<<<<<<< HEAD
 /**
  * Create a square represented as a vector of Vertex objects.
  *
@@ -11,6 +12,9 @@
  * @return A vector of vertices for the square.
  */
 std::vector<Vertex> ShapeTool::createSquareVertices(glm::vec3 origin, float cellsize)
+=======
+GameObject ShapeTool::generateGrid(uint32_t xCells, uint32_t yCells, float cellSize, float xOffset, float yOffset, float zOffset, uint32_t indicesoffset, glm::vec3 color)
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
 {
     std::vector<Vertex> vertices(4);
     // Bottom Left
@@ -32,6 +36,7 @@ std::vector<Vertex> ShapeTool::createSquareVertices(glm::vec3 origin, float cell
     return vertices;
 }
 
+<<<<<<< HEAD
 
 /**
  * Create a vector of indices representing a square.
@@ -52,16 +57,39 @@ std::vector<uint16_t> ShapeTool::createSquareIndices(uint32_t offSet)
     std::vector<uint16_t> indices;
 
     // First Triangle (T0)
+=======
+std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
+{
+    std::vector<Vertex> vertices(4);
+
+    vertices[0].pos = glm::vec3(-width, -width, 0.0f);
+    vertices[1].pos = glm::vec3(width, -width, 0.0f);
+    vertices[2].pos = glm::vec3(-width, width, 0.0f);
+    vertices[3].pos = glm::vec3(width, width, 0.0f);
+
+    return vertices;
+}
+
+std::vector<uint16_t> ShapeTool::generateSquareIndicies(uint32_t& offSet) 
+{
+
+    std::vector<uint16_t> indices;
+
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
     indices.push_back(0 + offSet);
     indices.push_back(1 + offSet);
     indices.push_back(2 + offSet);
 
+<<<<<<< HEAD
 
     // Second Triangle (T1)
+=======
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
     indices.push_back(2 + offSet);
     indices.push_back(1 + offSet);
     indices.push_back(3 + offSet);
 
+<<<<<<< HEAD
     return indices;
 };
 
@@ -100,3 +128,20 @@ std::vector<Vertex> ShapeTool::createRectangleVertices(glm::vec3 origin, float w
 
     return vertices;
 };
+=======
+    offSet += 4;
+    return indices;
+}
+GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+{
+
+    GameObject gameObject(
+        generateSquareVertices(width),
+        generateSquareIndicies(offSet),
+        transfrom, 
+        color);
+
+    return gameObject;
+}
+
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246

@@ -38,7 +38,11 @@ void application::mainLoop()
             updateColor(m.id, getColor(m.color));
         }
         glfwPollEvents();
+<<<<<<< HEAD
         updateObject();
+=======
+        updateTest();
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
         drawFrame();
 
         fps++;
@@ -73,7 +77,10 @@ void application::updateColorAddition(int index, glm::vec3 color)
 
 std::vector<GameObject> application::constructGameobjects()
 {
+<<<<<<< HEAD
     
+=======
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
 
     gameObjects.push_back(GameObject(
         { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
@@ -85,9 +92,11 @@ std::vector<GameObject> application::constructGameobjects()
         glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f,1.0f,1.0f)
         //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));
+    uint32_t offSet = gameObjects[0].vertices.size();
     
     int xCells = 1;
     int yCells = 1;
+<<<<<<< HEAD
     float cellSize = 0.1f;
     float xOffset = -0.15f;
     float yOffset = 0.17f;
@@ -123,9 +132,43 @@ std::vector<GameObject> application::constructGameobjects()
     glm::vec3 target_color(1.0f, 0.0f, 0.0f);
     Grid::createRectangle(gameObjects, target, 0.2, 0.2, indicesoffset, transform, target_color);
     
+=======
+    float cellSize = 0.05f;
 
+    glm::vec3 color = glm::vec3(0.0f, 1.0f, 1.0f);
+    glm::vec3 position1(-0.10f, 0.22f, 1.0f);
+    glm::mat4 transform1(1.0f);
+    transform1[3] = glm::vec4(position1, 1.0f);
 
+    gameObjects.push_back(ShapeTool::createSquare(cellSize, offSet,transform1,color));
+ 
+    color = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 position2(-0.22f, -0.10f, 1.0f);
+    glm::mat4 transform2(1.0f);
+    transform2[3] = glm::vec4(position2, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform2,color));
 
+    color = glm::vec3(1.0f, 0.0f, 1.0f);
+    glm::vec3 position3(0.22f, 0.10f, 1.0f);
+    glm::mat4 transform3(1.0f);
+    transform3[3] = glm::vec4(position3, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform3,color));
+
+    color = glm::vec3(1.0f, 1.0f, 0.0f);
+    glm::vec3 position4(0.10f, -0.22f, 1.0f);
+    glm::mat4 transform4(1.0f);
+    transform4[3] = glm::vec4(position4, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform4,color));
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
+
+    glm::vec3 newPosition(0.0f, 1.0f, 1.0f);
+    glm::mat4 transform(1.0f);
+    transform[3] = glm::vec4(newPosition, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
+
+   
+
+<<<<<<< HEAD
 
 
 
@@ -152,6 +195,9 @@ std::vector<GameObject> application::constructGameobjects()
 
         glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));*/
+=======
+    bool test = 1;
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
 
 
 
@@ -175,6 +221,7 @@ void application::cleanup()
 {
 }
 
+<<<<<<< HEAD
 glm::vec3 application::moveToTarget(glm::vec3 origin, glm::vec3 target, float velocity)
 {
     glm::vec3 direction = glm::normalize(target - origin);
@@ -227,4 +274,30 @@ void application::updateObject()
     else
     {
     }
+=======
+void application::updateTest()
+{
+    // Check for intersection with another object
+    if (Intersection::intersectSquares(gameObjects[5], gameObjects[1])) {
+        return; // Don't update if there's an intersection
+    }
+
+    // Set the target position
+    glm::vec3 target(-0.1f, -1.2f, 1.0f);
+
+    // Get the current position of the object
+    glm::vec3 position = glm::vec3(gameObjects[5].properties.transform[3]);
+
+    // Calculate the direction from the current position to the target position
+    glm::vec3 direction = glm::normalize(target - position);
+
+    // Set the velocity
+    float velocity = 0.00005f;
+
+    // Calculate the new position based on the direction and velocity
+    glm::vec3 new_pos = position + direction * velocity;
+
+    // Update the position of the object using glm::translate
+    gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
+>>>>>>> b6da4cd7a57b629668732f51f4d5d871b4c6a246
 }
