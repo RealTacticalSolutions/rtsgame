@@ -97,20 +97,30 @@ private:
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
-	std::vector<void*> uniformBuffersMapped;
-
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
 
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
-	VkBuffer storageBuffer;
-	VkDeviceMemory storageBufferMemory;
-	void* storageBufferHandle;
+	std::vector<Buffermanager> uniformBufferManagers;
+
+	Buffermanager vertexbufferManager = {
+	   0,
+	   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+	};
+
+	Buffermanager indexBufferManager = {
+		0,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+	};
+
+	Buffermanager modelTansformStorageBufferManager = {
+		0,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+	};
+	
+
 
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -156,7 +166,7 @@ private:
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void createBuffer(Buffermanager& bufferManager);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
