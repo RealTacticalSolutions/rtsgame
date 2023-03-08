@@ -3,8 +3,8 @@
 enum Color
 {
 	RED,
-	GREEN,
-	ORANGE
+	ORANGE,
+	GREEN
 };
 
 
