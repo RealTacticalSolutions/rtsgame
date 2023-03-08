@@ -3,11 +3,12 @@
 
 class server {
 private:
-	std::vector<messageObject>& message;
+	std::vector<trafficStatusObject> message;
 	const char* PORT;
-
+	void server::to_json_traffic(nlohmann::json& j, const std::vector<trafficStatusObject>& objects);
+	void server::to_json_message(nlohmann::json& j, const std::vector<messageObject>& objects);
 public:
-	server(char* port, std::vector<messageObject>& message) : PORT(port), message(message)
+	server(char* port) : PORT(port)
 	{
 	}
 	void startServer();

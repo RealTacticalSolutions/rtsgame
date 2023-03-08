@@ -13,11 +13,11 @@ void application::mainLoop()
 {
  
     char* IP = "192.168.178.52";
-    char* PORT = "27015";
-    char* SERVER_PORT = "27015";
+    char* PORT = "11000";
+    char* SERVER_PORT = "11000";
 
-    client myClient(IP, PORT);
-    server myServer(SERVER_PORT, message);
+    client myClient(IP, PORT, message);
+    server myServer(SERVER_PORT);
 
     std::thread serverThread(&server::startServer, &myServer);
     std::thread clientThread(&client::startClient, &myClient);
@@ -35,7 +35,7 @@ void application::mainLoop()
         lastFrameTime = currentFrameTime;
         for (auto m : message)
         {
-            updateColor(m.id, getColor(m.color));
+            updateColor(getId(m.id), getColor(m.color));
         }
         glfwPollEvents();
 

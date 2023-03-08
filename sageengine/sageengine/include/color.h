@@ -7,6 +7,7 @@ enum Color
 	ORANGE
 };
 
+
 static glm::vec3 getColor(Color color)
 {
 	Color c = color;
@@ -32,5 +33,24 @@ static glm::vec3 getColor(int color)
 		return glm::vec3(0.0f, 1.0f, 0.0f);
 	case 2:
 		return glm::vec3(1.0f, 0.5f, 0.0f);
+	}
+};
+
+static int getId(const std::string& id)
+{
+	if (id == "5.1") {
+		return 1;
+	}
+	else if (id == "2.1") {
+		return 2;
+	}
+	else if (id == "11.1") {
+		return 3;
+	}
+	else if (id == "8.1") {
+		return 4;
+	}
+	else {
+		return -1;
 	}
 };

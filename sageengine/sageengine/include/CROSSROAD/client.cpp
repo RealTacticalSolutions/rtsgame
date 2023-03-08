@@ -1,10 +1,12 @@
 #include "pchroads.h"
 #include "client.h"
-#include <random>
 
-std::random_device rd; // obtain a random number from hardware
-std::mt19937 gen(rd()); // seed the generator
-std::uniform_int_distribution<> distr(0, 2); // define the range
+
+#include <random>
+std::random_device rdclient; // obtain a random number from hardware
+std::mt19937 genclient(rdclient()); // seed the generator
+
+std::uniform_int_distribution<> distrclient(0, 200); // define the range
 
 void client::startClient()
 {
@@ -69,16 +71,16 @@ void client::startClient()
     int id3 = 3;
     int id4 = 4;
 
-    int color1 = 0;
-    int color2 = 0;
-    int color3 = 0;
-    int color4 = 0;
+    int weight1 = 0;
+    int weight2 = 0;
+    int weight3 = 0;
+    int weight4 = 0;
     while (client_running) {
         // Send the message to the server
-        std::vector<trafficObject> message = { { id1, color1 }, {id2, color2}, {id3, color3}, {id4, color4} };
-        nlohmann::json data;
-        client::to_json(data, message);
-        std::string dataStr = data.dump(); // Convert the JSON object to a string
+        std::vector<trafficStatusObject> messageclient = { { id1, weight1 }, {id2, weight2}, {id3, weight3}, {id4, weight4} };
+        nlohmann::json dataclient;
+        client::to_json_traffic(dataclient, messageclient);
+        std::string dataStr = dataclient.dump(); // Convert the JSON object to a string
         const char* sendData = dataStr.c_str();
         int bytesSent = send(clientSocket, sendData, strlen(sendData), 0);
         if (bytesSent == SOCKET_ERROR) {
@@ -87,10 +89,37 @@ void client::startClient()
             WSACleanup();
             return;
         }
-        color1 = distr(gen);
-        color2 = distr(gen);
-        color3 = distr(gen);
-        color4 = distr(gen);
+        weight1 = distrclient(genclient);
+        weight2 = distrclient(genclient);
+        weight3 = distrclient(genclient);
+        weight4 = distrclient(genclient);
+
+        // Receive data from the server
+        char recvBuf[4096];
+        int bytesReceived = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0); // subtract 1 from buffer size to leave space for null terminator
+        if (bytesReceived == SOCKET_ERROR) {
+            std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
+        // Add null terminator to received data
+        recvBuf[bytesReceived] = '\0';
+
+        // Check if the received message is empty
+        if (strlen(recvBuf) == 0) {
+            continue; // If the message is empty, wait for the next one
+        }
+
+        // Parse the JSON data into a vector of TrafficObjects
+        nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
+        for (const auto& obj : dataserver) {
+            message.push_back({ obj["id"], obj["color"] });
+            // Print the received data to the console
+            std::cout << "Received struct from server: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
+        }
+
+
         // Wait for 3.5 seconds before sending the next message
         Sleep(3500);
     }
@@ -100,13 +129,23 @@ void client::startClient()
     WSACleanup();
     return;
 }
-void client::to_json(nlohmann::json& j, const trafficObject& s) {
+void client::to_json(nlohmann::json& j, const messageObject& s) 
+{
     j = nlohmann::json{ { {"id", s.id}, {"color", s.color}} };
 }
 
-void client::to_json(nlohmann::json& j, const std::vector<trafficObject>& objects) {
+void client::to_json_message(nlohmann::json& j, const std::vector<messageObject>& objects)
+{
     j = nlohmann::json::array();
     for (const auto& obj : objects) {
         j.push_back(nlohmann::json{ {"id", obj.id}, {"color", obj.color} });
+    }
+}
+
+void client::to_json_traffic(nlohmann::json & j, const std::vector<trafficStatusObject>&objects) 
+{
+    j = nlohmann::json::array();
+    for (const auto& obj : objects) {
+    j.push_back(nlohmann::json{ {"id", obj.id}, {"weight", obj.weight} });
     }
 }

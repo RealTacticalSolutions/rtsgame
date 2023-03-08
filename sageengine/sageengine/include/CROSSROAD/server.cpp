@@ -1,6 +1,10 @@
 #include "pchroads.h"
 #include "server.h"
 
+#include <random>
+std::random_device rdserver; // obtain a random number from hardware
+std::mt19937 genserver(rdserver()); // seed the generator
+std::uniform_int_distribution<> distrserver(0, 2); // define the range
 
 void server::startServer()
 {
@@ -100,6 +104,15 @@ void server::startServer()
     //    std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
 
     //}
+    std::string id1 = "5.1";
+    std::string id2 = "2.1";
+    std::string id3 = "11.1";
+    std::string id4 = "8.1";
+
+    int color1 = 0;
+    int color2 = 0;
+    int color3 = 0;
+    int color4 = 0;
 
     while (server_running) {
         // Receive data from the client
@@ -122,10 +135,28 @@ void server::startServer()
         // Parse the JSON data into a vector of TrafficObjects
         nlohmann::json data = nlohmann::json::parse(recvBuf);
         for (const auto& obj : data) {
-            message.push_back({ obj["id"], obj["color"] });
+            message.push_back({ obj["id"], obj["weight"] });
             // Print the received data to the console
-            std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
+            std::cout << "Received struct from client: id = " << obj["id"] << ", weight = " << obj["weight"] << std::endl;
         }
+
+        std::vector<messageObject> messageserver = { { id1, color1}, {id2, color2}, {id3, color3}, {id4, color4}};
+        nlohmann::json dataserver;
+        server::to_json_message(dataserver, messageserver);
+        std::string dataStr = dataserver.dump(); // Convert the JSON object to a string
+        const char* sendData = dataStr.c_str();
+        int bytesSent = send(clientSocket, sendData, strlen(sendData), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
+        color1 = distrserver(genserver);
+        color2 = distrserver(genserver);
+        color3 = distrserver(genserver);
+        color4 = distrserver(genserver);
+
 
         // Clean message and fill it with new data
         message.clear();
@@ -136,4 +167,19 @@ void server::startServer()
     closesocket(listenSocket);
     WSACleanup();
     return;
+}
+void server::to_json_traffic(nlohmann::json& j, const std::vector<trafficStatusObject>& objects) 
+{
+    j = nlohmann::json::array();
+    for (const auto& obj : objects) {
+        j.push_back(nlohmann::json{ {"id", obj.id}, {"weight", obj.weight} });
+    }
+}
+
+void server::to_json_message(nlohmann::json& j, const std::vector<messageObject>& objects)
+{
+    j = nlohmann::json::array();
+    for (const auto& obj : objects) {
+        j.push_back(nlohmann::json{ {"id", obj.id}, {"color", obj.color} });
+    }
 }
