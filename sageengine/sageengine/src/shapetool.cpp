@@ -56,7 +56,7 @@ GameObject ShapeTool::generateGrid(uint32_t xCells, uint32_t yCells, float cellS
     std::vector<uint16_t> indices = ShapeTool::GenerateGridIndices(xCells, yCells, indicesoffset);
 
     // Create a new GameObject object with the generated vertices and indices
-    GameObject grid(vertices, indices, glm::mat4(1.0f), color);
+    GameObject grid({ vertices, indices }, glm::mat4(1.0f), color);
 
     return grid;
 }

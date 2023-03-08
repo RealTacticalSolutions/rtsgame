@@ -920,7 +920,7 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 void renderer::createVertexbuffer()
 {
     for (int i = 0; i < objectCount; i++) {
-        vertices.insert(vertices.end(), gameObjects[i].vertices.begin(), gameObjects[i].vertices.end());
+        vertices.insert(vertices.end(), gameObjects[i].mesh.vertices.begin(), gameObjects[i].mesh.vertices.end());
     }
 
     Buffermanager stagingbufferManager = {
@@ -950,7 +950,7 @@ void renderer::createIndexBuffer()
 {
     
     for (int i = 0; i < objectCount; i++) {
-        indices.insert(indices.end(), gameObjects[i].indices.begin(), gameObjects[i].indices.end());
+        indices.insert(indices.end(), gameObjects[i].mesh.indices.begin(), gameObjects[i].mesh.indices.end());
     }
 
     Buffermanager stagingbufferManager = {
@@ -1195,7 +1195,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
 
         // Compute the offset for the current object
-        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].indices.size());
+        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].mesh.indices.size());
         
         vkCmdDrawIndexed(commandBuffer, indexCount, 1, totalindex, 0, 0);
         //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);

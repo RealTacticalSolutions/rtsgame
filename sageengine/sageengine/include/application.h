@@ -15,6 +15,7 @@ private:
 	const float DEFAULT_NEAR_CLIPPING_PLANE = 0.1f;
 	const float DEFAULT_FAR_CLIPPING_PLANE = 10.0f;
 
+	int indexOffset = 0;
 	
 	std::unique_ptr<renderer> vulkanrenderer;
 	std::unique_ptr<window> windowObject;
