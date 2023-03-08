@@ -8,10 +8,10 @@ enum Color
 };
 
 
-static glm::vec3 getColor(Color color)
+static glm::vec3 getColor(Color& color)
 {
-	Color c = color;
-	switch (c)
+
+	switch (color)
 	{
 		case RED: 
 			return glm::vec3(1.0f,0.0f,0.0f);

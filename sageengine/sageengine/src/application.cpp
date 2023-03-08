@@ -35,7 +35,16 @@ void application::mainLoop()
         lastFrameTime = currentFrameTime;
         for (auto m : message)
         {
-            updateColor(getId(m.id), getColor(m.color));
+            try
+            {
+                updateColor(getId(m.id), getColor(m.color));
+            }
+            catch (const std::exception& e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+                
+            
         }
         glfwPollEvents();
 

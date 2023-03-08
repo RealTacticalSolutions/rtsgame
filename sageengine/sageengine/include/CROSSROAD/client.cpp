@@ -66,10 +66,10 @@ void client::startClient()
     //    {{"id", 123},{"weight", 45.6}},
     //    {{"id", 63},{"weight", 75.6}}
     //};
-    int id1 = 1;
-    int id2 = 2;
-    int id3 = 3;
-    int id4 = 4;
+    std::string id1 = "5.1";
+    std::string id2 = "2.1";
+    std::string id3 = "11.1";
+    std::string id4 = "8.1";
 
     int weight1 = 0;
     int weight2 = 0;
