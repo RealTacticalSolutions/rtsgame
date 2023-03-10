@@ -33,9 +33,11 @@ void application::mainLoop()
         double currentFrameTime = glfwGetTime();
         double delta = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
-        for (auto m : message)
+        //Todo probably crashed because message object gets cleared, probably need a message buffer that only reads when the last one is handled
+        for (messageObject m : message)
         {
-            if(m.id != "" || m.color != -1 || m.color >2)
+            //if(m.id.size() != 0 || m.color != -1 || m.color >2)
+            if (m.id.size() != 0)
             { 
             try
             {
