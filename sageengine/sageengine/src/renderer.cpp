@@ -28,8 +28,8 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createDepthResources();
     createFramebuffers();
     createCommandPool();
-    createTextureImage();
-    createTextureImageView();
+    createTextureImages();
+    createTextureImageViews();
     createTextureSampler();
     createVertexbuffer();
     createIndexBuffer();
@@ -54,11 +54,13 @@ void renderer::cleanupVulkan()
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
     vkDestroySampler(device, textureSampler, nullptr);
-    vkDestroyImageView(device, textureImageView, nullptr);
+    
 
-    vkDestroyImage(device, textureImage, nullptr);
-    vkFreeMemory(device, textureImageMemory, nullptr);
-
+    for (size_t i = 0; i < gameObjects.size(); i++) {
+        vkDestroyImage(device, textureImages[i], nullptr);
+        vkFreeMemory(device, textureImagesMemory[i], nullptr);
+        vkDestroyImageView(device, textureImageViews[i], nullptr);
+    }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
     vkDestroyBuffer(device, modelTansformStorageBufferManager.buffer, nullptr);
@@ -701,41 +703,51 @@ void renderer::createCommandPool()
     VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
 }
 
-void renderer::createTextureImage() {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("../../../textures/crossroadtexture1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
+void renderer::createTextureImages() {
+    textureImages.resize(objectCount);
+    textureImagesMemory.resize(objectCount);
 
-    if (!pixels) {
-        throw std::runtime_error("failed to load texture image!");
-    }
+    for (size_t i = 0; i < objectCount; i++)
+    {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(gameObjects[i].texture, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-    Buffermanager stagingbufferManager = {
-           texWidth* texHeight * 4,
-           VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-    };
+        if (!pixels) {
+            throw std::runtime_error("failed to load texture image!");
+        }
 
-    createBuffer(stagingbufferManager);
+        Buffermanager stagingbufferManager = {
+               texWidth * texHeight * 4,
+               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
 
-    vkMapMemory(device, stagingbufferManager.bufferMemory, 0, imageSize, 0, &stagingbufferManager.handle);
-    memcpy(stagingbufferManager.handle, pixels, static_cast<size_t>(imageSize));
-    vkUnmapMemory(device, stagingbufferManager.bufferMemory);
+        createBuffer(stagingbufferManager);
 
-    stbi_image_free(pixels);
+        vkMapMemory(device, stagingbufferManager.bufferMemory, 0, imageSize, 0, &stagingbufferManager.handle);
+        memcpy(stagingbufferManager.handle, pixels, static_cast<size_t>(imageSize));
+        vkUnmapMemory(device, stagingbufferManager.bufferMemory);
 
-    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+        stbi_image_free(pixels);
 
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingbufferManager.buffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImages[i], textureImagesMemory[i]);
 
-    vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
-    vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+        transitionImageLayout(textureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        copyBufferToImage(stagingbufferManager.buffer, textureImages[i], static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+        transitionImageLayout(textureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
+        vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+    }  
 }
 
-void renderer::createTextureImageView() {
-    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+void renderer::createTextureImageViews() {
+    textureImageViews.resize(objectCount);
+    for (size_t i = 0; i < objectCount; i++)
+    {
+        textureImageViews[i] = createImageView(textureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
 }
 
 void renderer::createTextureSampler() {
@@ -1053,7 +1065,7 @@ void renderer::createDescriptorSets()
 
             VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = textureImageView;
+            imageInfo.imageView = textureImageViews[j];
             imageInfo.sampler = textureSampler;
 
             VkDescriptorBufferInfo storageBufferInfo{};

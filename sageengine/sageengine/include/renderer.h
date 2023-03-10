@@ -130,6 +130,12 @@ private:
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
 
+	std::vector<VkImage> textureImages;
+	std::vector<VkDeviceMemory> textureImagesMemory;
+
+	std::vector<VkImageView> textureImageViews;
+	std::vector<VkSampler> textureSamplers;
+
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
@@ -152,8 +158,8 @@ private:
 	void createFramebuffers();
 	void createDepthResources();
 	void createCommandPool();
-	void createTextureImage();
-	void createTextureImageView();
+	void createTextureImages();
+	void createTextureImageViews();
 	void createTextureSampler();
 	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);

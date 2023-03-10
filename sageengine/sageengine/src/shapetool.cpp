@@ -56,7 +56,7 @@ GameObject ShapeTool::generatePlane(uint32_t xCells, uint32_t yCells, float cell
     std::vector<uint16_t> indices = ShapeTool::GenerateGridIndices(xCells, yCells, indicesoffset);
 
     // Create a new GameObject object with the generated vertices and indices
-    GameObject grid({ vertices, indices }, glm::mat4(1.0f), color);
+    GameObject grid({ vertices, indices }, glm::mat4(1.0f), color, "../../../textures/1.jpg");
 
     return grid;
 }
@@ -97,12 +97,16 @@ std::vector<Vertex> ShapeTool::GenerateGridVertices(uint32_t xCells, uint32_t yC
                 zOffset
             };
             v.color = color;
-            v.texCoord = { 0.0f, 0.5f };
+            v.texCoord = { 1.0f * x , 1.0f * y };
             vertices.push_back(v);
         }
     }
 
     return vertices;
+}
+
+Mesh ShapeTool::generatePlaneMesh() {
+    return Mesh();
 }
 
 Mesh ShapeTool::generateLine(uint16_t indexoffset, float linewidth, float length, glm::vec3 position, float rotationDeg, glm::vec3 rotationAxis, glm::vec3 color) {
