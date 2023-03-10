@@ -35,7 +35,7 @@ void application::mainLoop()
         lastFrameTime = currentFrameTime;
         for (auto m : message)
         {
-            if(m.id != "" || m.color != -1 | m.color >2)
+            if(m.id != "" || m.color != -1 || m.color >2)
             { 
             try
             {
