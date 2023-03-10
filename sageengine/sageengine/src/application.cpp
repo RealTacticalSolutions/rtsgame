@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "application.h"
+#define PI 3.14159265;
 
 void application::mainLoop()
 {
@@ -51,13 +52,15 @@ std::vector<GameObject> application::constructGameobjects()
 {
 
     gameObjects.push_back(GameObject(
-        { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
+        { { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
         { {0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} },
         { {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} },
         { {-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} } },
 
-        {  0, 1, 2, 2, 3, 0  },
-        glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f,1.0f,1.0f)
+        {  0, 1, 2, 2, 3, 0  } },
+        glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f,1.0f,1.0f),
+
+        "../../../textures/crossroadtexture1.jpg"
         //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));
     uint32_t offSet = gameObjects[0].vertices.size();
@@ -100,16 +103,19 @@ std::vector<GameObject> application::constructGameobjects()
 
     bool test = 1;
 
-
+    glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;
+    glm::vec4 gridEnd = glm::vec4(gameObjects[0].mesh.vertices[2].pos, 1.0f) * gameObjects[0].properties.transform;
+    float cellCount = 1;
+    gameObjects.push_back(ShapeTool::generateGrid(gridStart, gridEnd, cellCount, indexOffset));
 
     return gameObjects;
 }
 
 void application::initWindow()
 {
-    
     gameObjects = constructGameobjects();
     int objectCount = gameObjects.size();
+    camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
     
@@ -147,3 +153,4 @@ void application::updateTest()
     // Update the position of the object using glm::translate
     gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
 }
+

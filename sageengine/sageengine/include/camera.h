@@ -17,6 +17,21 @@ public:
 		aspectRatio = 0.0f;
 	};
 
+	void setPosition(glm::vec3 pos) {
+		position = pos;
+
+		glm::vec3 direction = glm::normalize(lookPosition - position);
+		glm::vec3 right = glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f)));
+		glm::vec3 up = glm::normalize(glm::cross(right, direction));
+
+		upPosition = up;
+	}
+
+	void setLookPosition(glm::vec3 pos) {
+		lookPosition = pos;
+		upPosition = glm::cross(position, lookPosition);
+	}
+
 	glm::mat4 getView();
 
 	glm::mat4 getProjection();

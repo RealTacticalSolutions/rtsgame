@@ -28,8 +28,8 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createDepthResources();
     createFramebuffers();
     createCommandPool();
-    createTextureImage();
-    createTextureImageView();
+    createTextureImages();
+    createTextureImageViews();
     createTextureSampler();
     createVertexbuffer();
     createIndexBuffer();
@@ -47,28 +47,30 @@ void renderer::cleanupVulkan()
     cleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+        vkDestroyBuffer(device, uniformBufferManagers[i].buffer, nullptr);
+        vkFreeMemory(device, uniformBufferManagers[i].bufferMemory, nullptr);
     }
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
     vkDestroySampler(device, textureSampler, nullptr);
-    vkDestroyImageView(device, textureImageView, nullptr);
+    
 
-    vkDestroyImage(device, textureImage, nullptr);
-    vkFreeMemory(device, textureImageMemory, nullptr);
-
+    for (size_t i = 0; i < gameObjects.size(); i++) {
+        vkDestroyImage(device, textureImages[i], nullptr);
+        vkFreeMemory(device, textureImagesMemory[i], nullptr);
+        vkDestroyImageView(device, textureImageViews[i], nullptr);
+    }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device, storageBuffer, nullptr);
-    vkFreeMemory(device, storageBufferMemory, nullptr);
+    vkDestroyBuffer(device, modelTansformStorageBufferManager.buffer, nullptr);
+    vkFreeMemory(device, modelTansformStorageBufferManager.bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, indexBuffer, nullptr);
-    vkFreeMemory(device, indexBufferMemory, nullptr);
+    vkDestroyBuffer(device, indexBufferManager.buffer, nullptr);
+    vkFreeMemory(device, indexBufferManager.bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, vertexBuffer, nullptr);
-    vkFreeMemory(device, vertexBufferMemory, nullptr);
+    vkDestroyBuffer(device, vertexbufferManager.buffer, nullptr);
+    vkFreeMemory(device, vertexbufferManager.bufferMemory, nullptr);
 
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -701,38 +703,51 @@ void renderer::createCommandPool()
     VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
 }
 
-void renderer::createTextureImage() {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("../../../textures/crossroadtexture1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
+void renderer::createTextureImages() {
+    textureImages.resize(objectCount);
+    textureImagesMemory.resize(objectCount);
 
-    if (!pixels) {
-        throw std::runtime_error("failed to load texture image!");
-    }
+    for (size_t i = 0; i < objectCount; i++)
+    {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(gameObjects[i].texture, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+        if (!pixels) {
+            throw std::runtime_error("failed to load texture image!");
+        }
 
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, pixels, static_cast<size_t>(imageSize));
-    vkUnmapMemory(device, stagingBufferMemory);
+        Buffermanager stagingbufferManager = {
+               texWidth * texHeight * 4,
+               VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        };
 
-    stbi_image_free(pixels);
+        createBuffer(stagingbufferManager);
 
-    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+        vkMapMemory(device, stagingbufferManager.bufferMemory, 0, imageSize, 0, &stagingbufferManager.handle);
+        memcpy(stagingbufferManager.handle, pixels, static_cast<size_t>(imageSize));
+        vkUnmapMemory(device, stagingbufferManager.bufferMemory);
 
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        stbi_image_free(pixels);
 
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+        createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImages[i], textureImagesMemory[i]);
+
+        transitionImageLayout(textureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        copyBufferToImage(stagingbufferManager.buffer, textureImages[i], static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+        transitionImageLayout(textureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
+        vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+    }  
 }
 
-void renderer::createTextureImageView() {
-    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+void renderer::createTextureImageViews() {
+    textureImageViews.resize(objectCount);
+    for (size_t i = 0; i < objectCount; i++)
+    {
+        textureImageViews[i] = createImageView(textureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
 }
 
 void renderer::createTextureSampler() {
@@ -843,6 +858,19 @@ void renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayo
     endSingleTimeCommands(commandBuffer);
 }
 
+uint32_t renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("failed to find suitable memory type!");
+}
+
 void renderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -903,62 +931,67 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 
 void renderer::createVertexbuffer()
 {
-
-    sizeof(Vertex);
     for (int i = 0; i < objectCount; i++) {
-        vertices.insert(vertices.end(), gameObjects[i].vertices.begin(), gameObjects[i].vertices.end());
+        vertices.insert(vertices.end(), gameObjects[i].mesh.vertices.begin(), gameObjects[i].mesh.vertices.end());
     }
 
-    VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+    Buffermanager stagingbufferManager = {
+        sizeof(Vertex) * vertices.size(),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    };
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    vertexbufferManager.bufferSize = sizeof(Vertex) * vertices.size();
 
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+    createBuffer(stagingbufferManager);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+    vkMapMemory(device, stagingbufferManager.bufferMemory, 0, stagingbufferManager.bufferSize, 0, &stagingbufferManager.handle);
+    memcpy(stagingbufferManager.handle, vertices.data(), (size_t)stagingbufferManager.bufferSize);
+    vkUnmapMemory(device, stagingbufferManager.bufferMemory);
 
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+    createBuffer(vertexbufferManager);
+
+    copyBuffer(stagingbufferManager.buffer, vertexbufferManager.buffer, stagingbufferManager.bufferSize);
+
+    vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
+    vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
 }
 
 void renderer::createIndexBuffer()
 {
     
     for (int i = 0; i < objectCount; i++) {
-        indices.insert(indices.end(), gameObjects[i].indices.begin(), gameObjects[i].indices.end());
+        indices.insert(indices.end(), gameObjects[i].mesh.indices.begin(), gameObjects[i].mesh.indices.end());
     }
 
-    VkDeviceSize bufferSize = sizeof(uint16_t) * indices.size();
+    Buffermanager stagingbufferManager = {
+        sizeof(uint16_t) * indices.size(),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    };
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    indexBufferManager.bufferSize = sizeof(uint16_t) * indices.size();
 
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, indices.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+    createBuffer(stagingbufferManager);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+    vkMapMemory(device, stagingbufferManager.bufferMemory, 0, stagingbufferManager.bufferSize, 0, &stagingbufferManager.handle);
+    memcpy(stagingbufferManager.handle, indices.data(), (size_t)stagingbufferManager.bufferSize);
+    vkUnmapMemory(device, stagingbufferManager.bufferMemory);
 
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+    createBuffer(indexBufferManager);
 
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+    copyBuffer(stagingbufferManager.buffer, indexBufferManager.buffer, indexBufferManager.bufferSize);
+
+    vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
+    vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
 }
 
 void renderer::createStorageBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(Properties) * objectCount;
+    modelTansformStorageBufferManager.bufferSize = sizeof(Properties) * objectCount;
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, storageBuffer, storageBufferMemory);
+    createBuffer(modelTansformStorageBufferManager);
 
     std::vector<Properties> properties(objectCount);
 
@@ -967,23 +1000,26 @@ void renderer::createStorageBuffer()
     }
 
     void* data;
-    vkMapMemory(device, storageBufferMemory, 0, bufferSize, 0, &storageBufferHandle);
-    memcpy(storageBufferHandle, properties.data(), bufferSize);
+    vkMapMemory(device, modelTansformStorageBufferManager.bufferMemory, 0, modelTansformStorageBufferManager.bufferSize, 0, &modelTansformStorageBufferManager.handle);
+    memcpy(modelTansformStorageBufferManager.handle, properties.data(), modelTansformStorageBufferManager.bufferSize);
    
 }
 
 void renderer::createUniformBuffers()
 {
+
+    uniformBufferManagers.resize(MAX_FRAMES_IN_FLIGHT);
+
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+        uniformBufferManagers[i].bufferSize = bufferSize;
+        uniformBufferManagers[i].bufferUsageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        uniformBufferManagers[i].memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-        vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+        createBuffer(uniformBufferManagers[i]);
+
+        vkMapMemory(device, uniformBufferManagers[i].bufferMemory, 0, uniformBufferManagers[i].bufferSize, 0, &uniformBufferManagers[i].handle);
     }
 }
 
@@ -1025,15 +1061,15 @@ void renderer::createDescriptorSets()
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
-            bufferInfo.buffer = uniformBuffers[i];
+            bufferInfo.buffer = uniformBufferManagers[i].buffer;
 
             VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = textureImageView;
+            imageInfo.imageView = textureImageViews[j];
             imageInfo.sampler = textureSampler;
 
             VkDescriptorBufferInfo storageBufferInfo{};
-            storageBufferInfo.buffer = storageBuffer;
+            storageBufferInfo.buffer = modelTansformStorageBufferManager.buffer;
             storageBufferInfo.range = sizeof(Properties);
             storageBufferInfo.offset = sizeof(Properties) * j;
 
@@ -1070,31 +1106,30 @@ void renderer::createDescriptorSets()
 }
 
 
-
-void renderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+void renderer::createBuffer(Buffermanager& buffermanager) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = size;
-    bufferInfo.usage = usage;
+    bufferInfo.size = buffermanager.bufferSize;
+    bufferInfo.usage = buffermanager.bufferUsageFlags;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffermanager.buffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to create buffer!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(device, buffermanager.buffer, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, buffermanager.memoryPropertyFlags);
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &buffermanager.bufferMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate buffer memory!");
     }
 
-    vkBindBufferMemory(device, buffer, bufferMemory, 0);
+    vkBindBufferMemory(device, buffermanager.buffer, buffermanager.bufferMemory, 0);
 }
 
 void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -1107,18 +1142,6 @@ void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
     endSingleTimeCommands(commandBuffer);
 }
 
-uint32_t renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("failed to find suitable memory type!");
-}
 
 void renderer::createCommandBuffers()
 {
@@ -1172,11 +1195,11 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    VkBuffer vertexBuffers[] = { vertexBuffer };
+    VkBuffer vertexBuffers[] = { vertexbufferManager.buffer };
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(commandBuffer, indexBufferManager.buffer, 0, VK_INDEX_TYPE_UINT16);
     uint32_t totalindex = 0;
     for (int i = 0; i < objectCount; i++) {
         int offset = i * MAX_FRAMES_IN_FLIGHT;
@@ -1184,7 +1207,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
 
         // Compute the offset for the current object
-        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].indices.size());
+        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].mesh.indices.size());
         
         vkCmdDrawIndexed(commandBuffer, indexCount, 1, totalindex, 0, 0);
         //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
@@ -1235,7 +1258,7 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
     ubo.view = camera.getView();
     ubo.proj = camera.getProjection();
 
-    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+    memcpy(uniformBufferManagers[currentImage].handle, &ubo, sizeof(ubo));
 }
 void renderer::updateStorageBuffer()
 {
@@ -1247,7 +1270,7 @@ void renderer::updateStorageBuffer()
         props[i].transform = gameObjects[i].properties.transform;
 
     }
-    memcpy(storageBufferHandle, props.data(), sizeof(Properties) * objectCount);
+    memcpy(modelTansformStorageBufferManager.handle, props.data(), sizeof(Properties) * objectCount);
 }
 
 void renderer::drawFrame(GLFWwindow* window)

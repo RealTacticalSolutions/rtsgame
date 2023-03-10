@@ -3,11 +3,15 @@
 class GameObject
 {
 public:
-	const std::vector<Vertex> vertices;
-	const std::vector<uint16_t> indices;
+	const Mesh mesh;
+	char* texture;
 	Properties properties;
 
-	GameObject(std::vector<Vertex> vertices, std::vector<uint16_t> indices, glm::mat4 transform, glm::vec3 color) : vertices(vertices), indices(indices), properties{transform, color} {
+	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color) : mesh(mesh), properties{transform, color} {
+		texture = "../../../textures/default.png";
+	};
+
+	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color, char* texture) : mesh(mesh), properties{ transform, color }, texture(texture) {
 
 	};
 
