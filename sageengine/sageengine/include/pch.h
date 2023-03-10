@@ -32,7 +32,7 @@
 #include "collisionType.h"
 #include "gameObject.h"
 #include "shapetool.h"
-
+#include "intersection.h"
 #include "camera.h"
 #include "application.h"
 #include "window.h"

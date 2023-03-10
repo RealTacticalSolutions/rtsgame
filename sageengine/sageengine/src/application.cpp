@@ -35,6 +35,8 @@ void application::mainLoop()
         lastFrameTime = currentFrameTime;
         for (auto m : message)
         {
+            if(m.id != "" || m.color != -1 | m.color >2)
+            { 
             try
             {
                 updateColor(getId(m.id), getColor(m.color));
@@ -42,6 +44,11 @@ void application::mainLoop()
             catch (const std::exception& e)
             {
                 std::cout << e.what() << std::endl;
+            }
+            }
+            else
+            {
+                std::cout << "message was not complete" << std::endl;
             }
                 
             
@@ -162,15 +169,11 @@ void application::cleanup()
 {
 }
 
-/*void application::updateTest()
+void application::updateTest()
 {
     // Check for intersection with another object
-<<<<<<< HEAD
     if ((Intersection::intersectSquares(gameObjects[5], gameObjects[1])) && gameObjects[1].properties.color == getColor(RED)) 
     {
-=======
-     if (Intersection::intersectSquares(gameObjects[5], gameObjects[1])) {
->>>>>>> b2f689cdc1dd9607cd62d8209f3bc1cd576f0869
         return; // Don't update if there's an intersection
     }
 
@@ -196,18 +199,13 @@ void application::cleanup()
     else
     { 
     // Update the position of the object using glm::translate
-<<<<<<< HEAD
     gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
     }
 
 }
-bool application::approxEqual(glm::vec3 a, glm::vec3 b, float epsilon) 
+    
+
+bool application::approxEqual(glm::vec3 a, glm::vec3 b, float epsilon)
 {
     return glm::all(glm::lessThanEqual(glm::abs(a - b), glm::vec3(epsilon)));
 }
-=======
-    gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
-    
-}*/
-
->>>>>>> b2f689cdc1dd9607cd62d8209f3bc1cd576f0869
