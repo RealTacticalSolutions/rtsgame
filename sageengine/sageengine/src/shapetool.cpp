@@ -2,6 +2,7 @@
 #include "shapetool.h"
 
 
+
 //void ShapeTool::setupvertices(std::vector<GameObject>& object)
 //{
 //    int XCELL = 2;
@@ -105,6 +106,7 @@ std::vector<Vertex> ShapeTool::GenerateGridVertices(uint32_t xCells, uint32_t yC
     return vertices;
 }
 
+
 Mesh ShapeTool::generatePlaneMesh() {
     return Mesh();
 }
@@ -157,3 +159,45 @@ GameObject ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, floa
 
     return GameObject(grid, glm::mat4(1.0f), glm::vec3(1.0f));
 }
+
+std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
+{
+    std::vector<Vertex> vertices(4);
+
+    vertices[0].pos = glm::vec3(-width, -width, 0.0f);
+    vertices[1].pos = glm::vec3(width, -width, 0.0f);
+    vertices[2].pos = glm::vec3(-width, width, 0.0f);
+    vertices[3].pos = glm::vec3(width, width, 0.0f);
+
+    return vertices;
+}
+
+std::vector<uint16_t> ShapeTool::generateSquareIndicies(uint32_t& offSet) 
+{
+
+    std::vector<uint16_t> indices;
+
+    indices.push_back(0 + offSet);
+    indices.push_back(1 + offSet);
+    indices.push_back(2 + offSet);
+
+    indices.push_back(2 + offSet);
+    indices.push_back(1 + offSet);
+    indices.push_back(3 + offSet);
+
+    offSet += 4;
+    return indices;
+}
+
+GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+{
+
+    GameObject gameObject(
+        generateSquareVertices(width),
+        generateSquareIndicies(offSet),
+        transfrom, 
+        color);
+
+    return gameObject;
+}
+

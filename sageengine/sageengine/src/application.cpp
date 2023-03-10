@@ -20,6 +20,7 @@ void application::mainLoop()
         updateColorAddition(3, glm::vec3(0.0001f, 0.0001f, 0.0001f));
         updateColorAddition(4, glm::vec3(0.0001f, 0.0001f, 0.0001f));
         glfwPollEvents();
+        updateTest();
         drawFrame();
 
         fps++;
@@ -49,7 +50,6 @@ void application::updateColorAddition(int index, glm::vec3 color)
 
 std::vector<GameObject> application::constructGameobjects()
 {
-    std::vector<GameObject> gameObjects;
 
     gameObjects.push_back(GameObject(
         { { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
@@ -63,33 +63,45 @@ std::vector<GameObject> application::constructGameobjects()
         "../../../textures/crossroadtexture1.jpg"
         //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));
+    uint32_t offSet = gameObjects[0].vertices.size();
     
     int xCells = 1;
     int yCells = 1;
-    float cellSize = 0.1f;
-    float xOffset = -0.15f;
-    float yOffset = 0.17f;
-    float zOffset = 1;
-    indexOffset += gameObjects[0].mesh.vertices.size();
-    glm::vec3 color = glm::vec3(0.0f, 1.0f, 1.0f);
-    gameObjects.push_back(ShapeTool::generatePlane(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indexOffset,color));
-    indexOffset += gameObjects[1].mesh.vertices.size();
-    xOffset = -0.28f;
-    yOffset = -0.15f;
-    color = glm::vec3(1.0f, 1.0f, 1.0f);
-    gameObjects.push_back(ShapeTool::generatePlane(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indexOffset, color));
-    indexOffset += gameObjects[2].mesh.vertices.size();
-    xOffset = 0.17f;
-    yOffset = 0.05f;
-    color = glm::vec3(1.0f, 0.0f, 1.0f);
-    gameObjects.push_back(ShapeTool::generatePlane(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indexOffset, color));
-    indexOffset += gameObjects[3].mesh.vertices.size();
-    xOffset = 0.05f;
-    yOffset = -0.28f;
-    color = glm::vec3(1.0f, 1.0f, 0.0f);
-    gameObjects.push_back(ShapeTool::generatePlane(xCells, yCells, cellSize, xOffset, yOffset, zOffset, indexOffset, color));
-    indexOffset += gameObjects[4].mesh.vertices.size();
+    float cellSize = 0.05f;
 
+    glm::vec3 color = glm::vec3(0.0f, 1.0f, 1.0f);
+    glm::vec3 position1(-0.10f, 0.22f, 1.0f);
+    glm::mat4 transform1(1.0f);
+    transform1[3] = glm::vec4(position1, 1.0f);
+
+    gameObjects.push_back(ShapeTool::createSquare(cellSize, offSet,transform1,color));
+ 
+    color = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 position2(-0.22f, -0.10f, 1.0f);
+    glm::mat4 transform2(1.0f);
+    transform2[3] = glm::vec4(position2, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform2,color));
+
+    color = glm::vec3(1.0f, 0.0f, 1.0f);
+    glm::vec3 position3(0.22f, 0.10f, 1.0f);
+    glm::mat4 transform3(1.0f);
+    transform3[3] = glm::vec4(position3, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform3,color));
+
+    color = glm::vec3(1.0f, 1.0f, 0.0f);
+    glm::vec3 position4(0.10f, -0.22f, 1.0f);
+    glm::mat4 transform4(1.0f);
+    transform4[3] = glm::vec4(position4, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform4,color));
+
+    glm::vec3 newPosition(0.0f, 1.0f, 1.0f);
+    glm::mat4 transform(1.0f);
+    transform[3] = glm::vec4(newPosition, 1.0f);
+    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
+
+   
+
+    bool test = 1;
 
     glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;
     glm::vec4 gridEnd = glm::vec4(gameObjects[0].mesh.vertices[2].pos, 1.0f) * gameObjects[0].properties.transform;
@@ -114,5 +126,31 @@ void application::initWindow()
 
 void application::cleanup()
 {
+}
+
+void application::updateTest()
+{
+    // Check for intersection with another object
+    if (Intersection::intersectSquares(gameObjects[5], gameObjects[1])) {
+        return; // Don't update if there's an intersection
+    }
+
+    // Set the target position
+    glm::vec3 target(-0.1f, -1.2f, 1.0f);
+
+    // Get the current position of the object
+    glm::vec3 position = glm::vec3(gameObjects[5].properties.transform[3]);
+
+    // Calculate the direction from the current position to the target position
+    glm::vec3 direction = glm::normalize(target - position);
+
+    // Set the velocity
+    float velocity = 0.00005f;
+
+    // Calculate the new position based on the direction and velocity
+    glm::vec3 new_pos = position + direction * velocity;
+
+    // Update the position of the object using glm::translate
+    gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
 }
 
