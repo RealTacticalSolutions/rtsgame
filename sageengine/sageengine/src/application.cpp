@@ -20,7 +20,6 @@ void application::mainLoop()
         updateColorAddition(3, glm::vec3(0.0001f, 0.0001f, 0.0001f));
         updateColorAddition(4, glm::vec3(0.0001f, 0.0001f, 0.0001f));
         glfwPollEvents();
-        updateTest();
         drawFrame();
 
         fps++;
@@ -63,7 +62,7 @@ std::vector<GameObject> application::constructGameobjects()
         "../../../textures/crossroadtexture1.jpg"
         //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));
-    uint32_t offSet = gameObjects[0].vertices.size();
+    uint32_t offSet = gameObjects[0].mesh.vertices.size();
     
     int xCells = 1;
     int yCells = 1;
@@ -106,7 +105,7 @@ std::vector<GameObject> application::constructGameobjects()
     glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;
     glm::vec4 gridEnd = glm::vec4(gameObjects[0].mesh.vertices[2].pos, 1.0f) * gameObjects[0].properties.transform;
     float cellCount = 1;
-    gameObjects.push_back(ShapeTool::generateGrid(gridStart, gridEnd, cellCount, indexOffset));
+    gameObjects.push_back(ShapeTool::generateGrid(gridStart, gridEnd, cellCount, offSet));
 
     return gameObjects;
 }
@@ -128,10 +127,10 @@ void application::cleanup()
 {
 }
 
-void application::updateTest()
+/*void application::updateTest()
 {
     // Check for intersection with another object
-    if (Intersection::intersectSquares(gameObjects[5], gameObjects[1])) {
+     if (Intersection::intersectSquares(gameObjects[5], gameObjects[1])) {
         return; // Don't update if there's an intersection
     }
 
@@ -152,5 +151,6 @@ void application::updateTest()
 
     // Update the position of the object using glm::translate
     gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
-}
+    
+}*/
 

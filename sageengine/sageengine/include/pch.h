@@ -27,7 +27,6 @@
 #include "buffermanager.h"
 #include "properties.h"
 #include "gameObject.h"
-#include "intersection.h"
 
 #include "shapetool.h"
 #include "camera.h"

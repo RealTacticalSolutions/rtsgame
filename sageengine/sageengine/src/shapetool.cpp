@@ -192,9 +192,10 @@ std::vector<uint16_t> ShapeTool::generateSquareIndicies(uint32_t& offSet)
 GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
 {
 
-    GameObject gameObject(
+    GameObject gameObject({
         generateSquareVertices(width),
         generateSquareIndicies(offSet),
+        },
         transfrom, 
         color);
 
