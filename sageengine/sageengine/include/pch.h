@@ -26,10 +26,11 @@
 #include "messageObject.h"
 
 #include "vertex.h"
+#include "mesh.h"
+#include "buffermanager.h"
 #include "properties.h"
 #include "collisionType.h"
 #include "gameObject.h"
-#include "intersection.h"
 #include "shapetool.h"
 
 #include "camera.h"

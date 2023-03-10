@@ -86,16 +86,18 @@ std::vector<GameObject> application::constructGameobjects()
 {
 
     gameObjects.push_back(GameObject(
-        { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
+        { { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
         { {0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} },
         { {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} },
         { {-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} } },
 
-        {  0, 1, 2, 2, 3, 0  },
-        glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f,1.0f,1.0f)
+        {  0, 1, 2, 2, 3, 0  } },
+        glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f,1.0f,1.0f),
+
+        "../../../textures/crossroadtexture1.jpg"
         //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));
-    uint32_t offSet = gameObjects[0].vertices.size();
+    uint32_t offSet = gameObjects[0].mesh.vertices.size();
     
     int xCells = 1;
     int yCells = 1;
@@ -135,16 +137,19 @@ std::vector<GameObject> application::constructGameobjects()
     bool test = 1;
 
 
-
+    glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;
+    glm::vec4 gridEnd = glm::vec4(gameObjects[0].mesh.vertices[2].pos, 1.0f) * gameObjects[0].properties.transform;
+    float cellCount = 1;
+    gameObjects.push_back(ShapeTool::generateGrid(gridStart, gridEnd, cellCount, offSet));
 
     return gameObjects;
 }
 
 void application::initWindow()
 {
-    
     gameObjects = constructGameobjects();
     int objectCount = gameObjects.size();
+    camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
     
@@ -157,11 +162,15 @@ void application::cleanup()
 {
 }
 
-void application::updateTest()
+/*void application::updateTest()
 {
     // Check for intersection with another object
+<<<<<<< HEAD
     if ((Intersection::intersectSquares(gameObjects[5], gameObjects[1])) && gameObjects[1].properties.color == getColor(RED)) 
     {
+=======
+     if (Intersection::intersectSquares(gameObjects[5], gameObjects[1])) {
+>>>>>>> b2f689cdc1dd9607cd62d8209f3bc1cd576f0869
         return; // Don't update if there's an intersection
     }
 
@@ -187,6 +196,7 @@ void application::updateTest()
     else
     { 
     // Update the position of the object using glm::translate
+<<<<<<< HEAD
     gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
     }
 
@@ -195,3 +205,9 @@ bool application::approxEqual(glm::vec3 a, glm::vec3 b, float epsilon)
 {
     return glm::all(glm::lessThanEqual(glm::abs(a - b), glm::vec3(epsilon)));
 }
+=======
+    gameObjects[5].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
+    
+}*/
+
+>>>>>>> b2f689cdc1dd9607cd62d8209f3bc1cd576f0869

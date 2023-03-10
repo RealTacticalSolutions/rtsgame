@@ -10,9 +10,13 @@ find_package(Vulkan REQUIRED)
 
 file(GLOB subdir_sources src/*.cpp)
 
+<<<<<<< HEAD
 
 add_executable(SageEngine ${subdir_sources} "include/pch.h" "include/application.h" "include/window.h" "src/window.cpp" "src/application.cpp" "include/renderer.h" "src/renderer.cpp" "src/camera.cpp" "include/camera.h" "include/STB/stb_image.h" "src/gameObject.cpp" "include/gameObject.h" "src/vertex.cpp" "include/vertex.h" "src/shapeTool.cpp" "include/shapeTool.h"  "include/properties.h" "include/CROSSROAD/server.h" "include/CROSSROAD/client.h" "include/CROSSROAD/client.cpp" "include/CROSSROAD/server.cpp" "include/CROSSROAD/pchroads.h"  "include/messageObject.h" "include/collisionType.h" "include/intersection.h" "src/intersection.cpp" "include/trafficStatusObject.h")
 
+=======
+add_executable(SageEngine ${subdir_sources} "include/pch.h" "include/application.h" "include/window.h" "src/window.cpp" "src/application.cpp" "include/renderer.h" "src/renderer.cpp" "src/camera.cpp" "include/camera.h" "include/STB/stb_image.h" "src/gameObject.cpp" "include/gameObject.h" "src/vertex.cpp" "include/vertex.h" "src/shapetool.cpp" "include/shapetool.h"  "include/properties.h"  "include/buffermanager.h" "include/mesh.h" "include/intersection.h" "src/intersection.cpp")
+>>>>>>> b2f689cdc1dd9607cd62d8209f3bc1cd576f0869
 
 target_link_libraries(SageEngine PUBLIC ${LIBS} Vulkan::Vulkan)
 target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include")
