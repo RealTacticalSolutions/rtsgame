@@ -56,7 +56,7 @@ void renderer::cleanupVulkan()
     vkDestroySampler(device, textureSampler, nullptr);
     
 
-    for (size_t i = 0; i < gameObjects.size(); i++) {
+    for (size_t i = 0; i < objectCount; i++) {
         vkDestroyImage(device, textureImages[i], nullptr);
         vkFreeMemory(device, textureImagesMemory[i], nullptr);
         vkDestroyImageView(device, textureImageViews[i], nullptr);
