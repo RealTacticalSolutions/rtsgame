@@ -20,17 +20,17 @@
 #include <fstream>
 #include <array>
 #include <string>
-
+#include <map>
 
 #include "vertex.h"
 #include "mesh.h"
 #include "buffermanager.h"
 #include "properties.h"
 #include "gameObject.h"
-
 #include "shapetool.h"
 #include "camera.h"
 #include "application.h"
 #include "window.h"
+#include "inputsystem.h"
 #include "renderer.h"
 
