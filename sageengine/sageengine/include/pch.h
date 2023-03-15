@@ -20,7 +20,7 @@
 #include <fstream>
 #include <array>
 #include <string>
-
+#include <map>
 
 
 #include "messageObject.h"
@@ -36,5 +36,6 @@
 #include "camera.h"
 #include "application.h"
 #include "window.h"
+#include "inputsystem.h"
 #include "renderer.h"
 #include "grid.h"

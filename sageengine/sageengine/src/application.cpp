@@ -15,6 +15,7 @@ void application::mainLoop()
     double lastSecondTime = lastFrameTime;
     int fps = 0;
     char windowTitle[256];
+    Input input = Input(windowObject.get()->getWindow());
 
     while (!windowObject->shouldClose())
     {
@@ -29,9 +30,19 @@ void application::mainLoop()
 
         drawFrame();
 
+        glm::vec2 cursorPos = input.getCursorPos();
+        bool spacePressed = input.keyPressed(GLFW_KEY_SPACE);
+        bool test = input.keyDown(GLFW_KEY_SPACE);
+
+        input.updateInput();
+
+        if (test) {
+            std::cout << "X: " << cursorPos.x << "  Y: " << cursorPos.y << std::endl;
+        }
+
         fps++;
         if (currentFrameTime - lastSecondTime >= 1.0)
-        {
+        {                   
             snprintf(windowTitle, 256, "FPS: %d", fps);
             glfwSetWindowTitle(windowObject->getWindow(), windowTitle);
             fps = 0;
