@@ -29,7 +29,9 @@ void application::mainLoop()
         input.updateInput();
 
         if (test) {
-            std::cout << "X: " << cursorPos.x << "  Y: " << cursorPos.y << std::endl;
+            glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, camera);
+           // std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
+            //std::cout << "world X: " << worldpos.x << "  world Y: " << worldpos.y << "  world Z: " << worldpos.z << std::endl;
         }
 
         fps++;

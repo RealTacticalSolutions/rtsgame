@@ -29,6 +29,7 @@
 #include "gameObject.h"
 #include "shapetool.h"
 #include "camera.h"
+#include "gamemath.h"
 #include "application.h"
 #include "window.h"
 #include "inputsystem.h"
