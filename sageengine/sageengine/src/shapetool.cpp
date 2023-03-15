@@ -83,6 +83,18 @@ std::vector<uint16_t> ShapeTool::generateSquareIndicies(uint32_t& offSet)
     return indices;
 }
 
+std::vector<Vertex> ShapeTool::generateRectangleVertices(float width, float height)
+{
+    std::vector<Vertex> vertices(4);
+
+    vertices[0].pos = glm::vec3(-width, -height, 0.0f);
+    vertices[1].pos = glm::vec3(width, -height, 0.0f);
+    vertices[2].pos = glm::vec3(-width, height, 0.0f);
+    vertices[3].pos = glm::vec3(width, height, 0.0f);
+
+    return vertices;
+}
+
 GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
 {
 
@@ -96,3 +108,15 @@ GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 tran
     return gameObject;
 }
 
+GameObject ShapeTool::createRectangle(float width,float height, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+{
+
+    GameObject gameObject({
+        generateRectangleVertices(width, height),
+        generateSquareIndicies(offSet),
+        },
+        transfrom,
+        color);
+
+    return gameObject;
+}
