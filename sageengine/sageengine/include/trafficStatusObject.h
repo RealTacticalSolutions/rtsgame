@@ -3,6 +3,6 @@
 class trafficStatusObject
 {
 public:
-    std::string id;
+    double id;
     int weight;
 };

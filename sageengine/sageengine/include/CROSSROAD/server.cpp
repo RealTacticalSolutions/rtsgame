@@ -104,10 +104,10 @@ void server::startServer()
     //    std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
 
     //}
-    std::string id1 = "5.1";
-    std::string id2 = "2.1";
-    std::string id3 = "11.1";
-    std::string id4 = "8.1";
+    double id1 = 5.1;
+    double id2 = 2.1;
+    double id3 = 11.1;
+    double id4 = 8.1;
 
     int color1 = 0;
     int color2 = 0;
@@ -158,8 +158,6 @@ void server::startServer()
         color4 = distrserver(genserver);
 
 
-        // Clean message and fill it with new data
-        message.clear();
     }
 
     // Close the client and server sockets and clean up Winsock

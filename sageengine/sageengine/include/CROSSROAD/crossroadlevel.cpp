@@ -35,11 +35,11 @@ void CrossRoadLevel::mainLoop()
     for (messageObject m : message_ref)
     {
         //if(m.id.size() != 0 || m.color != -1 || m.color >2)
-        if (m.id.size() != 0)
+        if (m.id != 0 && m.color != 0)
         {
             try
             {
-                
+                // getId MUST because from double to gameobject index
                 updateColor(getId(m.id), getColor(m.color));
             }
             catch (const std::exception& e)
@@ -52,6 +52,7 @@ void CrossRoadLevel::mainLoop()
             std::cout << "message was not complete" << std::endl;
         }
 
+        message_ref.clear();
 
     }
 }

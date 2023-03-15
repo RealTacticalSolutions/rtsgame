@@ -36,18 +36,18 @@ static glm::vec3 getColor(int color)
 	}
 };
 
-static int getId(const std::string& id)
+static int getId(const double& id)
 {
-	if (id == "5.1") {
+	if (id == 5.1) {
 		return 1;
 	}
-	else if (id == "2.1") {
+	else if (id == 2.1) {
 		return 2;
 	}
-	else if (id == "11.1") {
+	else if (id == 11.1) {
 		return 3;
 	}
-	else if (id == "8.1") {
+	else if (id == 8.1) {
 		return 4;
 	}
 	else {

@@ -66,10 +66,10 @@ void client::startClient()
     //    {{"id", 123},{"weight", 45.6}},
     //    {{"id", 63},{"weight", 75.6}}
     //};
-    std::string id1 = "5.1";
-    std::string id2 = "2.1";
-    std::string id3 = "11.1";
-    std::string id4 = "8.1";
+    double id1 = 5.1;
+    double id2 = 2.1;
+    double id3 = 11.1;
+    double id4 = 8.1;
 
     int weight1 = 0;
     int weight2 = 0;
@@ -111,6 +111,10 @@ void client::startClient()
             continue; // If the message is empty, wait for the next one
         }
 
+        // Todo:: temporary we need a buffer for messages, otherwise it overwrites and crashes
+        while (!message.empty())
+        {
+        }
         // Parse the JSON data into a vector of TrafficObjects
         nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
         for (const auto& obj : dataserver) {
