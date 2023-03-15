@@ -10,6 +10,9 @@ private:
 
 	static std::vector<Vertex> generateSquareVertices(float width);
 	static std::vector<uint16_t> generateSquareIndicies(uint32_t& offSet);
+
+	static std::vector<Vertex> ShapeTool::generateRectangleVertices(float width, float height);
+	
 public:
 
 	static GameObject generatePlane(uint32_t xCells, uint32_t yCells, float cellSize, float xOffset, float yOffset, float zOffset, uint32_t indicesoffset, glm::vec3 color);
@@ -17,5 +20,5 @@ public:
 	static GameObject generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cellSize, uint16_t indexOffset);
 	static Mesh generateLine(uint16_t indexoffset, float linewidth, float length, glm::vec3 position, float rotationDeg, glm::vec3 rotationAxis, glm::vec3 color);
 	static GameObject createSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color);
-
+	static GameObject createRectangle(float width, float height, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color);
 };
