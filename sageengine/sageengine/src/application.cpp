@@ -2,26 +2,14 @@
 #include "application.h"
 #include "CROSSROAD/pchroads.h"
 #include "color.h"
-
-std::mutex g_mutex;
-std::condition_variable g_conditionVariable;
-bool g_serverReady = false;
-bool server_running = true;
-bool client_running = true;
+#include "CROSSROAD/crossroadlevel.h"
 
 void application::mainLoop()
 {
  
-    char* IP = "192.168.178.52";
-    char* PORT = "11000";
-    char* SERVER_PORT = "11000";
+    CrossRoadLevel level(message, gameObjects);
 
-    client myClient(IP, PORT, message);
-    server myServer(SERVER_PORT);
-
-    std::thread serverThread(&server::startServer, &myServer);
-    std::thread clientThread(&client::startClient, &myClient);
-
+    level.init();
 
     double lastFrameTime = glfwGetTime();
     double lastSecondTime = lastFrameTime;
@@ -33,30 +21,10 @@ void application::mainLoop()
         double currentFrameTime = glfwGetTime();
         double delta = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
-        //Todo probably crashed because message object gets cleared, probably need a message buffer that only reads when the last one is handled
-        for (messageObject m : message)
-        {
-            //if(m.id.size() != 0 || m.color != -1 || m.color >2)
-            if (m.id.size() != 0)
-            { 
-            try
-            {
-                updateColor(getId(m.id), getColor(m.color));
-            }
-            catch (const std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }
-            }
-            else
-            {
-                std::cout << "message was not complete" << std::endl;
-            }
-                
-            
-        }
+        
         glfwPollEvents();
 
+        level.mainLoop();
         updateTest();
 
         drawFrame();
@@ -72,10 +40,7 @@ void application::mainLoop()
     }
 
     vkDeviceWaitIdle(vulkanrenderer->getDevice());
-    server_running = false;
-    client_running = false;
-    serverThread.join();
-    clientThread.join();
+    level.cleanup();
 }
 
 void application::drawFrame()
