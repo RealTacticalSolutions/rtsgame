@@ -23,12 +23,9 @@ public:
 
 	~CrossRoadLevel()
 	{
-		delete IP;
-		delete PORT;
-		delete SERVER_PORT;
+		
 		delete myClient;
 		delete myServer;
-
 	}
 	void init();
 	void mainLoop();

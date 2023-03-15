@@ -27,7 +27,7 @@ void application::mainLoop()
 
         level.mainLoop();
         updateTest();
-
+        updateWayPoints();
         drawFrame();
 
         glm::vec2 cursorPos = input.getCursorPos();
@@ -118,6 +118,20 @@ std::vector<GameObject> application::constructGameobjects()
     transform[3] = glm::vec4(newPosition, 1.0f);
     gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
 
+    glm::vec3 newPosition5(0.0f, -1.0f, 1.0f);
+    glm::mat4 transform5(1.0f);
+    transform5[3] = glm::vec4(newPosition5, 1.0f);
+    WayPoints waypoints ({ glm::vec3(newPosition5) ,glm::vec3(0.0f,1.0f,1.0f), glm::vec3(1.5f,1.0f,1.0f) });
+    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform5, glm::vec3(1.0f, 0.0f, 0.0f)));
+    gameObjects.back().waypoints = waypoints;
+
+    glm::vec3 newPosition6(0.0f, -1.5f, 1.0f);
+    glm::mat4 transform6(1.0f);
+    transform6[3] = glm::vec4(newPosition6, 1.0f);
+    WayPoints waypoints2({ glm::vec3(newPosition6) ,glm::vec3(0.0f,0.0f,1.0f), glm::vec3(1.5f,0.0f,1.0f) });
+    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform6, glm::vec3(1.0f, 1.0f, 0.0f)));
+    gameObjects.back().waypoints = waypoints2;
+
    
     bool test = 1;
 
@@ -186,4 +200,64 @@ void application::updateTest()
 bool application::approxEqual(glm::vec3 a, glm::vec3 b, float epsilon)
 {
     return glm::all(glm::lessThanEqual(glm::abs(a - b), glm::vec3(epsilon)));
+}
+
+void application::updateWayPoints()
+{
+    for (size_t i = 0; i < gameObjects.size(); i++)
+    {
+        int waypointsize = gameObjects[i].waypoints.getSize() -1;
+        if (!(waypointsize <= 0)) 
+        {
+            // Check for intersection with another object
+            if ((Intersection::intersectSquares(gameObjects[i], gameObjects[4])) && gameObjects[4].properties.color == getColor(RED))
+            {
+                return; // Don't update if there's an intersection
+            }
+            int currentwaypoint = gameObjects[i].waypoints.getCurrentWayPoint();
+            int nextwaypoint = -1;
+            if (currentwaypoint == waypointsize)
+            {
+                nextwaypoint = currentwaypoint;
+            }
+            else
+            {
+                nextwaypoint = (currentwaypoint+1);
+            }
+
+            // Set the target position
+            glm::vec3 target = gameObjects[i].waypoints.getWayPoint(nextwaypoint);
+
+            // Get the current position of the object
+            glm::vec3 position = glm::vec3(gameObjects[i].properties.transform[3]);
+
+            // Calculate the direction from the current position to the target position
+            glm::vec3 direction = glm::normalize(target - position);
+
+            // Set the velocity
+            float velocity = 0.00005f;
+
+            // Calculate the new position based on the direction and velocity
+            glm::vec3 new_pos = position + direction * velocity;
+            if (approxEqual(position, target, 0.15f))
+            {
+                if (currentwaypoint == waypointsize)
+                {
+                    gameObjects[i].waypoints.setCurrentWayPoint(0);
+                    gameObjects[i].properties.transform = glm::translate(glm::mat4(1.0f), gameObjects[i].waypoints.getWayPoint(0));
+                }
+                else
+                {
+
+                    gameObjects[i].waypoints.setCurrentWayPoint(nextwaypoint);
+                    gameObjects[i].properties.color = glm::vec3(0.0f, 1.0f, 0.0f);
+                }
+            }
+            else
+            {
+                // Update the position of the object using glm::translate
+                gameObjects[i].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
+            }
+        }
+    }
 }

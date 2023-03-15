@@ -28,6 +28,7 @@ private:
 	void updateColor(int index, glm::vec3 color);
 	void updateColorAddition(int index, glm::vec3 color);
 	bool approxEqual(glm::vec3 a, glm::vec3 b, float epsilon);
+	void updateWayPoints();
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE)

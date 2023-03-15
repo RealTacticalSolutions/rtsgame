@@ -24,7 +24,7 @@
 
 
 #include "messageObject.h"
-
+#include "waypoints.h"
 #include "vertex.h"
 #include "mesh.h"
 #include "buffermanager.h"
@@ -39,3 +39,4 @@
 #include "inputsystem.h"
 #include "renderer.h"
 #include "grid.h"
+
