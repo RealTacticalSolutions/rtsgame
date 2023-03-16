@@ -29,7 +29,10 @@ void application::mainLoop()
         input.updateInput();
 
         if (test) {
-            glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, camera);
+            int width = 0, height = 0;
+            
+            glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
+            glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
            // std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
             //std::cout << "world X: " << worldpos.x << "  world Y: " << worldpos.y << "  world Z: " << worldpos.z << std::endl;
         }

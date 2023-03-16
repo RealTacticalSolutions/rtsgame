@@ -6,6 +6,6 @@ private:
 
 
 public:
-	static glm::vec3 windowToWorldPos(glm::vec2 windowPosition, Camera camera);
+	static glm::vec3 windowToWorldPos(glm::vec2 windowPosition,glm::vec2 windowSize ,Camera camera);
 
 };
