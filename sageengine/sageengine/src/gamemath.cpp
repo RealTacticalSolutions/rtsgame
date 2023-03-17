@@ -4,7 +4,6 @@
 
 glm::vec3 GameMath::windowToWorldPos(glm::vec2 windowPosition, glm::vec2 windowSize, Camera camera)
 {
-
 	float halfX = windowSize.x / 2;
 	float halfY = windowSize.y / 2;
 
@@ -19,11 +18,12 @@ glm::vec3 GameMath::windowToWorldPos(glm::vec2 windowPosition, glm::vec2 windowS
 		lengthX = windowPosition.x / halfX * lengthX;
 	}
 	if (windowPosition.y < halfY) {
-		lengthY = (windowPosition.y - halfY) / halfY * lengthY;
+		windowPosition.y -= halfY;
+		lengthY = windowPosition.y / halfY * lengthY * -1;
 	}
 	else {
 		windowPosition.y -= halfY;
-		lengthY = windowPosition.y / halfY * lengthY;
+		lengthY = (windowPosition.y) / halfY * lengthY * -1;
 	}
 
 	glm::vec3 directionVec = glm::normalize(camera.lookPosition - camera.position);
