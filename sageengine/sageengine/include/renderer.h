@@ -114,7 +114,7 @@ private:
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 	};
 
-	Buffermanager modelTansformStorageBufferManager = {
+	Buffermanager transformBufferManager = {
 		0,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
@@ -168,7 +168,7 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	void createVertexbuffer(); 
 	void createIndexBuffer();
-	void createStorageBuffer();
+	void createTransformBuffer();
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
@@ -186,7 +186,7 @@ private:
 	void createLogicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool hasStencilComponent(VkFormat format);
-	void updateStorageBuffer();
+	void updateTransformBuffer();
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	std::vector<const char*> getRequiredExtensions();

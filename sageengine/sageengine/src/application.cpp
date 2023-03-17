@@ -112,9 +112,7 @@ std::vector<GameObject> application::constructGameobjects()
     glm::mat4 transform(1.0f);
     transform[3] = glm::vec4(newPosition, 1.0f);
     gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
-
-   
-
+    
     bool test = 1;
 
     glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;

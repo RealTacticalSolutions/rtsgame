@@ -33,7 +33,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTextureSampler();
     createVertexbuffer();
     createIndexBuffer();
-    createStorageBuffer();
+    createTransformBuffer();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -63,8 +63,8 @@ void renderer::cleanupVulkan()
     }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device, modelTansformStorageBufferManager.buffer, nullptr);
-    vkFreeMemory(device, modelTansformStorageBufferManager.bufferMemory, nullptr);
+    vkDestroyBuffer(device, transformBufferManager.buffer, nullptr);
+    vkFreeMemory(device, transformBufferManager.bufferMemory, nullptr);
 
     vkDestroyBuffer(device, indexBufferManager.buffer, nullptr);
     vkFreeMemory(device, indexBufferManager.bufferMemory, nullptr);
@@ -987,11 +987,11 @@ void renderer::createIndexBuffer()
     vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
 }
 
-void renderer::createStorageBuffer()
+void renderer::createTransformBuffer()
 {
-    modelTansformStorageBufferManager.bufferSize = sizeof(Properties) * objectCount;
+    transformBufferManager.bufferSize = sizeof(Properties) * objectCount;
 
-    createBuffer(modelTansformStorageBufferManager);
+    createBuffer(transformBufferManager);
 
     std::vector<Properties> properties(objectCount);
 
@@ -1000,8 +1000,8 @@ void renderer::createStorageBuffer()
     }
 
     void* data;
-    vkMapMemory(device, modelTansformStorageBufferManager.bufferMemory, 0, modelTansformStorageBufferManager.bufferSize, 0, &modelTansformStorageBufferManager.handle);
-    memcpy(modelTansformStorageBufferManager.handle, properties.data(), modelTansformStorageBufferManager.bufferSize);
+    vkMapMemory(device, transformBufferManager.bufferMemory, 0, transformBufferManager.bufferSize, 0, &transformBufferManager.handle);
+    memcpy(transformBufferManager.handle, properties.data(), transformBufferManager.bufferSize);
    
 }
 
@@ -1069,7 +1069,7 @@ void renderer::createDescriptorSets()
             imageInfo.sampler = textureSampler;
 
             VkDescriptorBufferInfo storageBufferInfo{};
-            storageBufferInfo.buffer = modelTansformStorageBufferManager.buffer;
+            storageBufferInfo.buffer = transformBufferManager.buffer;
             storageBufferInfo.range = sizeof(Properties);
             storageBufferInfo.offset = sizeof(Properties) * j;
 
@@ -1260,7 +1260,7 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
 
     memcpy(uniformBufferManagers[currentImage].handle, &ubo, sizeof(ubo));
 }
-void renderer::updateStorageBuffer()
+void renderer::updateTransformBuffer()
 {
     // TODO: really light flickering of black 
     std::vector<Properties> props(objectCount);
@@ -1270,7 +1270,7 @@ void renderer::updateStorageBuffer()
         props[i].transform = gameObjects[i].properties.transform;
 
     }
-    memcpy(modelTansformStorageBufferManager.handle, props.data(), sizeof(Properties) * objectCount);
+    memcpy(transformBufferManager.handle, props.data(), sizeof(Properties) * objectCount);
 }
 
 void renderer::drawFrame(GLFWwindow* window)
@@ -1288,7 +1288,7 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateStorageBuffer();
+    updateTransformBuffer();
     updateUniformBuffer(currentFrame);
 
 
