@@ -14,7 +14,6 @@ if(result != VK_SUCCESS)                                \
 
 void renderer::initVulkan(std::unique_ptr<window>& windowObject)
 {
-    setupvertices();
     createInstance();
     setupDebugMessenger();
     createSurface(windowObject->getWindow());
@@ -31,8 +30,11 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTextureImages();
     createTextureImageViews();
     createTextureSampler();
-    createVertexbuffer();
-    createIndexBuffer();
+
+    for (int i = 0; i < objectCount; i++) {
+        createObject(gameObjects[i].mesh);
+    }
+
     createTransformBuffer();
     createUniformBuffers();
     createDescriptorPool();
@@ -66,11 +68,14 @@ void renderer::cleanupVulkan()
     vkDestroyBuffer(device, transformBufferManager.buffer, nullptr);
     vkFreeMemory(device, transformBufferManager.bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, indexBufferManager.buffer, nullptr);
-    vkFreeMemory(device, indexBufferManager.bufferMemory, nullptr);
+   
+    for (size_t i = 0; i < objectCount; i++) {
+        vkDestroyBuffer(device, indexBuffers[i].buffer, nullptr);
+        vkFreeMemory(device, indexBuffers[i].bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, vertexbufferManager.buffer, nullptr);
-    vkFreeMemory(device, vertexbufferManager.bufferMemory, nullptr);
+        vkDestroyBuffer(device, vertexBuffers[i].buffer, nullptr);
+        vkFreeMemory(device, vertexBuffers[i].bufferMemory, nullptr);
+    }
 
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -129,82 +134,6 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
 
 }
 
-std::vector<Vertex> renderer::GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize) 
-{
-    std::vector<Vertex> vertices;
-
-    float halfGridSizeX = (float)xCells * cellSize * 0.5f;
-    float halfGridSizeY = (float)yCells * cellSize * 0.5f;
-
-    for (uint32_t y = 0; y <= yCells; y++)
-    {
-        for (uint32_t x = 0; x <= xCells; x++)
-        {
-            float xPos = (float)x * cellSize - halfGridSizeX;
-            float yPos = (float)y * cellSize - halfGridSizeY;
-
-            vertices.push_back({ {xPos, yPos, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} });
-        }
-    }
-
-    //vertices.push_back({ {0,0,0}, {1.0f,1.0f,0.0f},{0.0f,0.0f} });
-    //vertices.push_back({ {1,0,0}, {1.0f,1.0f,1.0f},{0.0f,0.0f} });
-    //vertices.push_back({ {0,1,0}, {1.0f,1.0f,1.0f},{0.0f,0.0f} });
-    return vertices;
-}
-
-std::vector<uint16_t> renderer::GenerateGridIndices(uint32_t xCells, uint32_t yCells) 
-{
-    std::vector<uint16_t> indices;
-    for (uint32_t y = 0; y < yCells; y++)
-    {
-        for (uint32_t x = 0; x < xCells; x++)
-        {
-            uint32_t vertexIndex = y * (xCells + 1) + x;
-
-            indices.push_back(vertexIndex);
-            indices.push_back(vertexIndex + 1);
-            indices.push_back(vertexIndex + xCells + 1);
-
-            indices.push_back(vertexIndex + xCells + 1);
-            indices.push_back(vertexIndex + 1);
-            indices.push_back(vertexIndex + xCells + 2);
-        }
-    }
-    //indices.push_back(0);
-    //indices.push_back(1);
-    //indices.push_back(2);
-
-    return indices;
-}
-void renderer::setupvertices()
-{
-    int XCELL = 5;
-    int YCELL = 5;
-    float GRIDSIZE = 1.0f;
-
-    /*vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-    };*/
-    //vertices = {
-    //{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // bottom left
-    //{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // bottom right
-    //{{ 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // top right
-    //{{-0.5f,  0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},  // top left
-    //{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},  // bottom left
-    //{{ 1.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // bottom right
-    //{{ 1.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  // top right
-    //{{ 0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}   // top left
-    //};
-}
 
 void renderer::createInstance()
 {
@@ -929,26 +858,25 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 
 
 
-void renderer::createVertexbuffer()
+Buffermanager renderer::createVertexbuffer(Mesh mesh)
 {
-    for (int i = 0; i < objectCount; i++) {
-        vertices.insert(vertices.end(), gameObjects[i].mesh.vertices.begin(), gameObjects[i].mesh.vertices.end());
-    }
-
     Buffermanager stagingbufferManager = {
-        sizeof(Vertex) * vertices.size(),
+        sizeof(Vertex) * mesh.vertices.size(),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
-    vertexbufferManager.bufferSize = sizeof(Vertex) * vertices.size();
+    Buffermanager vertexbufferManager = {
+        sizeof(Vertex)* mesh.vertices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
 
     createBuffer(stagingbufferManager);
 
     vkMapMemory(device, stagingbufferManager.bufferMemory, 0, stagingbufferManager.bufferSize, 0, &stagingbufferManager.handle);
-    memcpy(stagingbufferManager.handle, vertices.data(), (size_t)stagingbufferManager.bufferSize);
+    memcpy(stagingbufferManager.handle, mesh.vertices.data(), (size_t)stagingbufferManager.bufferSize);
     vkUnmapMemory(device, stagingbufferManager.bufferMemory);
-
 
     createBuffer(vertexbufferManager);
 
@@ -956,27 +884,28 @@ void renderer::createVertexbuffer()
 
     vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
     vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+
+    return vertexbufferManager;
 }
 
-void renderer::createIndexBuffer()
+Buffermanager renderer::createIndexBuffer(Mesh mesh)
 {
-    
-    for (int i = 0; i < objectCount; i++) {
-        indices.insert(indices.end(), gameObjects[i].mesh.indices.begin(), gameObjects[i].mesh.indices.end());
-    }
-
     Buffermanager stagingbufferManager = {
-        sizeof(uint16_t) * indices.size(),
+        sizeof(uint16_t) * mesh.indices.size(),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
-    indexBufferManager.bufferSize = sizeof(uint16_t) * indices.size();
+    Buffermanager indexBufferManager = {
+        sizeof(uint16_t)* mesh.indices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
 
     createBuffer(stagingbufferManager);
 
     vkMapMemory(device, stagingbufferManager.bufferMemory, 0, stagingbufferManager.bufferSize, 0, &stagingbufferManager.handle);
-    memcpy(stagingbufferManager.handle, indices.data(), (size_t)stagingbufferManager.bufferSize);
+    memcpy(stagingbufferManager.handle, mesh.indices.data(), (size_t)stagingbufferManager.bufferSize);
     vkUnmapMemory(device, stagingbufferManager.bufferMemory);
 
     createBuffer(indexBufferManager);
@@ -985,6 +914,8 @@ void renderer::createIndexBuffer()
 
     vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
     vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+
+    return indexBufferManager;
 }
 
 void renderer::createTransformBuffer()
@@ -1132,6 +1063,16 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     vkBindBufferMemory(device, buffermanager.buffer, buffermanager.bufferMemory, 0);
 }
 
+void renderer::createObject(Mesh mesh)
+{
+    vertexBuffers.push_back(createVertexbuffer(mesh));
+    indexBuffers.push_back(createIndexBuffer(mesh));
+}
+
+void renderer::destroyObject()
+{
+}
+
 void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -1195,23 +1136,21 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    VkBuffer vertexBuffers[] = { vertexbufferManager.buffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-    vkCmdBindIndexBuffer(commandBuffer, indexBufferManager.buffer, 0, VK_INDEX_TYPE_UINT16);
-    uint32_t totalindex = 0;
     for (int i = 0; i < objectCount; i++) {
         int offset = i * MAX_FRAMES_IN_FLIGHT;
+
+        VkBuffer buffers[] = { vertexBuffers[i].buffer };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT16);
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
 
         // Compute the offset for the current object
         uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].mesh.indices.size());
-        
-        vkCmdDrawIndexed(commandBuffer, indexCount, 1, totalindex, 0, 0);
-        //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
-        totalindex += indexCount;
+
+        vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
     }
 
     vkCmdEndRenderPass(commandBuffer);
@@ -1260,6 +1199,10 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
 
     memcpy(uniformBufferManagers[currentImage].handle, &ubo, sizeof(ubo));
 }
+void renderer::updateVertexBuffer()
+{
+
+}
 void renderer::updateTransformBuffer()
 {
     // TODO: really light flickering of black 
@@ -1288,6 +1231,7 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
+    updateVertexBuffer();
     updateTransformBuffer();
     updateUniformBuffer(currentFrame);
 

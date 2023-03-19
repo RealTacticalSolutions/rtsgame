@@ -32,6 +32,7 @@ private:
 	};
 
 	std::vector<GameObject>& gameObjects;
+	std::vector<Mesh> meshes;
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indices;
 
@@ -101,18 +102,8 @@ private:
 	std::vector<VkDescriptorSet> descriptorSets;
 
 	std::vector<Buffermanager> uniformBufferManagers;
-
-	Buffermanager vertexbufferManager = {
-	   0,
-	   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-	};
-
-	Buffermanager indexBufferManager = {
-		0,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-	};
+	std::vector<Buffermanager> vertexBuffers;
+	std::vector<Buffermanager> indexBuffers;
 
 	Buffermanager transformBufferManager = {
 		0,
@@ -120,8 +111,6 @@ private:
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	
-
-
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -142,8 +131,6 @@ private:
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
-
-	void setupvertices();
 
 	void cleanupVulkan();
 	void cleanupSwapChain();
@@ -166,18 +153,21 @@ private:
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-	void createVertexbuffer(); 
-	void createIndexBuffer();
+	Buffermanager createVertexbuffer(Mesh mesh);
+	Buffermanager createIndexBuffer(Mesh mesh);
 	void createTransformBuffer();
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
 	void createBuffer(Buffermanager& bufferManager);
+	void createObject(Mesh mesh);
+	void destroyObject();
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
+	void updateVertexBuffer();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();

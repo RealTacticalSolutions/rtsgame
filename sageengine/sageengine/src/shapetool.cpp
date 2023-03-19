@@ -27,10 +27,12 @@ Mesh ShapeTool::generateLine(uint16_t indexoffset, float linewidth, float length
     return mesh;
 }
 
-GameObject ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cellSize, uint16_t indexOffset) {
+GameObject ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cellSize) {
     Mesh grid;
     size_t cellCountX = 10;
     size_t cellCountY = 10;
+
+    uint16_t indexOffset = 0;
 
     float xLength = endpos.x - startingpos.x;
     float yLength = endpos.y - startingpos.y;
@@ -66,20 +68,18 @@ std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
     return vertices;
 }
 
-std::vector<uint16_t> ShapeTool::generateSquareIndicies(uint32_t& offSet) 
+std::vector<uint16_t> ShapeTool::generateSquareIndicies() 
 {
-
     std::vector<uint16_t> indices;
 
-    indices.push_back(0 + offSet);
-    indices.push_back(1 + offSet);
-    indices.push_back(2 + offSet);
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
 
-    indices.push_back(2 + offSet);
-    indices.push_back(1 + offSet);
-    indices.push_back(3 + offSet);
+    indices.push_back(2);
+    indices.push_back(1);
+    indices.push_back(3);
 
-    offSet += 4;
     return indices;
 }
 
@@ -95,12 +95,12 @@ std::vector<Vertex> ShapeTool::generateRectangleVertices(float width, float heig
     return vertices;
 }
 
-GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+GameObject ShapeTool::createSquare(float width,  glm::mat4 transfrom, glm::vec3 color)
 {
 
     GameObject gameObject({
         generateSquareVertices(width),
-        generateSquareIndicies(offSet),
+        generateSquareIndicies(),
         },
         transfrom, 
         color);
@@ -108,12 +108,12 @@ GameObject ShapeTool::createSquare(float width, uint32_t& offSet, glm::mat4 tran
     return gameObject;
 }
 
-GameObject ShapeTool::createRectangle(float width,float height, uint32_t& offSet, glm::mat4 transfrom, glm::vec3 color)
+GameObject ShapeTool::createRectangle(float width,float height, glm::mat4 transfrom, glm::vec3 color)
 {
 
     GameObject gameObject({
         generateRectangleVertices(width, height),
-        generateSquareIndicies(offSet),
+        generateSquareIndicies(),
         },
         transfrom,
         color);
