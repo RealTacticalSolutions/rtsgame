@@ -32,7 +32,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTextureSampler();
 
     for (int i = 0; i < objectCount; i++) {
-        createObject(gameObjects[i].mesh);
+        createObject(gameObjects[i].mesh, gameObjects[i].properties.transform);
     }
 
     createTransformBuffer();
@@ -920,14 +920,14 @@ Buffermanager renderer::createIndexBuffer(Mesh mesh)
 
 void renderer::createTransformBuffer()
 {
-    transformBufferManager.bufferSize = sizeof(Properties) * objectCount;
+    transformBufferManager.bufferSize = sizeof(renderObjects[0].renderprops) * renderObjects.size();
 
     createBuffer(transformBufferManager);
 
-    std::vector<Properties> properties(objectCount);
+    std::vector<RenderObject::RenderProps> properties(renderObjects.size());
 
     for (int i = 0; i < objectCount; i++) {
-        properties[i] = gameObjects[i].properties;
+        properties[i] = renderObjects[i].renderprops;
     }
 
     void* data;
@@ -987,8 +987,11 @@ void renderer::createDescriptorSets()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
+    
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        for (size_t j = 0; j < objectCount; j++) {
+        size_t totalOffset = 0;
+        for (size_t j = 0; j < renderObjects.size(); j++) {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
@@ -999,15 +1002,19 @@ void renderer::createDescriptorSets()
             imageInfo.imageView = textureImageViews[j];
             imageInfo.sampler = textureSampler;
 
+            size_t range = sizeof(renderObjects[j].renderprops);
+            
             VkDescriptorBufferInfo storageBufferInfo{};
             storageBufferInfo.buffer = transformBufferManager.buffer;
-            storageBufferInfo.range = sizeof(Properties);
-            storageBufferInfo.offset = sizeof(Properties) * j;
+            storageBufferInfo.range = range;
+            storageBufferInfo.offset = totalOffset;
+
+            totalOffset = totalOffset + range;
 
             std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[0].dstSet = descriptorSets[i * objectCount + j];
+            descriptorWrites[0].dstSet = descriptorSets[i * renderObjects.size() + j];
             descriptorWrites[0].dstBinding = 0;
             descriptorWrites[0].dstArrayElement = 0;
             descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1015,7 +1022,7 @@ void renderer::createDescriptorSets()
             descriptorWrites[0].pBufferInfo = &bufferInfo;
 
             descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[1].dstSet = descriptorSets[i * objectCount + j];
+            descriptorWrites[1].dstSet = descriptorSets[i * renderObjects.size() + j];
             descriptorWrites[1].dstBinding = 1;
             descriptorWrites[1].dstArrayElement = 0;
             descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1023,7 +1030,7 @@ void renderer::createDescriptorSets()
             descriptorWrites[1].pImageInfo = &imageInfo;
 
             descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[2].dstSet = descriptorSets[i * objectCount + j];
+            descriptorWrites[2].dstSet = descriptorSets[i * renderObjects.size() + j];
             descriptorWrites[2].dstBinding = 2;
             descriptorWrites[2].dstArrayElement = 0;
             descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -1063,10 +1070,16 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     vkBindBufferMemory(device, buffermanager.buffer, buffermanager.bufferMemory, 0);
 }
 
-void renderer::createObject(Mesh mesh)
+void renderer::createObject(Mesh mesh, glm::mat4 transform)
 {
+    renderObjects.push_back({mesh , transform});
     vertexBuffers.push_back(createVertexbuffer(mesh));
     indexBuffers.push_back(createIndexBuffer(mesh));
+}
+
+void renderer::instantiateObject()
+{
+
 }
 
 void renderer::destroyObject()
@@ -1136,7 +1149,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    for (int i = 0; i < objectCount; i++) {
+    for (int i = 0; i < renderObjects.size(); i++) {
         int offset = i * MAX_FRAMES_IN_FLIGHT;
 
         VkBuffer buffers[] = { vertexBuffers[i].buffer };
@@ -1145,7 +1158,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 
         vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT16);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * renderObjects.size() + i], 0, nullptr);
 
         // Compute the offset for the current object
         uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].mesh.indices.size());
@@ -1206,14 +1219,14 @@ void renderer::updateVertexBuffer()
 void renderer::updateTransformBuffer()
 {
     // TODO: really light flickering of black 
-    std::vector<Properties> props(objectCount);
-    for (size_t i = 0; i < objectCount; i++)
+    std::vector<RenderObject::RenderProps> props(renderObjects.size());
+    for (size_t i = 0; i < renderObjects.size(); i++)
     {
         props[i].color = gameObjects[i].properties.color;
-        props[i].transform = gameObjects[i].properties.transform;
+        props[i].instances[0] = gameObjects[i].properties.transform;
 
     }
-    memcpy(transformBufferManager.handle, props.data(), sizeof(Properties) * objectCount);
+    memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
 }
 
 void renderer::drawFrame(GLFWwindow* window)

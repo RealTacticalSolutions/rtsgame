@@ -32,6 +32,7 @@ private:
 	};
 
 	std::vector<GameObject>& gameObjects;
+	std::vector<RenderObject> renderObjects;
 	std::vector<Mesh> meshes;
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indices;
@@ -160,8 +161,6 @@ private:
 	void createDescriptorPool();
 	void createDescriptorSets();
 	void createBuffer(Buffermanager& bufferManager);
-	void createObject(Mesh mesh);
-	void destroyObject();
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -213,6 +212,10 @@ public:
 
 	void initVulkan(std::unique_ptr<window>& windowObject);
 	void drawFrame(GLFWwindow* window);
+
+	void createObject(Mesh mesh, glm::mat4 transform);
+	void instantiateObject();
+	void destroyObject();
 
 	VkDevice getDevice();
 };

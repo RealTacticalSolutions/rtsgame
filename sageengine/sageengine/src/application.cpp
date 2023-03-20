@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "application.h"
 
+class Scene;
+
 void application::mainLoop()
 {
     double lastFrameTime = glfwGetTime();

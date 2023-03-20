@@ -24,6 +24,7 @@
 
 #include "vertex.h"
 #include "mesh.h"
+#include "renderobject.h"
 #include "buffermanager.h"
 #include "properties.h"
 #include "gameObject.h"
@@ -32,6 +33,8 @@
 #include "gamemath.h"
 #include "application.h"
 #include "window.h"
-#include "inputsystem.h"
 #include "renderer.h"
+#include "scene.h"
+#include "inputsystem.h"
+
 
