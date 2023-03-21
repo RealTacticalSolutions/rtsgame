@@ -51,6 +51,6 @@ static int getId(const double& id)
 		return 4;
 	}
 	else {
-		return -1;
+		return 1;
 	}
 };

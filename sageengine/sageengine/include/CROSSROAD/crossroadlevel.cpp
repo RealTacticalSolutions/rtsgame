@@ -8,14 +8,14 @@
 std::mutex g_mutex;
 std::condition_variable g_conditionVariable;
 
-bool g_serverReady = false;
+bool g_serverReady = true;
 bool server_running = true;
 bool client_running = true;
 
 
 void CrossRoadLevel::init()
 {
-    IP = "192.168.178.52";
+    IP = "141.252.214.92";
     
     PORT = "11000";
     SERVER_PORT = "11000";
@@ -23,7 +23,7 @@ void CrossRoadLevel::init()
     myClient = new client(IP, PORT, message_ref);
     myServer = new server(SERVER_PORT);
 
-    serverThread = std::thread(&server::startServer, *myServer);
+    //serverThread = std::thread(&server::startServer, *myServer);
     clientThread = std::thread(&client::startClient, *myClient);
 
 }
@@ -35,12 +35,12 @@ void CrossRoadLevel::mainLoop()
     for (messageObject m : message_ref)
     {
         //if(m.id.size() != 0 || m.color != -1 || m.color >2)
-        if (m.id != 0 && m.color != 0)
+        if (m.id != 0)
         {
             try
             {
                 // getId MUST because from double to gameobject index
-                updateColor(getId(m.id), getColor(m.color));
+                updateColor(getId(m.id), getColor(m.status));
             }
             catch (const std::exception& e)
             {
@@ -61,7 +61,7 @@ void CrossRoadLevel::cleanup()
 {
     server_running = false;
     client_running = false;
-    serverThread.join();
+    //serverThread.join();
     clientThread.join();
     //delete myClient;
     //delete myServer;

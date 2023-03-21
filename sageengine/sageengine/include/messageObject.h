@@ -4,6 +4,6 @@ class messageObject
 {
 public:
     double id;
-    int color;
+    int status;
 };
 

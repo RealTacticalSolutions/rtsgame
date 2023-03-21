@@ -178,6 +178,6 @@ void server::to_json_message(nlohmann::json& j, const std::vector<messageObject>
 {
     j = nlohmann::json::array();
     for (const auto& obj : objects) {
-        j.push_back(nlohmann::json{ {"id", obj.id}, {"color", obj.color} });
+        j.push_back(nlohmann::json{ {"id", obj.id}, {"status", obj.status} });
     }
 }

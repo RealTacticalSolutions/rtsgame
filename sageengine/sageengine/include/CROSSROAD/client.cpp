@@ -76,11 +76,14 @@ void client::startClient()
     int weight3 = 0;
     int weight4 = 0;
     while (client_running) {
+        // Wait for 0.5 seconds before sending the next message
+        Sleep(500);
         // Send the message to the server
         std::vector<trafficStatusObject> messageclient = { { id1, weight1 }, {id2, weight2}, {id3, weight3}, {id4, weight4} };
         nlohmann::json dataclient;
         client::to_json_traffic(dataclient, messageclient);
         std::string dataStr = dataclient.dump(); // Convert the JSON object to a string
+        dataStr += "\n"; // Add newline character
         const char* sendData = dataStr.c_str();
         int bytesSent = send(clientSocket, sendData, strlen(sendData), 0);
         if (bytesSent == SOCKET_ERROR) {
@@ -89,6 +92,7 @@ void client::startClient()
             WSACleanup();
             return;
         }
+        std::cout << "message created" << std::endl;
         weight1 = distrclient(genclient);
         weight2 = distrclient(genclient);
         weight3 = distrclient(genclient);
@@ -103,6 +107,7 @@ void client::startClient()
             WSACleanup();
             return;
         }
+        std::cout << "message received" << std::endl;
         // Add null terminator to received data
         recvBuf[bytesReceived] = '\0';
 
@@ -114,18 +119,27 @@ void client::startClient()
         // Todo:: temporary we need a buffer for messages, otherwise it overwrites and crashes
         while (!message.empty())
         {
+            std::cout << "message wait loop" << std::endl;
+            continue;
         }
         // Parse the JSON data into a vector of TrafficObjects
-        nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
-        for (const auto& obj : dataserver) {
-            message.push_back({ obj["id"], obj["color"] });
-            // Print the received data to the console
-            std::cout << "Received struct from server: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
+        try
+        {
+             nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
+            for (const auto& obj : dataserver) {
+                message.push_back({ obj["id"], obj["status"] });
+                // Print the received data to the console
+                std::cout << "Received struct from server: id = " << obj["id"] << ", color = " << obj["status"] << std::endl;
+            }
+            std::cout << "send message / data" << std::endl;
         }
+		catch (const std::exception e)
+		{
+			std::cout << "error parsing json" << std::endl;
+		}
 
 
-        // Wait for 3.5 seconds before sending the next message
-        Sleep(3500);
+        
     }
 
     // Close the socket and clean up Winsock
@@ -135,14 +149,14 @@ void client::startClient()
 }
 void client::to_json(nlohmann::json& j, const messageObject& s) 
 {
-    j = nlohmann::json{ { {"id", s.id}, {"color", s.color}} };
+    j = nlohmann::json{ { {"id", s.id}, {"status", s.status}} };
 }
 
 void client::to_json_message(nlohmann::json& j, const std::vector<messageObject>& objects)
 {
     j = nlohmann::json::array();
     for (const auto& obj : objects) {
-        j.push_back(nlohmann::json{ {"id", obj.id}, {"color", obj.color} });
+        j.push_back(nlohmann::json{ {"id", obj.id}, {"status", obj.status} });
     }
 }
 
