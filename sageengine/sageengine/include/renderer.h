@@ -166,7 +166,6 @@ private:
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
-	void updateVertexBuffer();
 	bool checkValidationLayerSupport();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	void setupDebugMessenger();

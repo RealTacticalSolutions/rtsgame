@@ -27,7 +27,7 @@ Mesh ShapeTool::generateLine(uint16_t indexoffset, float linewidth, float length
     return mesh;
 }
 
-GameObject ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cellSize) {
+Mesh ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cellSize) {
     Mesh grid;
     size_t cellCountX = 10;
     size_t cellCountY = 10;
@@ -53,7 +53,7 @@ GameObject ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, floa
         indexOffset += 4;
     }
 
-    return GameObject(grid, glm::mat4(1.0f), glm::vec3(1.0f));
+    return grid;
 }
 
 std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
@@ -64,6 +64,11 @@ std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
     vertices[1].pos = glm::vec3(width, -width, 0.0f);
     vertices[2].pos = glm::vec3(-width, width, 0.0f);
     vertices[3].pos = glm::vec3(width, width, 0.0f);
+
+    vertices[0].texCoord.x = 1.0f;
+    vertices[0].texCoord.y = 1.0f;
+    vertices[1].texCoord.y = 1.0f;
+    vertices[2].texCoord.x = 1.0f;
 
     return vertices;
 }
@@ -95,17 +100,16 @@ std::vector<Vertex> ShapeTool::generateRectangleVertices(float width, float heig
     return vertices;
 }
 
-GameObject ShapeTool::createSquare(float width,  glm::mat4 transfrom, glm::vec3 color)
+Mesh ShapeTool::createSquare(float width)
 {
 
-    GameObject gameObject({
+    Mesh mesh({
         generateSquareVertices(width),
-        generateSquareIndicies(),
-        },
-        transfrom, 
-        color);
+        generateSquareIndicies()
+        });
+      
 
-    return gameObject;
+    return mesh;
 }
 
 GameObject ShapeTool::createRectangle(float width,float height, glm::mat4 transfrom, glm::vec3 color)

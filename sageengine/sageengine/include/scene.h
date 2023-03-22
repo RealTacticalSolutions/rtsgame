@@ -14,8 +14,9 @@ public:
 	std::vector<GameObject> gameObjects;
 	std::vector<RenderObject> renderObjects;
 
-	void blueprintObject(GameObject gameObject);
-	void instantiateObject(int index, int instanceIndex, glm::mat4 transform);
+	void blueprintObject(Mesh mesh);
+	void blueprintObject(Mesh mesh, char* texture);
+	void instantiateObject(int index, int instanceIndex, glm::mat4 transform, glm::vec3 color);
 	void removeObject();
 
 	std::unique_ptr<renderer> renderer;

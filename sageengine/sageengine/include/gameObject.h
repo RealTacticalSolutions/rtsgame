@@ -7,7 +7,7 @@ public:
 	char* texture;
 	Properties properties;
 	int instanceId = -1;
-	int renderObjectIndex = -1;
+	int renderObjectIndex;
 
 
 	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color) : mesh(mesh), properties{transform, color} {

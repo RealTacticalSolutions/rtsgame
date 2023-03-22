@@ -31,7 +31,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTextureImageViews();
     createTextureSampler();
 
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < objectCount; i++) {
         createObject(renderObjects[i]);
     }
 
@@ -1211,17 +1211,14 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
 
     memcpy(uniformBufferManagers[currentImage].handle, &ubo, sizeof(ubo));
 }
-void renderer::updateVertexBuffer()
-{
 
-}
 void renderer::updateTransformBuffer()
 {
     // TODO: really light flickering of black 
     std::vector<RenderObject::RenderProps> props(renderObjects.size());
     for (size_t i = 0; i < renderObjects.size(); i++)
     {
-        props[i].color = renderObjects[i].renderprops.color;
+        props[i].color[0] = renderObjects[i].renderprops.color[0];
         props[i].instances[0] = renderObjects[i].renderprops.instances[0];
 
     }
@@ -1243,8 +1240,7 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateVertexBuffer();
-    updateTransformBuffer();
+    //updateTransformBuffer();
     updateUniformBuffer(currentFrame);
 
 
