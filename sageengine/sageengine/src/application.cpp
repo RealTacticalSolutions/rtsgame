@@ -70,23 +70,6 @@ void application::constructGameobjects()
     int xCells = 1;
     int yCells = 1;
     float cellSize = 0.05f;
-
-    scene.blueprintObject(ShapeTool::createSquare(cellSize));
-   
-    scene.blueprintObject(ShapeTool::createSquare(cellSize));
-
-    scene.blueprintObject(ShapeTool::createSquare(cellSize));
-
-    scene.blueprintObject(ShapeTool::createSquare(cellSize));
-
-    scene.blueprintObject(ShapeTool::createSquare(0.2f));
-
-    glm::vec4 gridStart = glm::vec4(scene.bluePrints[0].mesh.vertices[0].pos, 1.0f) * scene.bluePrints[0].properties.transform;
-    glm::vec4 gridEnd = glm::vec4(scene.bluePrints[0].mesh.vertices[2].pos, 1.0f) * scene.bluePrints[0].properties.transform;
-    float cellCount = 1;
-    
-    scene.blueprintObject(ShapeTool::generateGrid(gridStart, gridEnd, cellCount));
-
 }
 
 void application::initWindow()
@@ -107,34 +90,9 @@ void application::start()
 {
     scene.instantiateObject(0, 0, glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
-    scene.instantiateObject(0, 1, glm::translate(glm::mat4(1.0f),glm::vec3(1.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    scene.instantiateObject(0, 2, glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.9f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    scene.instantiateObject(0, 1, glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
-    glm::vec3 color = glm::vec3(0.0f, 1.0f, 1.0f);
-    glm::vec3 position1(-0.10f, 0.22f, 1.0f);
-    glm::mat4 transform1(1.0f);
-    transform1[3] = glm::vec4(position1, 1.0f);
-
-    color = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::vec3 position2(-0.22f, -0.10f, 1.0f);
-    glm::mat4 transform2(1.0f);
-    transform2[3] = glm::vec4(position2, 1.0f);
-
-    color = glm::vec3(1.0f, 0.0f, 1.0f);
-    glm::vec3 position3(0.22f, 0.10f, 1.0f);
-    glm::mat4 transform3(1.0f);
-    transform3[3] = glm::vec4(position3, 1.0f);
-
-    color = glm::vec3(1.0f, 1.0f, 0.0f);
-    glm::vec3 position4(0.10f, -0.22f, 1.0f);
-    glm::mat4 transform4(1.0f);
-    transform4[3] = glm::vec4(position4, 1.0f);
-
-
-    glm::vec3 newPosition(0.0f, 1.0f, 1.0f);
-    glm::mat4 transform(1.0f);
-    transform[3] = glm::vec4(newPosition, 1.0f);
-
+    scene.instantiateObject(0, 2, glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
 }
 
 void application::cleanup()

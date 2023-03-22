@@ -1218,9 +1218,11 @@ void renderer::updateTransformBuffer()
     std::vector<RenderObject::RenderProps> props(renderObjects.size());
     for (size_t i = 0; i < renderObjects.size(); i++)
     {
-        props[i].color[0] = renderObjects[i].renderprops.color[0];
-        props[i].instances[0] = renderObjects[i].renderprops.instances[0];
-
+        for (size_t j = 0; j < renderObjects[i].instanceCount; j++)
+        {
+            props[i].color[j] = renderObjects[i].renderprops.color[j];
+            props[i].instances[j] = renderObjects[i].renderprops.instances[j];
+        }
     }
     memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
 }
@@ -1240,7 +1242,7 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    //updateTransformBuffer();
+    updateTransformBuffer();
     updateUniformBuffer(currentFrame);
 
 

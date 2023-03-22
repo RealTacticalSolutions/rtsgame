@@ -18,7 +18,7 @@ void Scene::blueprintObject(Mesh mesh, char* texture)
 void Scene::instantiateObject(int index, int instanceIndex, glm::mat4 transform, glm::vec3 color)
 {
 	renderObjects[index].instanceCount += 1;
-	renderObjects[index].renderprops.color[instanceIndex] = color;
+	renderObjects[index].renderprops.color[instanceIndex] = glm::vec4(color, 1.0f);
 	renderObjects[index].renderprops.instances[instanceIndex] = transform;
 }
 
