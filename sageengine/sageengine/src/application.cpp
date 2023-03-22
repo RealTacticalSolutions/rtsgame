@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "application.h"
 
-class Scene;
-
 void application::mainLoop()
 {
     double lastFrameTime = glfwGetTime();
@@ -37,6 +35,7 @@ void application::mainLoop()
             glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
            // std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
             //std::cout << "world X: " << worldpos.x << "  world Y: " << worldpos.y << "  world Z: " << worldpos.z << std::endl;
+            //scene.addObject();
         }
 
         fps++;
@@ -48,27 +47,26 @@ void application::mainLoop()
             lastSecondTime = currentFrameTime;
         }
     }
-    vkDeviceWaitIdle(vulkanrenderer->getDevice());
+    vkDeviceWaitIdle(scene.renderer->getDevice());
 }
 
 void application::drawFrame()
 {
-	vulkanrenderer->renderer::drawFrame(windowObject->getWindow());
+	scene.renderer->renderer::drawFrame(windowObject->getWindow());
 }
 void application::updateColor(int index, glm::vec3 color)
 {
-    gameObjects[index].properties.color = color;
+    scene.bluePrints[index].properties.color = color;
 };
 void application::updateColorAddition(int index, glm::vec3 color)
 {
-    gameObjects[index].properties.color = gameObjects[index].properties.color + color;
+    scene.bluePrints[index].properties.color = scene.bluePrints[index].properties.color + color;
 };
 
-std::vector<GameObject> application::constructGameobjects()
+void application::constructGameobjects()
 {
-
-    gameObjects.push_back(GameObject(
-        { { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
+    scene.blueprintObject(GameObject(
+    { { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
         { {0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} },
         { {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} },
         { {-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} } },
@@ -79,6 +77,7 @@ std::vector<GameObject> application::constructGameobjects()
         "../../../textures/crossroadtexture1.jpg"
         //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     ));
+  
     
     int xCells = 1;
     int yCells = 1;
@@ -89,52 +88,61 @@ std::vector<GameObject> application::constructGameobjects()
     glm::mat4 transform1(1.0f);
     transform1[3] = glm::vec4(position1, 1.0f);
 
-    gameObjects.push_back(ShapeTool::createSquare(cellSize, transform1,color));
+    scene.blueprintObject(ShapeTool::createSquare(cellSize, transform1,color));
  
     color = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 position2(-0.22f, -0.10f, 1.0f);
     glm::mat4 transform2(1.0f);
     transform2[3] = glm::vec4(position2, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(cellSize, transform2, color));
+    scene.blueprintObject(ShapeTool::createSquare(cellSize, transform2, color));
 
     color = glm::vec3(1.0f, 0.0f, 1.0f);
     glm::vec3 position3(0.22f, 0.10f, 1.0f);
     glm::mat4 transform3(1.0f);
     transform3[3] = glm::vec4(position3, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(cellSize, transform3, color));
+    scene.blueprintObject(ShapeTool::createSquare(cellSize, transform3, color));
 
     color = glm::vec3(1.0f, 1.0f, 0.0f);
     glm::vec3 position4(0.10f, -0.22f, 1.0f);
     glm::mat4 transform4(1.0f);
     transform4[3] = glm::vec4(position4, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(cellSize, transform4, color));
+    scene.blueprintObject(ShapeTool::createSquare(cellSize, transform4, color));
 
     glm::vec3 newPosition(0.0f, 1.0f, 1.0f);
     glm::mat4 transform(1.0f);
     transform[3] = glm::vec4(newPosition, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(0.2f,  transform, glm::vec3(1.0f, 0.0f, 0.0f)));
+    scene.blueprintObject(ShapeTool::createSquare(0.2f,  transform, glm::vec3(1.0f, 0.0f, 0.0f)));
     
     bool test = 1;
 
-    glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;
-    glm::vec4 gridEnd = glm::vec4(gameObjects[0].mesh.vertices[2].pos, 1.0f) * gameObjects[0].properties.transform;
+    glm::vec4 gridStart = glm::vec4(scene.bluePrints[0].mesh.vertices[0].pos, 1.0f) * scene.bluePrints[0].properties.transform;
+    glm::vec4 gridEnd = glm::vec4(scene.bluePrints[0].mesh.vertices[2].pos, 1.0f) * scene.bluePrints[0].properties.transform;
     float cellCount = 1;
-    gameObjects.push_back(ShapeTool::generateGrid(gridStart, gridEnd, cellCount));
+    scene.blueprintObject(ShapeTool::generateGrid(gridStart, gridEnd, cellCount));
 
-    return gameObjects;
 }
 
 void application::initWindow()
 {
-    gameObjects = constructGameobjects();
-    int objectCount = gameObjects.size();
+    constructGameobjects();
+    start();
+    int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
-	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
+	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
     
 
 	vulkanrenderer->initVulkan(std::move(windowObject));
+    scene.renderer = std::move(vulkanrenderer);
+}
 
+void application::start()
+{
+    scene.instantiateObject(0, 0, glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)));
+    scene.instantiateObject(1, 0, glm::mat4(1.0f));
+    scene.instantiateObject(2, 0, glm::mat4(1.0f));
+    scene.instantiateObject(3, 0, glm::mat4(1.0f));
+    scene.instantiateObject(4, 0, glm::mat4(1.0f));
 }
 
 void application::cleanup()

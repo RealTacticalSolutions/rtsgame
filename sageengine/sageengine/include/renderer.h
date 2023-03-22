@@ -1,6 +1,7 @@
 #pragma once
 
 
+
 class renderer
 {
 private:
@@ -31,8 +32,7 @@ private:
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
-	std::vector<GameObject>& gameObjects;
-	std::vector<RenderObject> renderObjects;
+	std::vector<RenderObject>& renderObjects;
 	std::vector<Mesh> meshes;
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indices;
@@ -196,7 +196,7 @@ private:
 
 public:
 
-	renderer(Camera& mainCamera, int objectCount, std::vector<GameObject>& gameObjects) : camera(mainCamera), objectCount(objectCount), gameObjects(gameObjects)
+	renderer(Camera& mainCamera, int objectCount, std::vector<RenderObject>& renderObjects) : camera(mainCamera), objectCount(objectCount), renderObjects(renderObjects)
 	{
 		
 	}
@@ -213,7 +213,7 @@ public:
 	void initVulkan(std::unique_ptr<window>& windowObject);
 	void drawFrame(GLFWwindow* window);
 
-	void createObject(Mesh mesh, glm::mat4 transform);
+	void createObject(RenderObject renderObject);
 	void instantiateObject();
 	void destroyObject();
 

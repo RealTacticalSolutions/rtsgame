@@ -8,5 +8,6 @@ struct RenderObject
 
 	Mesh mesh;
 	RenderProps renderprops;
-	
+	char* texture;
+	int instanceCount = 0;
 };

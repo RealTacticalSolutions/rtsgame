@@ -31,10 +31,10 @@
 #include "shapetool.h"
 #include "camera.h"
 #include "gamemath.h"
-#include "application.h"
+#include "scene.h"
 #include "window.h"
 #include "renderer.h"
-#include "scene.h"
+#include "application.h"
 #include "inputsystem.h"
 
 

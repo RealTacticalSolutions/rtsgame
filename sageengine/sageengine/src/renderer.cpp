@@ -31,8 +31,8 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTextureImageViews();
     createTextureSampler();
 
-    for (int i = 0; i < objectCount; i++) {
-        createObject(gameObjects[i].mesh, gameObjects[i].properties.transform);
+    for (int i = 0; i < 7; i++) {
+        createObject(renderObjects[i]);
     }
 
     createTransformBuffer();
@@ -639,7 +639,7 @@ void renderer::createTextureImages() {
     for (size_t i = 0; i < objectCount; i++)
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(gameObjects[i].texture, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(renderObjects[i].texture, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         if (!pixels) {
@@ -1070,11 +1070,10 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     vkBindBufferMemory(device, buffermanager.buffer, buffermanager.bufferMemory, 0);
 }
 
-void renderer::createObject(Mesh mesh, glm::mat4 transform)
+void renderer::createObject(RenderObject renderObject)
 {
-    renderObjects.push_back({mesh , transform});
-    vertexBuffers.push_back(createVertexbuffer(mesh));
-    indexBuffers.push_back(createIndexBuffer(mesh));
+    vertexBuffers.push_back(createVertexbuffer(renderObject.mesh));
+    indexBuffers.push_back(createIndexBuffer(renderObject.mesh));
 }
 
 void renderer::instantiateObject()
@@ -1161,9 +1160,9 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * renderObjects.size() + i], 0, nullptr);
 
         // Compute the offset for the current object
-        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].mesh.indices.size());
+        uint32_t indexCount = static_cast<uint32_t>(renderObjects[i].mesh.indices.size());
 
-        vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, indexCount, renderObjects[i].instanceCount, 0, 0, 0);
     }
 
     vkCmdEndRenderPass(commandBuffer);
@@ -1222,8 +1221,8 @@ void renderer::updateTransformBuffer()
     std::vector<RenderObject::RenderProps> props(renderObjects.size());
     for (size_t i = 0; i < renderObjects.size(); i++)
     {
-        props[i].color = gameObjects[i].properties.color;
-        props[i].instances[0] = gameObjects[i].properties.transform;
+        props[i].color = renderObjects[i].renderprops.color;
+        props[i].instances[0] = renderObjects[i].renderprops.instances[0];
 
     }
     memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
