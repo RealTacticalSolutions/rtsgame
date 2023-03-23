@@ -3,19 +3,17 @@
 class GameObject
 {
 public:
-	const Mesh mesh;
-	char* texture;
+	RenderObject* renderObject;
 	Properties properties;
 	int instanceId = -1;
-	int renderObjectIndex;
 
 
-	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color) : mesh(mesh), properties{transform, color} {
-		texture = "../../../textures/default.png";
+	GameObject(RenderObject* renderObject, glm::mat4 transform, glm::vec3 color) : renderObject(renderObject), properties{transform, color} {
+
 		
 	};
 
-	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color, char* texture) : mesh(mesh), properties{ transform, color }, texture(texture) {
+	GameObject(RenderObject* renderObject, glm::mat4 transform, glm::vec3 color, char* texture) : renderObject(renderObject), properties{ transform, color } {
 
 	};
 

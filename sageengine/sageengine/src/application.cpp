@@ -56,20 +56,22 @@ void application::drawFrame()
 }
 void application::updateColor(int index, glm::vec3 color)
 {
-    scene.bluePrints[index].properties.color = color;
+    scene.gameObjects[index].properties.color = color;
 };
 void application::updateColorAddition(int index, glm::vec3 color)
 {
-    scene.bluePrints[index].properties.color = scene.bluePrints[index].properties.color + color;
+    scene.gameObjects[index].properties.color = scene.gameObjects[index].properties.color + color;
 };
 
 void application::constructGameobjects()
 {
     scene.blueprintObject(ShapeTool::createSquare(0.5f), "../../../textures/1.jpg");
-  
-    int xCells = 1;
-    int yCells = 1;
-    float cellSize = 0.05f;
+
+   /* glm::vec4 gridStart = glm::vec4(scene.gameObjects[0].mesh.vertices[0].pos, 1.0f) * scene.gameObjects[0].properties.transform;
+    glm::vec4 gridEnd = glm::vec4(scene.gameObjects[0].mesh.vertices[2].pos, 1.0f) * scene.gameObjects[0].properties.transform;
+    float cellCount = 1;
+
+    scene.blueprintObject(ShapeTool::generateGrid(gridStart, gridEnd, cellCount));*/
 }
 
 void application::initWindow()
@@ -88,11 +90,11 @@ void application::initWindow()
 
 void application::start()
 {
-    scene.instantiateObject(0, 0, glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
-    scene.instantiateObject(0, 1, glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
-    scene.instantiateObject(0, 2, glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
 }
 
 void application::cleanup()

@@ -112,15 +112,13 @@ Mesh ShapeTool::createSquare(float width)
     return mesh;
 }
 
-GameObject ShapeTool::createRectangle(float width,float height, glm::mat4 transfrom, glm::vec3 color)
+Mesh ShapeTool::createRectangle(float width,float height)
 {
 
-    GameObject gameObject({
+    Mesh mesh({
         generateRectangleVertices(width, height),
         generateSquareIndicies(),
-        },
-        transfrom,
-        color);
+        });
 
-    return gameObject;
+    return mesh;
 }

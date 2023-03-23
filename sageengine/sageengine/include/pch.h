@@ -25,6 +25,7 @@
 #include "vertex.h"
 #include "mesh.h"
 #include "renderobject.h"
+#include "blueprint.h"
 #include "buffermanager.h"
 #include "properties.h"
 #include "gameObject.h"

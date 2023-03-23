@@ -15,5 +15,5 @@ public:
 	static Mesh generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cellSize);
 	static Mesh generateLine(uint16_t indexoffset, float linewidth, float length, glm::vec3 position, float rotationDeg, glm::vec3 rotationAxis, glm::vec3 color);
 	static Mesh createSquare(float width);
-	static GameObject createRectangle(float width, float height,  glm::mat4 transfrom, glm::vec3 color);
+	static Mesh createRectangle(float width, float height);
 };
