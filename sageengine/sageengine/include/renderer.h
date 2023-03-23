@@ -33,6 +33,7 @@ private:
 	};
 
 	std::vector<RenderObject>& renderObjects;
+	std::vector<GameObject>& gameObjects;
 	std::vector<Mesh> meshes;
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indices;
@@ -195,7 +196,7 @@ private:
 
 public:
 
-	renderer(Camera& mainCamera, int objectCount, std::vector<RenderObject>& renderObjects) : camera(mainCamera), objectCount(objectCount), renderObjects(renderObjects)
+	renderer(Camera& mainCamera, int objectCount, std::vector<RenderObject>& renderObjects, std::vector<GameObject>& gameObjects) : camera(mainCamera), objectCount(objectCount), renderObjects(renderObjects), gameObjects(gameObjects)
 	{
 		
 	}

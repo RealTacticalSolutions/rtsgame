@@ -15,10 +15,7 @@ void application::mainLoop()
         double delta = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
 
-        //updateColor(1, glm::vec3(1.0f,1.0f,1.0f));
-        //updateColorAddition(1, glm::vec3(0.0001f, 0.0001f, 0.0001f));
-        //updateColorAddition(3, glm::vec3(0.0001f, 0.0001f, 0.0001f));
-        //updateColorAddition(4, glm::vec3(0.0001f, 0.0001f, 0.0001f));
+        //updateColorAddition(0, glm::vec3(0.0001f, 0.0001f, 0.0001f));
         glfwPollEvents();
         drawFrame();
 
@@ -29,6 +26,7 @@ void application::mainLoop()
         input.updateInput();
 
         if (test) {
+            scene.removeObject(0);
             int width = 0, height = 0;
             
             glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
@@ -80,9 +78,8 @@ void application::initWindow()
     start();
     int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
-	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects);
+	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
-    
 
 	vulkanrenderer->initVulkan(std::move(windowObject));
     scene.renderer = std::move(vulkanrenderer);

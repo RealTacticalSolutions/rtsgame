@@ -17,7 +17,7 @@ public:
 	void blueprintObject(Mesh mesh);
 	void blueprintObject(Mesh mesh, char* texture);
 	void instantiateObject(BluePrint bluePrint, glm::mat4 transform, glm::vec3 color);
-	void removeObject();
+	void removeObject(int index);
 
 	std::unique_ptr<renderer> renderer;
 

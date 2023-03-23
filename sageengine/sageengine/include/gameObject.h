@@ -5,18 +5,13 @@ class GameObject
 public:
 	RenderObject* renderObject;
 	Properties properties;
-	int instanceId = -1;
+	int instanceId;
 
 
-	GameObject(RenderObject* renderObject, glm::mat4 transform, glm::vec3 color) : renderObject(renderObject), properties{transform, color} {
+	GameObject(RenderObject* renderObject, glm::mat4 transform, glm::vec3 color, int instanceId = -1) : renderObject(renderObject), properties{transform, color}, instanceId(instanceId) {
 
 		
 	};
-
-	GameObject(RenderObject* renderObject, glm::mat4 transform, glm::vec3 color, char* texture) : renderObject(renderObject), properties{ transform, color } {
-
-	};
-
 	
 private:
 
