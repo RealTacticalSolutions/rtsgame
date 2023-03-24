@@ -63,7 +63,11 @@ void application::updateColorAddition(int index, glm::vec3 color)
 
 void application::constructGameobjects()
 {
+    scene.renderObjects.reserve(10);
+
     scene.blueprintObject(ShapeTool::createSquare(0.5f), "../../../textures/1.jpg");
+
+    scene.blueprintObject(ShapeTool::createSquare(0.1f));
 
    /* glm::vec4 gridStart = glm::vec4(scene.gameObjects[0].mesh.vertices[0].pos, 1.0f) * scene.gameObjects[0].properties.transform;
     glm::vec4 gridEnd = glm::vec4(scene.gameObjects[0].mesh.vertices[2].pos, 1.0f) * scene.gameObjects[0].properties.transform;
@@ -92,6 +96,8 @@ void application::start()
     scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
     scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
 }
 
 void application::cleanup()
