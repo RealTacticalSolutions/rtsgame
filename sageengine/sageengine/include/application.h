@@ -6,6 +6,13 @@ class window;
 
 class application {
 private:
+	struct car
+	{
+		int index;
+		int currentwaypoint;
+		WayPoints waypoints;
+	};
+
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
 
@@ -23,14 +30,15 @@ private:
 
 	Scene scene;
 	Camera camera;
-	std::vector<GameObject> gameObjects;
 	std::vector<messageObject> message;
-
+	std::vector<car> cars;
+	WayPoints path;
 
 	void updateColor(int index, glm::vec3 color);
 	void updateColorAddition(int index, glm::vec3 color);
 	bool approxEqual(glm::vec3 a, glm::vec3 b, float epsilon);
 	void updateWayPoints();
+	void initWayPoints();
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()

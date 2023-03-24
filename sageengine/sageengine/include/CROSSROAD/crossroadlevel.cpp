@@ -15,7 +15,7 @@ bool client_running = true;
 
 void CrossRoadLevel::init()
 {
-    IP = "141.252.214.92";
+    IP = "127.0.0.1";
     
     PORT = "11000";
     SERVER_PORT = "11000";
@@ -25,7 +25,6 @@ void CrossRoadLevel::init()
 
     //serverThread = std::thread(&server::startServer, *myServer);
     clientThread = std::thread(&client::startClient, *myClient);
-
 }
 
 void CrossRoadLevel::mainLoop()
