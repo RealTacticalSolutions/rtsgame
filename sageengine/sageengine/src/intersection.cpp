@@ -24,8 +24,8 @@ std::vector<glm::vec3> Intersection::getTransformVertices(std::vector<Vertex> ve
 
 bool Intersection::intersectSquares(GameObject& square1, GameObject& square2)
 {
-    std::vector<glm::vec3> square1_vertices = getTransformVertices(square1.mesh.vertices, square1.properties.transform);
-    std::vector<glm::vec3> square2_vertices = getTransformVertices(square2.mesh.vertices, square2.properties.transform);
+    std::vector<glm::vec3> square1_vertices = getTransformVertices(square1.renderObject->mesh.vertices, square1.properties.transform);
+    std::vector<glm::vec3> square2_vertices = getTransformVertices(square2.renderObject->mesh.vertices, square2.properties.transform);
 
     return checkSquareIntersection(square1_vertices, square2_vertices);
 }

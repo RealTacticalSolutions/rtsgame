@@ -3,31 +3,16 @@
 class GameObject
 {
 public:
-	const Mesh mesh;
-	char* texture;
+	RenderObject* renderObject;
 	Properties properties;
-	WayPoints waypoints;
+	int instanceId;
 
-	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color) : mesh(mesh), properties{transform, color} 
-	{
-		texture = "../../../textures/default.png";
 
+	GameObject(RenderObject* renderObject, glm::mat4 transform, glm::vec3 color, int instanceId = -1) : renderObject(renderObject), properties{transform, color}, instanceId(instanceId) {
+
+		
 	};
-
-	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color, char* texture) : mesh(mesh), properties{ transform, color }, texture(texture) 
-	{
-
-	};
-	GameObject(Mesh mesh, glm::mat4 transform, glm::vec3 color, WayPoints waypoints) : mesh(mesh), properties{ transform, color }, waypoints(waypoints)
-	{
-
-	};
-
-	GameObject(glm::mat4 transform, glm::vec3 color) :  properties{ transform, color } 
-	{
-
-	};
-
+	
 private:
 
 };

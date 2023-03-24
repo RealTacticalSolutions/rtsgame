@@ -22,7 +22,8 @@ void application::mainLoop()
         double currentFrameTime = glfwGetTime();
         double delta = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
-        
+
+        //updateColorAddition(0, glm::vec3(0.0001f, 0.0001f, 0.0001f));
         glfwPollEvents();
 
         level.mainLoop();
@@ -37,7 +38,14 @@ void application::mainLoop()
         input.updateInput();
 
         if (test) {
-            std::cout << "X: " << cursorPos.x << "  Y: " << cursorPos.y << std::endl;
+            scene.removeObject(0);
+            int width = 0, height = 0;
+            
+            glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
+            glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
+           // std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
+            //std::cout << "world X: " << worldpos.x << "  world Y: " << worldpos.y << "  world Z: " << worldpos.z << std::endl;
+            //scene.addObject();
         }
 
         fps++;
@@ -49,112 +57,59 @@ void application::mainLoop()
             lastSecondTime = currentFrameTime;
         }
     }
-
-    vkDeviceWaitIdle(vulkanrenderer->getDevice());
-    level.cleanup();
+    vkDeviceWaitIdle(scene.renderer->getDevice());
 }
 
 void application::drawFrame()
 {
-	vulkanrenderer->renderer::drawFrame(windowObject->getWindow());
+	scene.renderer->renderer::drawFrame(windowObject->getWindow());
 }
 void application::updateColor(int index, glm::vec3 color)
 {
-    gameObjects[index].properties.color = color;
+    scene.gameObjects[index].properties.color = color;
 };
 void application::updateColorAddition(int index, glm::vec3 color)
 {
-    gameObjects[index].properties.color = gameObjects[index].properties.color + color;
+    scene.gameObjects[index].properties.color = scene.gameObjects[index].properties.color + color;
 };
 
-std::vector<GameObject> application::constructGameobjects()
+void application::constructGameobjects()
 {
+    scene.renderObjects.reserve(10);
 
-    gameObjects.push_back(GameObject(
-        { { { {-0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
-        { {0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} },
-        { {0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f} },
-        { {-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} } },
+    scene.blueprintObject(ShapeTool::createSquare(0.5f), "../../../textures/1.jpg");
 
-        {  0, 1, 2, 2, 3, 0  } },
-        glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f,1.0f,1.0f),
+    scene.blueprintObject(ShapeTool::createSquare(0.1f));
 
-        "../../../textures/crossroadtexture1.jpg"
-        //glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f))
-    ));
-    uint32_t offSet = gameObjects[0].mesh.vertices.size();
-    
-    int xCells = 1;
-    int yCells = 1;
-
-    float cellSize = 0.05f;
-
-    glm::vec3 color = glm::vec3(1.0f,0.0f,0.0f);
-    glm::vec3 position1(-0.10f, 0.22f, 1.0f);
-    glm::mat4 transform1(1.0f);
-    transform1[3] = glm::vec4(position1, 1.0f);
-
-    gameObjects.push_back(ShapeTool::createSquare(cellSize, offSet,transform1,color));
- 
-
-    glm::vec3 position2(-0.22f, -0.10f, 1.0f);
-    glm::mat4 transform2(1.0f);
-    transform2[3] = glm::vec4(position2, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform2,color));
-
-    glm::vec3 position3(0.22f, 0.10f, 1.0f);
-    glm::mat4 transform3(1.0f);
-    transform3[3] = glm::vec4(position3, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform3,color));
-
-    glm::vec3 position4(0.10f, -0.22f, 1.0f);
-    glm::mat4 transform4(1.0f);
-    transform4[3] = glm::vec4(position4, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(cellSize,offSet,transform4,color));
-
-
-    glm::vec3 newPosition(0.0f, 1.0f, 1.0f);
-    glm::mat4 transform(1.0f);
-    transform[3] = glm::vec4(newPosition, 1.0f);
-    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform, glm::vec3(1.0f, 0.0f, 0.0f)));
-
-    glm::vec3 newPosition5(0.0f, -1.0f, 1.0f);
-    glm::mat4 transform5(1.0f);
-    transform5[3] = glm::vec4(newPosition5, 1.0f);
-    WayPoints waypoints ({ glm::vec3(newPosition5) ,glm::vec3(0.0f,1.0f,1.0f), glm::vec3(1.5f,1.0f,1.0f) });
-    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform5, glm::vec3(1.0f, 0.0f, 0.0f)));
-    gameObjects.back().waypoints = waypoints;
-
-    glm::vec3 newPosition6(0.0f, -1.5f, 1.0f);
-    glm::mat4 transform6(1.0f);
-    transform6[3] = glm::vec4(newPosition6, 1.0f);
-    WayPoints waypoints2({ glm::vec3(newPosition6) ,glm::vec3(0.0f,0.0f,1.0f), glm::vec3(1.5f,0.0f,1.0f) });
-    gameObjects.push_back(ShapeTool::createSquare(0.2f, offSet, transform6, glm::vec3(1.0f, 1.0f, 0.0f)));
-    gameObjects.back().waypoints = waypoints2;
-
-   
-    bool test = 1;
-
-
-    glm::vec4 gridStart = glm::vec4(gameObjects[0].mesh.vertices[0].pos, 1.0f) * gameObjects[0].properties.transform;
-    glm::vec4 gridEnd = glm::vec4(gameObjects[0].mesh.vertices[2].pos, 1.0f) * gameObjects[0].properties.transform;
+   /* glm::vec4 gridStart = glm::vec4(scene.gameObjects[0].mesh.vertices[0].pos, 1.0f) * scene.gameObjects[0].properties.transform;
+    glm::vec4 gridEnd = glm::vec4(scene.gameObjects[0].mesh.vertices[2].pos, 1.0f) * scene.gameObjects[0].properties.transform;
     float cellCount = 1;
-    gameObjects.push_back(ShapeTool::generateGrid(gridStart, gridEnd, cellCount, offSet));
 
-    return gameObjects;
+    scene.blueprintObject(ShapeTool::generateGrid(gridStart, gridEnd, cellCount));*/
 }
 
 void application::initWindow()
 {
-    gameObjects = constructGameobjects();
-    int objectCount = gameObjects.size();
+    constructGameobjects();
+    start();
+    int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
-	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, gameObjects);
+	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
-    
 
 	vulkanrenderer->initVulkan(std::move(windowObject));
+    scene.renderer = std::move(vulkanrenderer);
+}
 
+void application::start()
+{
+    scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
 }
 
 void application::cleanup()

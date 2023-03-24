@@ -1,14 +1,15 @@
 #pragma once
 
+
+
 class window;
-class renderer;
 
 class application {
 private:
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
 
-	const glm::vec3 DEFAULT_CAM_POS = glm::vec3(0.0f, -.0f, 2.0f);
+	const glm::vec3 DEFAULT_CAM_POS = glm::vec3(1.0f, 0.0f, 2.0f);
 	const glm::vec3 DEFAULT_CAM_LOOK_POS = glm::vec3(0.0f, 0.0f, 0.0f);
 	const glm::vec3 DEFAULT_CAM_UP_POS = glm::vec3(0.0f, 0.0f, 1.0f);
 	const float DEFAULT_FOV = glm::radians(45.0f);
@@ -20,6 +21,7 @@ private:
 	std::unique_ptr<renderer> vulkanrenderer;
 	std::unique_ptr<window> windowObject;
 
+	Scene scene;
 	Camera camera;
 	std::vector<GameObject> gameObjects;
 	std::vector<messageObject> message;
@@ -31,7 +33,7 @@ private:
 	void updateWayPoints();
 public:
 	
-	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE)
+	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()
 	{
 	};
 	~application()
@@ -39,8 +41,9 @@ public:
 	};
 
 	
-	std::vector<GameObject> constructGameobjects();
+	void constructGameobjects();
 	void initWindow();
+	void start();
 	void mainLoop();
 	void drawFrame();
 	void cleanup();
