@@ -1,6 +1,7 @@
 #pragma once
 
 
+
 class renderer
 {
 private:
@@ -31,7 +32,9 @@ private:
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
+	std::vector<RenderObject>& renderObjects;
 	std::vector<GameObject>& gameObjects;
+	std::vector<Mesh> meshes;
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indices;
 
@@ -101,27 +104,15 @@ private:
 	std::vector<VkDescriptorSet> descriptorSets;
 
 	std::vector<Buffermanager> uniformBufferManagers;
+	std::vector<Buffermanager> vertexBuffers;
+	std::vector<Buffermanager> indexBuffers;
 
-	Buffermanager vertexbufferManager = {
-	   0,
-	   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-	};
-
-	Buffermanager indexBufferManager = {
-		0,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-	};
-
-	Buffermanager modelTansformStorageBufferManager = {
+	Buffermanager transformBufferManager = {
 		0,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	
-
-
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -142,8 +133,6 @@ private:
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
-
-	void setupvertices();
 
 	void cleanupVulkan();
 	void cleanupSwapChain();
@@ -166,9 +155,9 @@ private:
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-	void createVertexbuffer(); 
-	void createIndexBuffer();
-	void createStorageBuffer();
+	Buffermanager createVertexbuffer(Mesh mesh);
+	Buffermanager createIndexBuffer(Mesh mesh);
+	void createTransformBuffer();
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
@@ -186,7 +175,7 @@ private:
 	void createLogicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool hasStencilComponent(VkFormat format);
-	void updateStorageBuffer();
+	void updateTransformBuffer();
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	std::vector<const char*> getRequiredExtensions();
@@ -207,7 +196,7 @@ private:
 
 public:
 
-	renderer(Camera& mainCamera, int objectCount, std::vector<GameObject>& gameObjects) : camera(mainCamera), objectCount(objectCount), gameObjects(gameObjects)
+	renderer(Camera& mainCamera, int objectCount, std::vector<RenderObject>& renderObjects, std::vector<GameObject>& gameObjects) : camera(mainCamera), objectCount(objectCount), renderObjects(renderObjects), gameObjects(gameObjects)
 	{
 		
 	}
@@ -223,6 +212,10 @@ public:
 
 	void initVulkan(std::unique_ptr<window>& windowObject);
 	void drawFrame(GLFWwindow* window);
+
+	void createObject(RenderObject renderObject);
+	void instantiateObject();
+	void destroyObject();
 
 	VkDevice getDevice();
 };

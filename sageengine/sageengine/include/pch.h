@@ -24,14 +24,18 @@
 
 #include "vertex.h"
 #include "mesh.h"
+#include "renderobject.h"
+#include "blueprint.h"
 #include "buffermanager.h"
 #include "properties.h"
 #include "gameObject.h"
 #include "shapetool.h"
 #include "camera.h"
 #include "gamemath.h"
-#include "application.h"
+#include "scene.h"
 #include "window.h"
-#include "inputsystem.h"
 #include "renderer.h"
+#include "application.h"
+#include "inputsystem.h"
+
 

@@ -14,7 +14,6 @@ if(result != VK_SUCCESS)                                \
 
 void renderer::initVulkan(std::unique_ptr<window>& windowObject)
 {
-    setupvertices();
     createInstance();
     setupDebugMessenger();
     createSurface(windowObject->getWindow());
@@ -31,9 +30,12 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTextureImages();
     createTextureImageViews();
     createTextureSampler();
-    createVertexbuffer();
-    createIndexBuffer();
-    createStorageBuffer();
+
+    for (int i = 0; i < objectCount; i++) {
+        createObject(renderObjects[i]);
+    }
+
+    createTransformBuffer();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -63,14 +65,17 @@ void renderer::cleanupVulkan()
     }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device, modelTansformStorageBufferManager.buffer, nullptr);
-    vkFreeMemory(device, modelTansformStorageBufferManager.bufferMemory, nullptr);
+    vkDestroyBuffer(device, transformBufferManager.buffer, nullptr);
+    vkFreeMemory(device, transformBufferManager.bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, indexBufferManager.buffer, nullptr);
-    vkFreeMemory(device, indexBufferManager.bufferMemory, nullptr);
+   
+    for (size_t i = 0; i < objectCount; i++) {
+        vkDestroyBuffer(device, indexBuffers[i].buffer, nullptr);
+        vkFreeMemory(device, indexBuffers[i].bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, vertexbufferManager.buffer, nullptr);
-    vkFreeMemory(device, vertexbufferManager.bufferMemory, nullptr);
+        vkDestroyBuffer(device, vertexBuffers[i].buffer, nullptr);
+        vkFreeMemory(device, vertexBuffers[i].bufferMemory, nullptr);
+    }
 
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -129,82 +134,6 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
 
 }
 
-std::vector<Vertex> renderer::GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize) 
-{
-    std::vector<Vertex> vertices;
-
-    float halfGridSizeX = (float)xCells * cellSize * 0.5f;
-    float halfGridSizeY = (float)yCells * cellSize * 0.5f;
-
-    for (uint32_t y = 0; y <= yCells; y++)
-    {
-        for (uint32_t x = 0; x <= xCells; x++)
-        {
-            float xPos = (float)x * cellSize - halfGridSizeX;
-            float yPos = (float)y * cellSize - halfGridSizeY;
-
-            vertices.push_back({ {xPos, yPos, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f} });
-        }
-    }
-
-    //vertices.push_back({ {0,0,0}, {1.0f,1.0f,0.0f},{0.0f,0.0f} });
-    //vertices.push_back({ {1,0,0}, {1.0f,1.0f,1.0f},{0.0f,0.0f} });
-    //vertices.push_back({ {0,1,0}, {1.0f,1.0f,1.0f},{0.0f,0.0f} });
-    return vertices;
-}
-
-std::vector<uint16_t> renderer::GenerateGridIndices(uint32_t xCells, uint32_t yCells) 
-{
-    std::vector<uint16_t> indices;
-    for (uint32_t y = 0; y < yCells; y++)
-    {
-        for (uint32_t x = 0; x < xCells; x++)
-        {
-            uint32_t vertexIndex = y * (xCells + 1) + x;
-
-            indices.push_back(vertexIndex);
-            indices.push_back(vertexIndex + 1);
-            indices.push_back(vertexIndex + xCells + 1);
-
-            indices.push_back(vertexIndex + xCells + 1);
-            indices.push_back(vertexIndex + 1);
-            indices.push_back(vertexIndex + xCells + 2);
-        }
-    }
-    //indices.push_back(0);
-    //indices.push_back(1);
-    //indices.push_back(2);
-
-    return indices;
-}
-void renderer::setupvertices()
-{
-    int XCELL = 5;
-    int YCELL = 5;
-    float GRIDSIZE = 1.0f;
-
-    /*vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-    };*/
-    //vertices = {
-    //{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // bottom left
-    //{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // bottom right
-    //{{ 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // top right
-    //{{-0.5f,  0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},  // top left
-    //{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},  // bottom left
-    //{{ 1.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // bottom right
-    //{{ 1.5f,  0.5f, 0.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  // top right
-    //{{ 0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}   // top left
-    //};
-}
 
 void renderer::createInstance()
 {
@@ -710,7 +639,7 @@ void renderer::createTextureImages() {
     for (size_t i = 0; i < objectCount; i++)
     {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(gameObjects[i].texture, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(renderObjects[i].texture, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         if (!pixels) {
@@ -929,26 +858,25 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 
 
 
-void renderer::createVertexbuffer()
+Buffermanager renderer::createVertexbuffer(Mesh mesh)
 {
-    for (int i = 0; i < objectCount; i++) {
-        vertices.insert(vertices.end(), gameObjects[i].mesh.vertices.begin(), gameObjects[i].mesh.vertices.end());
-    }
-
     Buffermanager stagingbufferManager = {
-        sizeof(Vertex) * vertices.size(),
+        sizeof(Vertex) * mesh.vertices.size(),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
-    vertexbufferManager.bufferSize = sizeof(Vertex) * vertices.size();
+    Buffermanager vertexbufferManager = {
+        sizeof(Vertex)* mesh.vertices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
 
     createBuffer(stagingbufferManager);
 
     vkMapMemory(device, stagingbufferManager.bufferMemory, 0, stagingbufferManager.bufferSize, 0, &stagingbufferManager.handle);
-    memcpy(stagingbufferManager.handle, vertices.data(), (size_t)stagingbufferManager.bufferSize);
+    memcpy(stagingbufferManager.handle, mesh.vertices.data(), (size_t)stagingbufferManager.bufferSize);
     vkUnmapMemory(device, stagingbufferManager.bufferMemory);
-
 
     createBuffer(vertexbufferManager);
 
@@ -956,27 +884,28 @@ void renderer::createVertexbuffer()
 
     vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
     vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+
+    return vertexbufferManager;
 }
 
-void renderer::createIndexBuffer()
+Buffermanager renderer::createIndexBuffer(Mesh mesh)
 {
-    
-    for (int i = 0; i < objectCount; i++) {
-        indices.insert(indices.end(), gameObjects[i].mesh.indices.begin(), gameObjects[i].mesh.indices.end());
-    }
-
     Buffermanager stagingbufferManager = {
-        sizeof(uint16_t) * indices.size(),
+        sizeof(uint16_t) * mesh.indices.size(),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
-    indexBufferManager.bufferSize = sizeof(uint16_t) * indices.size();
+    Buffermanager indexBufferManager = {
+        sizeof(uint16_t)* mesh.indices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
 
     createBuffer(stagingbufferManager);
 
     vkMapMemory(device, stagingbufferManager.bufferMemory, 0, stagingbufferManager.bufferSize, 0, &stagingbufferManager.handle);
-    memcpy(stagingbufferManager.handle, indices.data(), (size_t)stagingbufferManager.bufferSize);
+    memcpy(stagingbufferManager.handle, mesh.indices.data(), (size_t)stagingbufferManager.bufferSize);
     vkUnmapMemory(device, stagingbufferManager.bufferMemory);
 
     createBuffer(indexBufferManager);
@@ -985,23 +914,30 @@ void renderer::createIndexBuffer()
 
     vkDestroyBuffer(device, stagingbufferManager.buffer, nullptr);
     vkFreeMemory(device, stagingbufferManager.bufferMemory, nullptr);
+
+    return indexBufferManager;
 }
 
-void renderer::createStorageBuffer()
+void renderer::createTransformBuffer()
 {
-    modelTansformStorageBufferManager.bufferSize = sizeof(Properties) * objectCount;
+    transformBufferManager.bufferSize = sizeof(renderObjects[0].renderprops) * renderObjects.size();
 
-    createBuffer(modelTansformStorageBufferManager);
+    createBuffer(transformBufferManager);
 
-    std::vector<Properties> properties(objectCount);
+    for (auto& gameObject : gameObjects) {
+        gameObject.renderObject->renderprops.instances[gameObject.instanceId] = gameObject.properties.transform;
+        gameObject.renderObject->renderprops.color[gameObject.instanceId] = glm::vec4(gameObject.properties.color, 1.0f);
+    }
+
+    std::vector<RenderObject::RenderProps> properties(renderObjects.size());
 
     for (int i = 0; i < objectCount; i++) {
-        properties[i] = gameObjects[i].properties;
+        properties[i] = renderObjects[i].renderprops;
     }
 
     void* data;
-    vkMapMemory(device, modelTansformStorageBufferManager.bufferMemory, 0, modelTansformStorageBufferManager.bufferSize, 0, &modelTansformStorageBufferManager.handle);
-    memcpy(modelTansformStorageBufferManager.handle, properties.data(), modelTansformStorageBufferManager.bufferSize);
+    vkMapMemory(device, transformBufferManager.bufferMemory, 0, transformBufferManager.bufferSize, 0, &transformBufferManager.handle);
+    memcpy(transformBufferManager.handle, properties.data(), transformBufferManager.bufferSize);
    
 }
 
@@ -1056,8 +992,11 @@ void renderer::createDescriptorSets()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
+    
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        for (size_t j = 0; j < objectCount; j++) {
+        size_t totalOffset = 0;
+        for (size_t j = 0; j < renderObjects.size(); j++) {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
@@ -1068,15 +1007,19 @@ void renderer::createDescriptorSets()
             imageInfo.imageView = textureImageViews[j];
             imageInfo.sampler = textureSampler;
 
+            size_t range = sizeof(renderObjects[j].renderprops);
+            
             VkDescriptorBufferInfo storageBufferInfo{};
-            storageBufferInfo.buffer = modelTansformStorageBufferManager.buffer;
-            storageBufferInfo.range = sizeof(Properties);
-            storageBufferInfo.offset = sizeof(Properties) * j;
+            storageBufferInfo.buffer = transformBufferManager.buffer;
+            storageBufferInfo.range = range;
+            storageBufferInfo.offset = totalOffset;
+
+            totalOffset = totalOffset + range;
 
             std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[0].dstSet = descriptorSets[i * objectCount + j];
+            descriptorWrites[0].dstSet = descriptorSets[i * renderObjects.size() + j];
             descriptorWrites[0].dstBinding = 0;
             descriptorWrites[0].dstArrayElement = 0;
             descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1084,7 +1027,7 @@ void renderer::createDescriptorSets()
             descriptorWrites[0].pBufferInfo = &bufferInfo;
 
             descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[1].dstSet = descriptorSets[i * objectCount + j];
+            descriptorWrites[1].dstSet = descriptorSets[i * renderObjects.size() + j];
             descriptorWrites[1].dstBinding = 1;
             descriptorWrites[1].dstArrayElement = 0;
             descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1092,7 +1035,7 @@ void renderer::createDescriptorSets()
             descriptorWrites[1].pImageInfo = &imageInfo;
 
             descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[2].dstSet = descriptorSets[i * objectCount + j];
+            descriptorWrites[2].dstSet = descriptorSets[i * renderObjects.size() + j];
             descriptorWrites[2].dstBinding = 2;
             descriptorWrites[2].dstArrayElement = 0;
             descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -1130,6 +1073,21 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     }
 
     vkBindBufferMemory(device, buffermanager.buffer, buffermanager.bufferMemory, 0);
+}
+
+void renderer::createObject(RenderObject renderObject)
+{
+    vertexBuffers.push_back(createVertexbuffer(renderObject.mesh));
+    indexBuffers.push_back(createIndexBuffer(renderObject.mesh));
+}
+
+void renderer::instantiateObject()
+{
+
+}
+
+void renderer::destroyObject()
+{
 }
 
 void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -1195,23 +1153,21 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    VkBuffer vertexBuffers[] = { vertexbufferManager.buffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-    vkCmdBindIndexBuffer(commandBuffer, indexBufferManager.buffer, 0, VK_INDEX_TYPE_UINT16);
-    uint32_t totalindex = 0;
-    for (int i = 0; i < objectCount; i++) {
+    for (int i = 0; i < renderObjects.size(); i++) {
         int offset = i * MAX_FRAMES_IN_FLIGHT;
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * objectCount + i], 0, nullptr);
+        VkBuffer buffers[] = { vertexBuffers[i].buffer };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT16);
+
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * renderObjects.size() + i], 0, nullptr);
 
         // Compute the offset for the current object
-        uint32_t indexCount = static_cast<uint32_t>(gameObjects[i].mesh.indices.size());
-        
-        vkCmdDrawIndexed(commandBuffer, indexCount, 1, totalindex, 0, 0);
-        //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size() / 2), 1, indices.size() / 2 * i, 0, 0);
-        totalindex += indexCount;
+        uint32_t indexCount = static_cast<uint32_t>(renderObjects[i].mesh.indices.size());
+
+        vkCmdDrawIndexed(commandBuffer, indexCount, renderObjects[i].instanceCount, 0, 0, 0);
     }
 
     vkCmdEndRenderPass(commandBuffer);
@@ -1260,17 +1216,25 @@ void renderer::updateUniformBuffer(uint32_t currentImage)
 
     memcpy(uniformBufferManagers[currentImage].handle, &ubo, sizeof(ubo));
 }
-void renderer::updateStorageBuffer()
+
+void renderer::updateTransformBuffer()
 {
     // TODO: really light flickering of black 
-    std::vector<Properties> props(objectCount);
-    for (size_t i = 0; i < objectCount; i++)
-    {
-        props[i].color = gameObjects[i].properties.color;
-        props[i].transform = gameObjects[i].properties.transform;
+    std::vector<RenderObject::RenderProps> props(renderObjects.size());
 
+    for (auto& gameObject : gameObjects) {
+        gameObject.renderObject->renderprops.instances[gameObject.instanceId] = gameObject.properties.transform;
+        gameObject.renderObject->renderprops.color[gameObject.instanceId] = glm::vec4(gameObject.properties.color, 1.0f);
     }
-    memcpy(modelTansformStorageBufferManager.handle, props.data(), sizeof(Properties) * objectCount);
+
+    for (size_t i = 0; i < renderObjects.size(); i++)
+    {
+        for (size_t j = 0; j < renderObjects[i].instanceCount; j++)
+        {
+            props[i] = renderObjects[i].renderprops;
+        }
+    }
+    memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
 }
 
 void renderer::drawFrame(GLFWwindow* window)
@@ -1288,7 +1252,7 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateStorageBuffer();
+    updateTransformBuffer();
     updateUniformBuffer(currentFrame);
 
 
