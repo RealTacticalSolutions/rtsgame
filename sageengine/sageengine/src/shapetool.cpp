@@ -65,10 +65,10 @@ std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
     vertices[2].pos = glm::vec3(-width, width, 0.0f);
     vertices[3].pos = glm::vec3(width, width, 0.0f);
 
-    vertices[0].texCoord.x = 1.0f;
-    vertices[0].texCoord.y = 1.0f;
+    vertices[1].texCoord.x = 1.0f;
     vertices[1].texCoord.y = 1.0f;
-    vertices[2].texCoord.x = 1.0f;
+    vertices[0].texCoord.y = 1.0f;
+    vertices[3].texCoord.x = 1.0f;
 
     return vertices;
 }
