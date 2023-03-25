@@ -66,20 +66,20 @@ void client::startClient()
     //    {{"id", 123},{"weight", 45.6}},
     //    {{"id", 63},{"weight", 75.6}}
     //};
-    double id1 = 5.1;
-    double id2 = 2.1;
-    double id3 = 11.1;
-    double id4 = 8.1;
 
-    int weight1 = 0;
-    int weight2 = 0;
-    int weight3 = 0;
-    int weight4 = 0;
     while (client_running) {
         // Wait for 0.5 seconds before sending the next message
         Sleep(500);
         // Send the message to the server
-        std::vector<trafficStatusObject> messageclient = { { id1, weight1 }, {id2, weight2}, {id3, weight3}, {id4, weight4} };
+        //std::vector<trafficStatusObject> messageclient = { { id1, weight1 }, {id2, weight2}, {id3, weight3}, {id4, weight4} };
+        std::vector<trafficStatusObject> messageclient;
+        for (size_t i = 0; i < lights.size(); i++)
+        {
+            messageclient.push_back(trafficStatusObject{ lights[i].id, lights[i].weight});
+
+            //Randomize weight propbably remove this later
+            lights[i].weight = distrclient(genclient);
+        }
         nlohmann::json dataclient;
         client::to_json_traffic(dataclient, messageclient);
         std::string dataStr = dataclient.dump(); // Convert the JSON object to a string
@@ -93,10 +93,6 @@ void client::startClient()
             return;
         }
         std::cout << "message created" << std::endl;
-        weight1 = distrclient(genclient);
-        weight2 = distrclient(genclient);
-        weight3 = distrclient(genclient);
-        weight4 = distrclient(genclient);
 
         // Receive data from the server
         char recvBuf[4096];

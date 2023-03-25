@@ -34,11 +34,14 @@ private:
 	std::vector<car> cars;
 	WayPoints path;
 
+	std::vector<TrafficLight> lights;
+
 	void updateColor(int index, glm::vec3 color);
 	void updateColorAddition(int index, glm::vec3 color);
 	bool approxEqual(glm::vec3 a, glm::vec3 b, float epsilon);
 	void updateWayPoints();
 	void initWayPoints();
+	void addTrafficLight(std::string id, int index, double weight, int status);
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()

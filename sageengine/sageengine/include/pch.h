@@ -22,7 +22,7 @@
 #include <string>
 #include <map>
 
-
+#include "trafficlight.h"
 #include "messageObject.h"
 #include "waypoints.h"
 #include "vertex.h"

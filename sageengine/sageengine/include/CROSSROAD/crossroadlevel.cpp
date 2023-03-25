@@ -20,10 +20,10 @@ void CrossRoadLevel::init()
     PORT = "11000";
     SERVER_PORT = "11000";
 
-    myClient = new client(IP, PORT, message_ref);
-    myServer = new server(SERVER_PORT);
+    myClient = new client(IP, PORT, message_ref, lights);
+    myServer = new server(SERVER_PORT, lights);
 
-    //serverThread = std::thread(&server::startServer, *myServer);
+    serverThread = std::thread(&server::startServer, *myServer);
     clientThread = std::thread(&client::startClient, *myClient);
 }
 
@@ -34,12 +34,21 @@ void CrossRoadLevel::mainLoop()
     for (messageObject m : message_ref)
     {
         //if(m.id.size() != 0 || m.color != -1 || m.color >2)
-        if (m.id != 0)
+        if (m.id != "0")
         {
             try
             {
-                // getId MUST because from double to gameobject index
-                updateColor(getId(m.id), getColor(m.status));
+                // getId MUST because from string to gameobject index
+                int index = getId(lights, m.id);
+                if (index == -1)
+                {
+                    std::cout << "(CrossroadLevel Line 45)ERROR: Index Is -1 From: " << m.id << std::endl;
+                    continue;
+                }
+                else
+                {
+                    updateColor(index, getColor(m.status));
+                }
             }
             catch (const std::exception& e)
             {
@@ -60,7 +69,7 @@ void CrossRoadLevel::cleanup()
 {
     server_running = false;
     client_running = false;
-    //serverThread.join();
+    serverThread.join();
     clientThread.join();
     //delete myClient;
     //delete myServer;

@@ -6,7 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
+#include <glm/glm.hpp>
 
 #include "trafficStatusObject.h"
 #include "messageObject.h"
@@ -15,7 +15,7 @@
 #include "server.h"
 #pragma comment(lib, "ws2_32.lib")  // Link with ws2_32.lib
 
-
+#include "trafficlight.h"
 extern std::mutex g_mutex;
 extern bool g_serverReady;
 extern std::condition_variable g_conditionVariable;

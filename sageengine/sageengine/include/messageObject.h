@@ -3,7 +3,7 @@
 class messageObject
 {
 public:
-    double id;
+    std::string id;
     int status;
 };
 

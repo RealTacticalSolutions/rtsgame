@@ -14,9 +14,10 @@ private:
 
 	std::vector<messageObject>& message_ref;
 	std::vector<GameObject>& gameObjects_ref;
+	std::vector<TrafficLight>& lights;
 	void updateColor(int index, glm::vec3 color);
 public:
-	CrossRoadLevel(std::vector<messageObject>& message_input, std::vector<GameObject>& gameObjects_input) : message_ref(message_input), gameObjects_ref(gameObjects_input)
+	CrossRoadLevel(std::vector<messageObject>& message_input, std::vector<GameObject>& gameObjects_input, std::vector<TrafficLight>& lights) : message_ref(message_input), gameObjects_ref(gameObjects_input), lights(lights)
 	{
 
 	}

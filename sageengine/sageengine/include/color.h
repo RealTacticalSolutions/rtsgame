@@ -37,21 +37,14 @@ static glm::vec3 getColor(int color)
 	}
 };
 
-static int getId(const double& id)
+static int getId(std::vector<TrafficLight>& lights, const std::string& id)
 {
-	if (id == 5.1) {
-		return 1;
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		if (lights[i].id == id) 
+		{
+			return lights[i].index;
+		}
 	}
-	else if (id == 2.1) {
-		return 2;
-	}
-	else if (id == 11.1) {
-		return 3;
-	}
-	else if (id == 8.1) {
-		return 4;
-	}
-	else {
-		return 1;
-	}
+	return -1;
 };

@@ -104,15 +104,6 @@ void server::startServer()
     //    std::cout << "Received struct from client: id = " << obj["id"] << ", color = " << obj["color"] << std::endl;
 
     //}
-    double id1 = 5.1;
-    double id2 = 2.1;
-    double id3 = 11.1;
-    double id4 = 8.1;
-
-    int color1 = 0;
-    int color2 = 0;
-    int color3 = 0;
-    int color4 = 0;
 
     while (server_running) {
         // Receive data from the client
@@ -140,7 +131,15 @@ void server::startServer()
             std::cout << "Received struct from client: id = " << obj["id"] << ", weight = " << obj["weight"] << std::endl;
         }
 
-        std::vector<messageObject> messageserver = { { id1, color1}, {id2, color2}, {id3, color3}, {id4, color4}};
+        //std::vector<messageObject> messageserver = { { id1, color1}, {id2, color2}, {id3, color3}, {id4, color4}};
+        std::vector<messageObject> messageserver;
+        for (size_t i = 0; i < lights.size(); i++)
+        {
+            messageserver.push_back(messageObject{ lights[i].id, lights[i].status });
+
+            //Randomize weight propbably remove this later
+            lights[i].status = distrserver(genserver);
+        }
         nlohmann::json dataserver;
         server::to_json_message(dataserver, messageserver);
         std::string dataStr = dataserver.dump(); // Convert the JSON object to a string
@@ -152,10 +151,7 @@ void server::startServer()
             WSACleanup();
             return;
         }
-        color1 = distrserver(genserver);
-        color2 = distrserver(genserver);
-        color3 = distrserver(genserver);
-        color4 = distrserver(genserver);
+
 
 
     }
