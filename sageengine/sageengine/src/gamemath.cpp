@@ -35,6 +35,5 @@ glm::vec3 GameMath::windowToWorldPos(glm::vec2 windowPosition, glm::vec2 windowS
 	glm::vec3 firstPos = nearPlaneCenter + (up * lengthY);
 	glm::vec3 finalPos = firstPos + (right * lengthX);
 
-	std::cout << "Pos X: " << finalPos.x << " Pos Y: " << finalPos.y << " Pos Z: " << finalPos.z << std::endl;
-	return glm::vec3(1.0f);
+	return finalPos;
 }

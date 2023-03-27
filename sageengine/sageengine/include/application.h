@@ -45,4 +45,5 @@ public:
 	void drawFrame();
 	void cleanup();
 	void updateTest();
+	Mesh loadModel(char* path);
 };

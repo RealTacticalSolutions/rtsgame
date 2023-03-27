@@ -891,13 +891,13 @@ Buffermanager renderer::createVertexbuffer(Mesh mesh)
 Buffermanager renderer::createIndexBuffer(Mesh mesh)
 {
     Buffermanager stagingbufferManager = {
-        sizeof(uint16_t) * mesh.indices.size(),
+        sizeof(uint32_t) * mesh.indices.size(),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
     Buffermanager indexBufferManager = {
-        sizeof(uint16_t)* mesh.indices.size(),
+        sizeof(uint32_t)* mesh.indices.size(),
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
@@ -1160,7 +1160,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT32);
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * renderObjects.size() + i], 0, nullptr);
 

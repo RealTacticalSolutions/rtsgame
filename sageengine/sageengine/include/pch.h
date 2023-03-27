@@ -5,9 +5,10 @@
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
+#include <glm/gtx/hash.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -21,6 +22,7 @@
 #include <array>
 #include <string>
 #include <map>
+#include <unordered_map>
 
 #include "vertex.h"
 #include "mesh.h"
