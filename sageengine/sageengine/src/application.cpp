@@ -28,6 +28,7 @@ void application::mainLoop()
         bool test = input.keyDown(GLFW_KEY_SPACE);
 
         input.updateInput();
+        camera.rotateCamera(0.005f);
 
         if (test) {
             int width = 0, height = 0;
@@ -100,6 +101,7 @@ void application::initWindow()
     start();
     int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
+    camera.rotateCamera(180.0f);
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
@@ -117,7 +119,7 @@ void application::start()
 
     //scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
 
-    scene.instantiateObject(scene.bluePrints[2], glm::mat4(1.0f), glm::vec3(1.0f));
+    scene.instantiateObject(scene.bluePrints[2], glm::mat4(1.0f), glm::vec3(0.6f));
 }
 
 void application::cleanup()
@@ -156,6 +158,14 @@ Mesh application::loadModel(char* path) {
 
             vertex.color = { 1.0f, 1.0f, 1.0f };
 
+            if (index.normal_index >= 0) {
+                vertex.normal = {
+                    attrib.normals[3 * index.normal_index + 0],
+                    attrib.normals[3 * index.normal_index + 1],
+                    attrib.normals[3 * index.normal_index + 2]
+                };
+            }
+           
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
                 vertices.push_back(vertex);

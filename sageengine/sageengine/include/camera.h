@@ -32,6 +32,12 @@ public:
 		upPosition = glm::cross(position, lookPosition);
 	}
 
+	void rotateCamera(float degrees) {
+		glm::vec3 direction = glm::normalize(lookPosition - position);
+		glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), direction);
+		upPosition = glm::vec3(glm::vec4(upPosition, 0.0f) * rotationMatrix);
+	}
+
 	glm::mat4 getView();
 
 	glm::mat4 getProjection();
