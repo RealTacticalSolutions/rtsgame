@@ -20,6 +20,7 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
 const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, -3.0, 4.0));
+const float AMBIENCE = 0.03f;
 
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * sbo.model[gl_InstanceIndex] * vec4(inPosition, 1.0);
