@@ -36,6 +36,21 @@ private:
 
 	std::vector<TrafficLight> lights;
 
+	std::vector<glm::vec3> lightspos =
+	{ 
+	glm::vec3(0.52f,0.18f,1.0f),//1.1
+	glm::vec3(0.52f,0.0f,1.0f),//2.1
+	glm::vec3(0.52f,0.35f,1.0f),//42.0 
+	glm::vec3(0.10f,0.50f,1.0f),//12.1 
+	glm::vec3(-0.18f,0.50f,1.0f),//11.1
+	glm::vec3(-0.38f,0.50f,1.0f),//10.1 
+	glm::vec3(-0.50f,0.0f,1.0f),//9.1 
+	glm::vec3(-0.50f,-0.20f,1.0f),//8.1 
+	glm::vec3(-0.50f,-0.40f,1.0f),//7.1 
+	glm::vec3(-0.16f,-0.54f,1.0f),//6.1 
+	glm::vec3(0.34f,-0.54f,1.0f)//5.1 
+	};
+
 	void updateColor(int index, glm::vec3 color);
 	void updateColorAddition(int index, glm::vec3 color);
 	bool approxEqual(glm::vec3 a, glm::vec3 b, float epsilon);

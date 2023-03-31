@@ -24,6 +24,7 @@
 
 #include "trafficlight.h"
 #include "messageObject.h"
+#include "waypoint.h"
 #include "waypoints.h"
 #include "vertex.h"
 #include "mesh.h"

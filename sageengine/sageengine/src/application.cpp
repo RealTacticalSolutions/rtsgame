@@ -4,6 +4,7 @@
 #include "color.h"
 #include "CROSSROAD/crossroadlevel.h"
 
+
 void application::mainLoop()
 {
 
@@ -110,40 +111,40 @@ void application::start()
 {
 	scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.52f, 0.18f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //1.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[0]), glm::vec3(1.0f, 0.0f, 0.0f)); //1.1
 	addTrafficLight("1.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.52f, 0.0f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //2.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[1]), glm::vec3(1.0f, 0.0f, 0.0f)); //2.1
 	addTrafficLight("2.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.52f, 0.35f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //42.0
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[2]), glm::vec3(1.0f, 0.0f, 0.0f)); //42.0
 	addTrafficLight("42.0", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.10f, 0.50f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //12.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[3]), glm::vec3(1.0f, 0.0f, 0.0f)); //12.1
 	addTrafficLight("12.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(-0.18f, 0.50f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //11.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[4]), glm::vec3(1.0f, 0.0f, 0.0f)); //11.1
 	addTrafficLight("11.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(-0.38f, 0.50f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //10.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[5]), glm::vec3(1.0f, 0.0f, 0.0f)); //10.1
 	addTrafficLight("10.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, 0.0f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //9.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[6]), glm::vec3(1.0f, 0.0f, 0.0f)); //9.1
 	addTrafficLight("9.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.20f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //8.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[7]), glm::vec3(1.0f, 0.0f, 0.0f)); //8.1
 	addTrafficLight("8.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.40f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //7.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[8]), glm::vec3(1.0f, 0.0f, 0.0f)); //7.1
 	addTrafficLight("7.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.16f, -0.54f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //6.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[9]), glm::vec3(1.0f, 0.0f, 0.0f)); //6.1
 	addTrafficLight("6.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.34f, -0.54f, 1.0f)), glm::vec3(1.0f, 0.0f, 0.0f)); //5.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[10]), glm::vec3(1.0f, 0.0f, 0.0f)); //5.1
 	addTrafficLight("5.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), glm::vec3(0.2f, 1.0f, 1.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+	scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), glm::vec3(0.34f, -1.0f, 1.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 	cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, path });
 
 }
@@ -210,7 +211,7 @@ void application::updateWayPoints()
 		int currentpoint = cars[i].currentwaypoint;
 
 		// Set the target position
-		glm::vec3 target(cars[i].waypoints.getWayPoint(currentpoint));
+		glm::vec3 target(cars[i].waypoints.getWayPointPosition(currentpoint));
 
 		// Get the current position of the object
 		glm::vec3 position = glm::vec3(scene.gameObjects[index].properties.transform[3]);
@@ -226,6 +227,14 @@ void application::updateWayPoints()
 
 		if (approxEqual(position, target, 0.15f))
 		{
+			std::string lightid = cars[i].waypoints.getLightId(currentpoint);
+			if (!( lightid == "-1"))
+			{
+				if (scene.gameObjects[getId(lights,lightid)].properties.color == getColor(RED))
+				{
+					continue;
+				}
+			}
 			int nextwaypoint = currentpoint + 1;
 			if (nextwaypoint > cars[i].waypoints.getSize() - 1)
 			{
@@ -248,12 +257,11 @@ void application::updateWayPoints()
 
 void application::initWayPoints()
 {
-	std::vector<glm::vec3> waypoints = {
-	glm::vec3(0.0f, 0.0f, 1.0f),
-	glm::vec3(1.0f, 0.0f, 1.0f),
-	glm::vec3(1.0f, 1.0f, 1.0f)
-	};
-	path = WayPoints(waypoints);
+	
+	path.addWayPoint(WayPoint(glm::vec3(0.34f, -0.60f, 1.0f)));
+	path.addWayPoint(WayPoint(lightspos[10],"5.1"));
+	path.addWayPoint(WayPoint(glm::vec3(0.34f, 1.0f, 1.0f)));
+	path.addWayPoint(WayPoint(glm::vec3(0.34f, 1.2f, 1.0f)));
 }
 
 void application::addTrafficLight(std::string id, int index, double weight, int status)

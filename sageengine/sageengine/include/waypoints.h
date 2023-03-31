@@ -4,9 +4,10 @@
 class WayPoints
 {
 private:
-	std::vector<glm::vec3> waypoints;
+	std::vector<WayPoint> waypoints;
+	
 public:
-	WayPoints(std::vector<glm::vec3> waypoints) : waypoints(waypoints)
+	WayPoints(std::vector<WayPoint> waypoints) : waypoints(waypoints)
 	{
 
 	}
@@ -19,5 +20,9 @@ public:
 	}
 
 	int getSize();
-	glm::vec3 WayPoints::getWayPoint(int index);
+	glm::vec3 getWayPointPosition(int index);
+	WayPoint getWayPoint(int index);
+	void addWayPoint(WayPoint pos);
+	void addWayPoints(std::vector<WayPoint> positions);
+	std::string getLightId(int index);
 };
