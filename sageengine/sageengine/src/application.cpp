@@ -144,7 +144,7 @@ void application::start()
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[10]), glm::vec3(1.0f, 0.0f, 0.0f)); //5.1
 	addTrafficLight("5.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), glm::vec3(0.34f, -1.0f, 1.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+	scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
 	cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, path });
 
 }
@@ -155,6 +155,11 @@ void application::cleanup()
 
 void application::updateTest()
 {
+	if (cars.size() < 1)
+	{
+		scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
+		cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, path });
+	}
 	//// Check for intersection with another object
 	//if ((Intersection::intersectSquares(gameObjects[5], gameObjects[1])) && gameObjects[1].properties.color == getColor(RED)) 
 	//{

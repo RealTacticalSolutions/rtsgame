@@ -33,6 +33,7 @@ private:
 	std::vector<messageObject> message;
 	std::vector<car> cars;
 	WayPoints path;
+	glm::vec3 spawnpoint = glm::vec3(0.34f,-1.0f,1.0f);
 
 	std::vector<TrafficLight> lights;
 
