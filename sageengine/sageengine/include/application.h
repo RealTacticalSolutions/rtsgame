@@ -6,12 +6,6 @@ class window;
 
 class application {
 private:
-	struct car
-	{
-		int index;
-		int currentwaypoint;
-		WayPoints waypoints;
-	};
 
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
@@ -31,8 +25,8 @@ private:
 	Scene scene;
 	Camera camera;
 	std::vector<messageObject> message;
-	std::vector<car> cars;
-	WayPoints path;
+
+	std::vector<WayPoints> paths;
 	glm::vec3 spawnpoint = glm::vec3(0.34f,-1.0f,1.0f);
 
 	std::vector<TrafficLight> lights;
@@ -48,7 +42,7 @@ private:
 	glm::vec3(-0.50f,0.0f,1.0f),//9.1 
 	glm::vec3(-0.50f,-0.20f,1.0f),//8.1 
 	glm::vec3(-0.50f,-0.40f,1.0f),//7.1 
-	glm::vec3(-0.16f,-0.54f,1.0f),//6.1 
+	glm::vec3(0.16f,-0.54f,1.0f),//6.1 
 	glm::vec3(0.34f,-0.54f,1.0f)//5.1 
 	};
 
@@ -58,6 +52,7 @@ private:
 	void updateWayPoints();
 	void initWayPoints();
 	void addTrafficLight(std::string id, int index, double weight, int status);
+	void removeCarObject(int index);
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()

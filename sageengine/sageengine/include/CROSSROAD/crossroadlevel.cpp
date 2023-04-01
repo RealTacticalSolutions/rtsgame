@@ -76,5 +76,5 @@ void CrossRoadLevel::cleanup()
 }
 void CrossRoadLevel::updateColor(int index, glm::vec3 color)
 {
-    gameObjects_ref[index].properties.color = color;
+    gameObjects_ref[index]->properties.color = color;
 };

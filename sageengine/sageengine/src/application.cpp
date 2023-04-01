@@ -69,11 +69,11 @@ void application::drawFrame()
 }
 void application::updateColor(int index, glm::vec3 color)
 {
-	scene.gameObjects[index].properties.color = color;
+	scene.gameObjects[index]->properties.color = color;
 };
 void application::updateColorAddition(int index, glm::vec3 color)
 {
-	scene.gameObjects[index].properties.color = scene.gameObjects[index].properties.color + color;
+	scene.gameObjects[index]->properties.color = scene.gameObjects[index]->properties.color + color;
 };
 
 void application::constructGameobjects()
@@ -144,8 +144,16 @@ void application::start()
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[10]), glm::vec3(1.0f, 0.0f, 0.0f)); //5.1
 	addTrafficLight("5.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
-	cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, path });
+	spawnpoint = paths[0].getWayPointPosition(0);
+	scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f), paths[0]);
+
+	spawnpoint = glm::vec3(1.5f, 0.18f, 1.0f);
+	scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 0.0f, 1.0f), paths[0]);
+
+	////spawnpoint = paths[1].getWayPointPosition(0);
+	//spawnpoint = glm::vec3(1.0f, 0.0f, 1.0f);
+	//scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
+	//cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, paths[1] });
 
 }
 
@@ -155,11 +163,6 @@ void application::cleanup()
 
 void application::updateTest()
 {
-	if (cars.size() < 1)
-	{
-		scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
-		cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, path });
-	}
 	//// Check for intersection with another object
 	//if ((Intersection::intersectSquares(gameObjects[5], gameObjects[1])) && gameObjects[1].properties.color == getColor(RED)) 
 	//{
@@ -202,24 +205,36 @@ bool application::approxEqual(glm::vec3 a, glm::vec3 b, float epsilon)
 
 void application::updateWayPoints()
 {
-	if (!(cars.size() > 0))
+	if (scene.gameObjects.empty())
 	{
 		return;
 	}
 
-	for (size_t i = 0; i < cars.size(); i++)
+	std::vector<std::pair<size_t, Car*>> cars;
+	for (size_t i = 0; i < scene.gameObjects.size(); i++)
 	{
-		// Get current gameobjext index
-		int index = cars[i].index;
+		if (Car* car = dynamic_cast<Car*>(scene.gameObjects[i].get())) {
+			cars.emplace_back(i, car);
+		}
+	}
 
+	std::vector<int> carstoremove;
+	for (auto& [index, car] : cars)
+	{
+		
+		if (car->getWayPointSize() < 1)
+		{
+			throw std::runtime_error("Waypoint index must be not < 1");
+		}
 		// Get current waypoint (target)
-		int currentpoint = cars[i].currentwaypoint;
+		int currentpoint = car->getCurrentWayPoint();
 
 		// Set the target position
-		glm::vec3 target(cars[i].waypoints.getWayPointPosition(currentpoint));
+		WayPoints waypoints = car->getWayPoints();
+		glm::vec3 target(waypoints.getWayPointPosition(currentpoint));	
 
 		// Get the current position of the object
-		glm::vec3 position = glm::vec3(scene.gameObjects[index].properties.transform[3]);
+		glm::vec3 position = glm::vec3(car->properties.transform[3]);
 
 		// Calculate the direction from the current position to the target position
 		glm::vec3 direction = glm::normalize(target - position);
@@ -230,45 +245,67 @@ void application::updateWayPoints()
 		// Calculate the new position based on the direction and velocity
 		glm::vec3 new_pos = position + direction * velocity;
 
-		if (approxEqual(position, target, 0.15f))
+		if (approxEqual(position, target, 0.05f))
 		{
-			std::string lightid = cars[i].waypoints.getLightId(currentpoint);
+			std::string lightid = waypoints.getLightId(currentpoint);
 			if (!( lightid == "-1"))
 			{
-				if (scene.gameObjects[getId(lights,lightid)].properties.color == getColor(RED))
+				if (scene.gameObjects[getId(lights,lightid)]->properties.color == getColor(RED))
 				{
 					continue;
 				}
 			}
 			int nextwaypoint = currentpoint + 1;
-			if (nextwaypoint > cars[i].waypoints.getSize() - 1)
+			if (nextwaypoint > waypoints.getSize() - 1)
 			{
 				// Todo: destruct object probably
-				scene.removeObject(index);
-				auto it = cars.begin() + i;
-				cars.erase(it);
+				//scene.removeObject(index);
+				carstoremove.push_back(index);
 				continue;
 			}
-			cars[i].currentwaypoint = nextwaypoint;
+			car->setCurrentWayPoint(nextwaypoint);
 			//scene.gameObjects[index].properties.transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 1.0f));
 		}
 		else
 		{
 			// Update the position of the object using glm::translate
-			scene.gameObjects[index].properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
+			scene.gameObjects[index]->properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
 		}
+		
+	}
+	for (size_t i = 0; i < carstoremove.size(); i++)
+	{
+		scene.removeObject(carstoremove[i]);
 	}
 }
 
 void application::initWayPoints()
-{
-	
-	path.addWayPoint(WayPoint(glm::vec3(0.34f, -0.60f, 1.0f)));
-	path.addWayPoint(WayPoint(lightspos[10],"5.1"));
-	path.addWayPoint(WayPoint(glm::vec3(0.34f, 1.0f, 1.0f)));
-	path.addWayPoint(WayPoint(glm::vec3(0.34f, 1.2f, 1.0f)));
+{	
+	/*1.1*/std::vector<WayPoint> waypoints0 = { WayPoint(glm::vec3(1.0f, 0.18f, 1.0f)),WayPoint(lightspos[0],"1.1"),WayPoint(glm::vec3(-0.3f,0.3f,1.0f)),WayPoint(glm::vec3(-1.2f,0.3f,1.0f)) };
+	/*2.1*/std::vector<WayPoint> waypoints1 = { WayPoint(glm::vec3(1.0f, 0.0f, 1.0f)),WayPoint(lightspos[1],"2.1"),WayPoint(glm::vec3(0.0f,0.0f,1.0f)),WayPoint(glm::vec3(-0.3f,0.3f,1.0f)),WayPoint(glm::vec3(-1.2f,0.3f,1.0f)) };
+	/*42.0*/std::vector<WayPoint> waypoints2 = { WayPoint(glm::vec3(1.2f, 0.35f, 1.0f)),WayPoint(lightspos[2],"42.0"),WayPoint(glm::vec3(-1.2f,0.35f,1.0f)) };
+	/*12.1*/std::vector<WayPoint> waypoints3 = { WayPoint(glm::vec3(0.1f, 1.20f, 1.0f)),WayPoint(lightspos[3],"12.1"),WayPoint(glm::vec3(0.1f,-0.20f,1.0f)),WayPoint(glm::vec3(0.3f,-0.20f,1.0f)),WayPoint(glm::vec3(1.2f,-0.20f,1.0f)) };
+	/*11.1*/std::vector<WayPoint> waypoints4 = { WayPoint(glm::vec3(-0.18f, 1.20f, 1.0f)),WayPoint(lightspos[4],"11.1"),WayPoint(glm::vec3(-0.18f,-1.20f,1.0f)) };
+	/*10.1*/std::vector<WayPoint> waypoints5 = { WayPoint(glm::vec3(-0.38f, 1.20f, 1.0f)),WayPoint(lightspos[5],"10.1"),WayPoint(glm::vec3(-0.38f,0.30f,1.0f)),WayPoint(glm::vec3(-1.2f,0.38f,1.0f)) };
+	/*9.1*/std::vector<WayPoint> waypoints6 = { WayPoint(glm::vec3(-1.2f, 0.0f, 1.0f)),WayPoint(lightspos[6],"9.1"),WayPoint(glm::vec3(0.0f,0.0f,1.0f)),WayPoint(glm::vec3(0.3f,-0.2f,1.0f)),WayPoint(glm::vec3(1.2f,-0.2f,1.0f)) };
+	/*8.1*/std::vector<WayPoint> waypoints7 = { WayPoint(glm::vec3(-1.2f, -0.20f, 1.0f)),WayPoint(lightspos[7],"8.1"),WayPoint(glm::vec3(1.2f,-0.20f,1.0f)) };
+	/*7.1*/std::vector<WayPoint> waypoints8 = { WayPoint(glm::vec3(-1.2f, -0.40f, 1.0f)),WayPoint(lightspos[8],"7.1"),WayPoint(glm::vec3(-0.32f,-0.40f,1.0f)),WayPoint(glm::vec3(-0.32f,-1.2f,1.0f)) };
+	/*6.1*/std::vector<WayPoint> waypoints9 = { WayPoint(glm::vec3(0.16f, -1.2f, 1.0f)),WayPoint(lightspos[9],"6.1"),WayPoint(glm::vec3(0.16f,0.35f,1.0f)),WayPoint(glm::vec3(-1.2f,0.35f,1.0f)) };
+	/*5.1*/std::vector<WayPoint> waypoints10 = {WayPoint(glm::vec3(0.34f, -0.60f, 1.0f)),WayPoint(lightspos[10],"5.1"),WayPoint(glm::vec3(0.34f, 1.0f, 1.0f)),WayPoint(glm::vec3(0.34f, 1.2f, 1.0f))};
+	paths.push_back(waypoints0);
+	paths.push_back(waypoints1);
+	paths.push_back(waypoints2);
+	paths.push_back(waypoints3);
+	paths.push_back(waypoints4);
+	paths.push_back(waypoints5);
+	paths.push_back(waypoints6);
+	paths.push_back(waypoints7);
+	paths.push_back(waypoints8);
+	paths.push_back(waypoints9);
+	paths.push_back(waypoints10);
 }
 
+// Todo: use inheritance from gameObject class instead of its own vector
 void application::addTrafficLight(std::string id, int index, double weight, int status)
 {
 	lights.push_back(TrafficLight{id, index, weight, status});

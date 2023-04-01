@@ -8,7 +8,14 @@ int WayPoints::getSize()
 }
 glm::vec3 WayPoints::getWayPointPosition(int index)
 {
-	return waypoints[index].getWayPoint();
+	if (!(waypoints.size() < 1))
+	{
+		return waypoints[index].getWayPoint();
+	}
+	else
+	{
+		throw std::runtime_error("Waypoint index must be not < 1");
+	}
 }
 WayPoint WayPoints::getWayPoint(int index)
 {
@@ -22,9 +29,16 @@ void WayPoints::addWayPoint(WayPoint pos)
 }
 void WayPoints::addWayPoints(std::vector<WayPoint> positions)
 {
-	for (size_t i = 0; i < positions.size()-1; i++)
+	if (!(positions.size() < 1))
 	{
-		this->waypoints.push_back(positions[i]);
+		for (size_t i = 0; i < positions.size(); i++)
+		{
+			this->waypoints.push_back(positions[i]);
+		}
+	}
+	else
+	{
+		throw std::runtime_error("Waypoint index must be not < 1");
 	}
 }
 std::string WayPoints::getLightId(int index)

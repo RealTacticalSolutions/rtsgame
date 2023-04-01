@@ -26,6 +26,7 @@
 #include "messageObject.h"
 #include "waypoint.h"
 #include "waypoints.h"
+
 #include "vertex.h"
 #include "mesh.h"
 #include "renderobject.h"
@@ -34,6 +35,7 @@
 #include "properties.h"
 #include "collisionType.h"
 #include "gameObject.h"
+#include "car.h"
 #include "shapetool.h"
 #include "intersection.h"
 #include "camera.h"

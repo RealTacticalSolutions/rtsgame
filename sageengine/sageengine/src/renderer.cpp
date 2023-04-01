@@ -925,8 +925,8 @@ void renderer::createTransformBuffer()
     createBuffer(transformBufferManager);
 
     for (auto& gameObject : gameObjects) {
-        gameObject.renderObject->renderprops.instances[gameObject.instanceId] = gameObject.properties.transform;
-        gameObject.renderObject->renderprops.color[gameObject.instanceId] = glm::vec4(gameObject.properties.color, 1.0f);
+        gameObject->renderObject->renderprops.instances[gameObject->instanceId] = gameObject->properties.transform;
+        gameObject->renderObject->renderprops.color[gameObject->instanceId] = glm::vec4(gameObject->properties.color, 1.0f);
     }
 
     std::vector<RenderObject::RenderProps> properties(renderObjects.size());
@@ -1223,8 +1223,8 @@ void renderer::updateTransformBuffer()
     std::vector<RenderObject::RenderProps> props(renderObjects.size());
 
     for (auto& gameObject : gameObjects) {
-        gameObject.renderObject->renderprops.instances[gameObject.instanceId] = gameObject.properties.transform;
-        gameObject.renderObject->renderprops.color[gameObject.instanceId] = glm::vec4(gameObject.properties.color, 1.0f);
+        gameObject->renderObject->renderprops.instances[gameObject->instanceId] = gameObject->properties.transform;
+        gameObject->renderObject->renderprops.color[gameObject->instanceId] = glm::vec4(gameObject->properties.color, 1.0f);
     }
 
     for (size_t i = 0; i < renderObjects.size(); i++)
