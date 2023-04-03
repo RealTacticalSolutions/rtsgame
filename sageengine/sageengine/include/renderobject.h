@@ -1,5 +1,8 @@
-struct RenderObject
+class RenderObject
 {
+private:
+
+public:
 	struct RenderProps
 	{
 		glm::mat4 instances[30];
@@ -10,4 +13,10 @@ struct RenderObject
 	RenderProps renderprops;
 	char* texture;
 	int instanceCount = 0;
+
+	void addInstance(glm::mat4 transform, glm::vec4 color) {
+		renderprops.instances[instanceCount] = transform;
+		renderprops.color[instanceCount] = color;
+		instanceCount += 1;
+	}
 };
