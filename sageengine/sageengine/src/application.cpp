@@ -4,6 +4,14 @@
 #include "color.h"
 #include "CROSSROAD/crossroadlevel.h"
 
+#include <random>
+static double lastSpawnTime = 0.0;
+static int carcount = 2;
+
+std::random_device rd; // obtain a random number from hardware
+std::mt19937 gen(rd()); // seed the generator
+
+std::uniform_int_distribution<> distr(0, 10); // define the range
 
 void application::mainLoop()
 {
@@ -24,13 +32,14 @@ void application::mainLoop()
 		double currentFrameTime = glfwGetTime();
 		double delta = currentFrameTime - lastFrameTime;
 		lastFrameTime = currentFrameTime;
+		
 
 		//updateColorAddition(0, glm::vec3(0.0001f, 0.0001f, 0.0001f));
 		glfwPollEvents();
 
 		level.mainLoop();
-		updateTest();
-		updateWayPoints();
+		updateTest(currentFrameTime);
+		updateWayPoints(delta);
 		drawFrame();
 
 		glm::vec2 cursorPos = input.getCursorPos();
@@ -161,8 +170,18 @@ void application::cleanup()
 {
 }
 
-void application::updateTest()
+void application::updateTest(const double currentFrameTime)
 {
+	if (carcount < 30 && 0.1 < (currentFrameTime - lastSpawnTime))
+	{
+		int pathindex = distr(gen);
+		spawnpoint = paths[pathindex].getWayPointPosition(0);
+		scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+		lastSpawnTime = currentFrameTime;
+		carcount += 1;
+	}
+
+
 	//// Check for intersection with another object
 	//if ((Intersection::intersectSquares(gameObjects[5], gameObjects[1])) && gameObjects[1].properties.color == getColor(RED)) 
 	//{
@@ -203,7 +222,7 @@ bool application::approxEqual(glm::vec3 a, glm::vec3 b, float epsilon)
 	return glm::all(glm::lessThanEqual(glm::abs(a - b), glm::vec3(epsilon)));
 }
 
-void application::updateWayPoints()
+void application::updateWayPoints(double delta)
 {
 	if (scene.gameObjects.empty())
 	{
@@ -240,7 +259,7 @@ void application::updateWayPoints()
 		glm::vec3 direction = glm::normalize(target - position);
 
 		// Set the velocity
-		float velocity = 0.00005f;
+		float velocity = 20.0f * (delta /60);
 
 		// Calculate the new position based on the direction and velocity
 		glm::vec3 new_pos = position + direction * velocity;
@@ -276,6 +295,7 @@ void application::updateWayPoints()
 	for (size_t i = 0; i < carstoremove.size(); i++)
 	{
 		scene.removeObject(carstoremove[i]);
+		carcount -= 1;
 	}
 }
 

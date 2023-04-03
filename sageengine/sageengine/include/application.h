@@ -49,7 +49,7 @@ private:
 	void updateColor(int index, glm::vec3 color);
 	void updateColorAddition(int index, glm::vec3 color);
 	bool approxEqual(glm::vec3 a, glm::vec3 b, float epsilon);
-	void updateWayPoints();
+	void updateWayPoints(double delta);
 	void initWayPoints();
 	void addTrafficLight(std::string id, int index, double weight, int status);
 	void removeCarObject(int index);
@@ -69,5 +69,5 @@ public:
 	void mainLoop();
 	void drawFrame();
 	void cleanup();
-	void updateTest();
+	void updateTest(const double currentframetime);
 };
