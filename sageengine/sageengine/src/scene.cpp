@@ -29,7 +29,6 @@ void Scene::instantiateObject(BluePrint bluePrint, glm::mat4 transform, glm::vec
 void Scene::removeObject(int index)
 {
 	if (gameObjects.size() > index) {
-		gameObjects[index].renderObject->instanceCount -= 1;
 		gameObjects.erase(gameObjects.begin() + index);
 	}
 }
