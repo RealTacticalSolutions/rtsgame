@@ -28,20 +28,21 @@ void application::mainLoop()
         bool test = input.keyDown(GLFW_KEY_SPACE);
 
         input.updateInput();
-        camera.rotateCamera(0.005f);
+        //camera.rotateCamera(0.005f);
 
         if (test) {
             int width = 0, height = 0;
             glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
             glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
+            std::cout << "worldpos X : " << worldpos.x << "worldpos Y : " << worldpos.y << "worldpos Z : " << worldpos.z << std::endl;
             glm::mat4 test = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-            scene.instantiateObject(scene.bluePrints[0], glm::translate(test, worldpos), glm::vec3(1.0f));
+            worldpos.z = 2;
+            scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), worldpos), glm::vec3(0.2f, 0.2f, 0.2f));
             
             
            
             
            // std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
-            //std::cout << "world X: " << worldpos.x << "  world Y: " << worldpos.y << "  world Z: " << worldpos.z << std::endl;
             //scene.addObject();
         }
 
@@ -101,7 +102,7 @@ void application::initWindow()
     start();
     int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
-    camera.rotateCamera(180.0f);
+    //camera.rotateCamera(180.0f);
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
