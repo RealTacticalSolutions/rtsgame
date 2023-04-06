@@ -36,13 +36,10 @@ void application::mainLoop()
             glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
             std::cout << "worldpos X : " << worldpos.x << "worldpos Y : " << worldpos.y << "worldpos Z : " << worldpos.z << std::endl;
             glm::mat4 test = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-            worldpos.z = 2;
             scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), worldpos), glm::vec3(0.2f, 0.2f, 0.2f));
-            
-            
            
             
-           // std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
+            std::cout << "cursor X: " << width << "  cursor Y: " << height << std::endl;
             //scene.addObject();
         }
 
@@ -85,7 +82,7 @@ void application::constructGameobjects()
 
     scene.blueprintObject(ShapeTool::createSquare(0.5f), "../../../textures/1.jpg");
 
-    scene.blueprintObject(ShapeTool::createSquare(0.1f));
+    scene.blueprintObject(ShapeTool::createSquare(0.01f));
 
     scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
 
