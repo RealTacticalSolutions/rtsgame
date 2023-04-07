@@ -135,6 +135,8 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
 }
 
 
+
+
 void renderer::createInstance()
 {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
@@ -738,6 +740,28 @@ void renderer::createImage(uint32_t width, uint32_t height, VkFormat format, VkI
     vkBindImageMemory(device, image, imageMemory, 0);
 }
 
+void renderer::createAccelerationStructures()
+{
+    VkAccelerationStructureCreateInfoKHR accelerationStructureInfo{};
+
+    VkAccelerationStructureKHR test;
+    if (createAccelerationStructureEXT(device, &accelerationStructureInfo, nullptr, &test) != VK_SUCCESS) {
+        throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
+    }
+   
+}
+
+VkResult renderer::createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure)
+{
+    auto func = (PFN_vkCreateAccelerationStructureKHR)vkGetInstanceProcAddr(instance, "vkCreateAccelerationSructureKHR");
+    if (func != nullptr) {
+        return func(device, pCreateInfo, pAllocator, pAccelerationStructure);
+    }
+    else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
 void renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -1048,7 +1072,6 @@ void renderer::createDescriptorSets()
     }
 }
 
-
 void renderer::createBuffer(Buffermanager& buffermanager) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1079,15 +1102,6 @@ void renderer::createObject(RenderObject renderObject)
 {
     vertexBuffers.push_back(createVertexbuffer(renderObject.mesh));
     indexBuffers.push_back(createIndexBuffer(renderObject.mesh));
-}
-
-void renderer::instantiateObject()
-{
-
-}
-
-void renderer::destroyObject()
-{
 }
 
 void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {

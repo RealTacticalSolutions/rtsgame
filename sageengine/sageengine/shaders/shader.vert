@@ -19,7 +19,7 @@ layout(location = 3) in vec3 inNormal;
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
-const vec3 DIRECTION_TO_LIGHT = normalize(vec3(0.0, 0.0, 5.0));
+const vec3 DIRECTION_TO_LIGHT = normalize(vec3(0.0, 0.0, 1.0));
 const float AMBIENCE = 0.03f;
 
 void main() {
