@@ -18,7 +18,7 @@ public class Program {
     {
         int setup = 0;
 
-        double[] lightIds = {1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 42,};
+        double[] lightIds = {1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2,32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0};
 
         TrafficlightInfo[] trafficlightInfos = new TrafficlightInfo[lightIds.Length];
 
@@ -31,7 +31,7 @@ public class Program {
             };
         }
 
-        IPAddress ipAddress = IPAddress.Parse("141.252.214.92");
+        IPAddress ipAddress = IPAddress.Parse("141.252.221.5");
         IPEndPoint ipEndPoint = new(ipAddress, 11000);
 
         Socket listener = new Socket(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -47,33 +47,24 @@ public class Program {
 
         Socket socket = listener.Accept();
 
-        socket.ReceiveTimeout = 1000;
-        socket.SendTimeout = 1000;
+        socket.ReceiveTimeout = 10000;
+        socket.SendTimeout = 5000;
 
         Console.WriteLine("connection succeeded");
 
         while (socket.Connected)
-        { 
+        {
             try
             {
 
-                Thread.Sleep(3000);
-
-                string message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightInfos);
-                message += '\n';
-                byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
-                if (socket.Connected)
-                {
-                    Console.WriteLine("Sending data");
-                    sendResult = socket.Send(data);
-                }
+                Thread.Sleep(1000);
 
                 byte[] buffer = new byte[2048];
 
                 int bytesRead = socket.Receive(buffer);
                 response = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 Console.WriteLine($"received:  {response}");
-                
+
                 TrafficInfo[]? JsonResponse = JsonSerializer.Deserialize<TrafficInfo[]>(response);
 
                 foreach (TrafficInfo trafficInfo in JsonResponse)
@@ -81,13 +72,29 @@ public class Program {
                     Console.WriteLine($"LightId: {trafficInfo.id} Weight: {trafficInfo.weight} ");
 
                 }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine($"receiving failed error: {e}");
+            }
+            try
+            {
+
+                string message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightInfos);
+                message += '\n';
+                byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
+                if (socket.Connected)
+                {
+                    Console.WriteLine($"Sending data {message}");
+                    sendResult = socket.Send(data);
+                }
 
                 foreach (TrafficlightInfo info in trafficlightInfos)
                 {
                     info.status = lightstatus.red;
                 }
 
-                switch(setup) {
+                switch (setup) {
                     case 0:
                         trafficlightInfos[0].status = lightstatus.green;
                         trafficlightInfos[1].status = lightstatus.green;
@@ -109,7 +116,7 @@ public class Program {
                         trafficlightInfos[7].status = lightstatus.green;
                         trafficlightInfos[8].status = lightstatus.green;
                         trafficlightInfos[9].status = lightstatus.green;
-                        setup = 4;
+                        setup = 0;
                         break;
                 }
             }
@@ -119,7 +126,9 @@ public class Program {
                 {
 
                 }
+                Console.WriteLine("Sending failed");
                 Console.WriteLine("ERROR: " + e);
+
             }
         }
 
