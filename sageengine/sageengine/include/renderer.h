@@ -141,6 +141,8 @@ private:
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
+	std::vector<VkAccelerationStructureBuildGeometryInfoKHR> accelerationStructureBuildGeometryInfos;
+	std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationStructureBuildRangeInfos;
 	std::vector<VkAccelerationStructureBuildSizesInfoKHR> accelerationStructureBuildSizesInfos;
 	std::vector<Buffermanager> accelerationStructureBufferManagers;
 	std::vector<VkAccelerationStructureKHR> bottomLevelAccelerationStructures;
