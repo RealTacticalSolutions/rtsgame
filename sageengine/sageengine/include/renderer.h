@@ -141,6 +141,13 @@ private:
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
+	std::vector<VkAccelerationStructureBuildSizesInfoKHR> accelerationStructureBuildSizesInfos;
+	std::vector<Buffermanager> accelerationStructureBufferManagers;
+	std::vector<VkAccelerationStructureKHR> bottomLevelAccelerationStructures;
+	std::vector<VkAccelerationStructureGeometryKHR> accelerationStructureGeometry;
+	std::vector<uint32_t> maxPrimitveCounts;
+	
+
 	void cleanupVulkan();
 	void cleanupSwapChain();
 	void recreateSwapChain(GLFWwindow* window);
@@ -157,15 +164,19 @@ private:
 	void createTextureImages();
 	void createTextureImageViews();
 	void createTextureSampler();
+	void createAccelerationStructureGeometry(int index);
 	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void createAccelerationStructures();
+	void creatBottomLevelAccelerationStructure(int index);
 	VkResult createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure);
+	void getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelerationStructureBuildTypeKHR buildType, const VkAccelerationStructureBuildGeometryInfoKHR* pBuildInfo,	const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR* pSizeInfo);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	Buffermanager createVertexbuffer(Mesh mesh);
 	Buffermanager createIndexBuffer(Mesh mesh);
+	void createAccelerationStructureBuffer(int index);
 	void createTransformBuffer();
 	void createUniformBuffers();
 	void createDescriptorPool();
@@ -200,6 +211,7 @@ private:
 	VkFormat findDepthFormat();
 
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
