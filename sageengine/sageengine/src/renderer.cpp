@@ -253,15 +253,21 @@ void renderer::createLogicalDevice() {
     rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
     rayQueryFeatures.rayQuery = VK_TRUE;
 
+    VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures{};
+    bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+    bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.queueCreateInfoCount = 1;
 
+    //Binding all features in a pNext chain
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.pNext = (VkPhysicalDeviceAccelerationStructureFeaturesKHR*) &accelerationStructureFeatures;
     accelerationStructureFeatures.pNext = (VkPhysicalDeviceRayQueryFeaturesKHR*) &rayQueryFeatures;
+    rayQueryFeatures.pNext = (VkPhysicalDeviceBufferDeviceAddressFeatures*)&bufferDeviceAddressFeatures;
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
@@ -716,34 +722,6 @@ void renderer::createTextureSampler() {
     }
 }
 
-void renderer::createAccelerationStructureGeometry(int index)
-{
-    VkDeviceOrHostAddressConstKHR vertexDataAdress{};
-    vertexDataAdress.hostAddress = vertexBuffers[index].handle;
-
-    VkDeviceOrHostAddressConstKHR indexDataAdress{};
-    indexDataAdress.hostAddress = indexBuffers[index].handle;
-
-    VkAccelerationStructureGeometryTrianglesDataKHR accelerationStructureGeometryTrianglesDataKHR{};
-    accelerationStructureGeometryTrianglesDataKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-    accelerationStructureGeometryTrianglesDataKHR.vertexFormat = VK_FORMAT_R8G8B8A8_SRGB;
-    accelerationStructureGeometryTrianglesDataKHR.vertexData = vertexDataAdress;
-    accelerationStructureGeometryTrianglesDataKHR.vertexStride = sizeof(Vertex);
-    accelerationStructureGeometryTrianglesDataKHR.maxVertex = renderObjects[index].mesh.vertices.size();
-    accelerationStructureGeometryTrianglesDataKHR.indexType = VK_INDEX_TYPE_UINT32;
-    accelerationStructureGeometryTrianglesDataKHR.indexData = indexDataAdress;
-
-    VkAccelerationStructureGeometryDataKHR accelerationStructureGeometryDataKHR{};
-    accelerationStructureGeometryDataKHR.triangles = accelerationStructureGeometryTrianglesDataKHR;
-
-    VkAccelerationStructureGeometryKHR accelerationStructureGeometryKHR{};
-    accelerationStructureGeometryKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-    accelerationStructureGeometryKHR.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-    accelerationStructureGeometryKHR.geometry = accelerationStructureGeometryDataKHR;
-
-    accelerationStructureGeometry.push_back(accelerationStructureGeometryKHR);
-}
-
 void renderer::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -779,54 +757,190 @@ void renderer::createImage(uint32_t width, uint32_t height, VkFormat format, VkI
     vkBindImageMemory(device, image, imageMemory, 0);
 }
 
+void renderer::createScratchBuffer(VkDeviceSize size)
+{
+    scratchBuffer.bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    scratchBuffer.memoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    scratchBuffer.bufferSize = size;
+
+    createBuffer(scratchBuffer);
+}
+
+
 void renderer::createAccelerationStructures()
 {
-    accelerationStructureBufferManagers.resize(objectCount);
-    accelerationStructureBuildSizesInfos.resize(objectCount);
+    bottomLevelAccelerationStructureBufferManagers.resize(objectCount);
+    bottomLevelAccelerationStructureBuildSizesInfos.resize(objectCount);
     bottomLevelAccelerationStructures.resize(objectCount);
-    accelerationStructureBuildSizesInfos.resize(objectCount);
+    bottomLevelAccelerationStructureBuildSizesInfos.resize(objectCount);
+
+    createTopLevelAccelerationStructure(0);
 
     for (size_t i = 0; i < renderObjects.size(); i++)
     {
-        creatBottomLevelAccelerationStructure(i);
+        createBottomLevelAccelerationStructure(i);
     }
 }
 
-void renderer::creatBottomLevelAccelerationStructure(int index)
+
+void renderer::createBottomLevelAccelerationStructureGeometry(int index)
 {
-    createAccelerationStructureGeometry(index);
+    VkDeviceOrHostAddressConstKHR vertexDataAdress{};
+    vertexDataAdress.deviceAddress = getBufferDeviceAddress(vertexBuffers[index].buffer);
+
+    VkDeviceOrHostAddressConstKHR indexDataAdress{};
+    indexDataAdress.deviceAddress = getBufferDeviceAddress(indexBuffers[index].buffer);
+
+    VkDeviceOrHostAddressConstKHR transformDataAdress{};
+    transformDataAdress.deviceAddress = getBufferDeviceAddress(transformBufferManager.buffer);
+
+    VkAccelerationStructureGeometryTrianglesDataKHR accelerationStructureGeometryTrianglesDataKHR{};
+    accelerationStructureGeometryTrianglesDataKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+    accelerationStructureGeometryTrianglesDataKHR.vertexFormat = VK_FORMAT_R8G8B8A8_SRGB;
+    accelerationStructureGeometryTrianglesDataKHR.vertexData = vertexDataAdress;
+    accelerationStructureGeometryTrianglesDataKHR.vertexStride = sizeof(Vertex);
+    accelerationStructureGeometryTrianglesDataKHR.maxVertex = renderObjects[index].mesh.vertices.size();
+    accelerationStructureGeometryTrianglesDataKHR.indexType = VK_INDEX_TYPE_UINT32;
+    accelerationStructureGeometryTrianglesDataKHR.indexData = indexDataAdress;
+    accelerationStructureGeometryTrianglesDataKHR.transformData = transformDataAdress;
+
+    VkAccelerationStructureGeometryDataKHR accelerationStructureGeometryDataKHR{};
+    accelerationStructureGeometryDataKHR.triangles = accelerationStructureGeometryTrianglesDataKHR;
+
+    VkAccelerationStructureGeometryKHR accelerationStructureGeometryKHR{};
+    accelerationStructureGeometryKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    accelerationStructureGeometryKHR.pNext = nullptr;
+    accelerationStructureGeometryKHR.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    accelerationStructureGeometryKHR.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+    accelerationStructureGeometryKHR.geometry = accelerationStructureGeometryDataKHR;
+
+    bottomLevelAccelerationStructureGeometry.push_back(accelerationStructureGeometryKHR);
+}
+
+void renderer::createBottomLevelAccelerationStructure(int index)
+{
+    createBottomLevelAccelerationStructureGeometry(index);
 
     uint32_t geometryCount = renderObjects[index].mesh.indices.size() / 3;
 
     VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfoKHR{};
     accelerationStructureBuildGeometryInfoKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     accelerationStructureBuildGeometryInfoKHR.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    accelerationStructureBuildGeometryInfoKHR.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-    accelerationStructureBuildGeometryInfoKHR.dstAccelerationStructure = bottomLevelAccelerationStructures[index];
+    accelerationStructureBuildGeometryInfoKHR.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     accelerationStructureBuildGeometryInfoKHR.geometryCount = 1;
-    accelerationStructureBuildGeometryInfoKHR.pGeometries = &accelerationStructureGeometry[index];
+    accelerationStructureBuildGeometryInfoKHR.pGeometries = &bottomLevelAccelerationStructureGeometry[index];
 
     maxPrimitveCounts.push_back(geometryCount);
-    accelerationStructureBuildSizesInfos[index].sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+    bottomLevelAccelerationStructureBuildSizesInfos[index].sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_HOST_KHR, &accelerationStructureBuildGeometryInfoKHR, maxPrimitveCounts.data(), &accelerationStructureBuildSizesInfos[index]);
+    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfoKHR, maxPrimitveCounts.data(), &bottomLevelAccelerationStructureBuildSizesInfos[index]);
 
     accelerationStructureBuildGeometryInfos.push_back(accelerationStructureBuildGeometryInfoKHR);
 
-    createAccelerationStructureBuffer(index);
+    createAccelerationStructureBuffer(bottomLevelAccelerationStructures[index], bottomLevelAccelerationStructureBuildSizesInfos[index]);
 
     VkAccelerationStructureCreateInfoKHR accelerationStructureInfo{};
     accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-    accelerationStructureInfo.buffer = accelerationStructureBufferManagers[index].buffer;
+    accelerationStructureInfo.buffer = bottomLevelAccelerationStructures[index].buffer.buffer;
     accelerationStructureInfo.offset = 0;
-    accelerationStructureInfo.size = accelerationStructureBuildSizesInfos[index].accelerationStructureSize;
+    accelerationStructureInfo.size = bottomLevelAccelerationStructureBuildSizesInfos[index].accelerationStructureSize;
     accelerationStructureInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 
 
-    if (createAccelerationStructureEXT(device, &accelerationStructureInfo, nullptr, &bottomLevelAccelerationStructures[index]) != VK_SUCCESS) {
+    if (createAccelerationStructureEXT(device, &accelerationStructureInfo, nullptr, &bottomLevelAccelerationStructures[index].handle) != VK_SUCCESS) {
         throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
     }
 
+    bottomLevelAccelerationStructures[index].deviceAddress = getAccelerationStructureDeviceAddressEXT(index);
+
+}
+
+void renderer::createTopLevelAccelerationStructureGeometry()
+{
+    //TODO: set maxobjectCount
+    std::vector<VkAccelerationStructureInstanceKHR> instances;
+
+    //creates all VkAccelerationStructureInstances
+    for (int i = 0; i < objectCount; i++) {
+        for (int j = 0; j < renderObjects[i].instanceCount; j++) {
+            VkTransformMatrixKHR vkTransform;
+            glm::mat4 transform = renderObjects[i].renderprops.instances[j];
+            VkAccelerationStructureInstanceKHR instance{};
+            memcpy(vkTransform.matrix, &transform, sizeof(vkTransform.matrix));
+            
+            instance.transform = vkTransform;
+            instance.instanceCustomIndex = 0;
+            instance.mask = 0xFF;
+            instance.instanceShaderBindingTableRecordOffset = 0;
+            instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+            instance.accelerationStructureReference = bottomLevelAccelerationStructures[0].deviceAddress;
+            instances.push_back(instance);
+        }
+    }
+
+    createTopLevelAccelerationStructureBuffer(instances);
+
+    VkDeviceOrHostAddressConstKHR instancesDataDeviceAddress{};
+    instancesDataDeviceAddress.deviceAddress = getBufferDeviceAddress(topLevelAccelerationStructureBufferManager.buffer);
+
+   
+    topLevelAccelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    topLevelAccelerationStructureGeometry.pNext = nullptr;
+    topLevelAccelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+    topLevelAccelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    topLevelAccelerationStructureGeometry.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+    topLevelAccelerationStructureGeometry.geometry.instances.pNext = nullptr;
+    topLevelAccelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
+    topLevelAccelerationStructureGeometry.geometry.instances.data = instancesDataDeviceAddress;
+
+}
+
+void renderer::createTopLevelAccelerationStructure(int index)
+{
+    createTopLevelAccelerationStructureGeometry();
+
+    VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+    accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    accelerationStructureBuildGeometryInfo.geometryCount = 1;
+    accelerationStructureBuildGeometryInfo.pGeometries = &topLevelAccelerationStructureGeometry;
+
+    uint32_t primitive_count = 1;
+
+    topLevelAccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &primitive_count, &topLevelAccelerationStructureBuildSizesInfo);
+
+    createAccelerationStructureBuffer(topLevelAccelerationStructures, topLevelAccelerationStructureBuildSizesInfo);
+}
+
+uint64_t renderer::getBufferDeviceAddress(VkBuffer buffer)
+{
+    VkBufferDeviceAddressInfo bufferDeviceAddressInfo{};
+    bufferDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    bufferDeviceAddressInfo.buffer = buffer;
+    return vkGetBufferDeviceAddress(device, &bufferDeviceAddressInfo);
+}
+
+VkDeviceAddress renderer::getAccelerationStructureDeviceAddressEXT(int index)
+{
+    VkAccelerationStructureDeviceAddressInfoKHR deviceAdressInfo{};
+    deviceAdressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+    deviceAdressInfo.accelerationStructure = bottomLevelAccelerationStructures[index].handle;
+
+    auto func = (PFN_vkGetAccelerationStructureDeviceAddressKHR)vkGetInstanceProcAddr(instance, "vkGetAccelerationStructureDeviceAddressKHR");
+    if (func != nullptr) {
+        return func(device, &deviceAdressInfo);
+    }
+}
+
+void renderer::cmdBuildAccelerationStructuresEXT(VkCommandBuffer commandBuffer, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos)
+{
+    auto func = (PFN_vkCmdBuildAccelerationStructuresKHR)vkGetInstanceProcAddr(instance, "vkCmdBuildAccelerationStructuresKHR");
+    if (func != nullptr) {
+        return func(commandBuffer, infoCount, pInfos, ppBuildRangeInfos);
+    }
 }
 
 VkResult renderer::createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure)
@@ -846,8 +960,13 @@ void renderer::getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelera
     if (func != nullptr) {
         return func(device, buildType, pBuildInfo, pMaxPrimitiveCounts, pSizeInfo);
     }
-    else {
-        return;
+}
+
+void renderer::destroyAccelerationStructureEXT(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator)
+{
+    auto func = (PFN_vkDestroyAccelerationStructureKHR)vkGetInstanceProcAddr(instance, "vkDestroyAccelerationStructureKHR");
+    if (func != nullptr) {
+        return func(device, accelerationStructure, pAllocator);
     }
 }
 
@@ -1029,16 +1148,28 @@ Buffermanager renderer::createIndexBuffer(Mesh mesh)
     return indexBufferManager;
 }
 
-void renderer::createAccelerationStructureBuffer(int index)
+void renderer::createAccelerationStructureBuffer(AccelerationStructure& accelerationStructure, VkAccelerationStructureBuildSizesInfoKHR buildSizeInfo)
 {
-    accelerationStructureBufferManagers[index].bufferUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
-    accelerationStructureBufferManagers[index].memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    accelerationStructure.buffer.bufferUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+    accelerationStructure.buffer.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-    accelerationStructureBufferManagers[index].bufferSize = accelerationStructureBuildSizesInfos[index].accelerationStructureSize;
+    accelerationStructure.buffer.bufferSize = buildSizeInfo.accelerationStructureSize;
 
-    createBuffer(accelerationStructureBufferManagers[index]);
+    createBuffer(accelerationStructure.buffer);
 
-    vkMapMemory(device, accelerationStructureBufferManagers[index].bufferMemory, 0, accelerationStructureBufferManagers[index].bufferSize, 0, &accelerationStructureBufferManagers[index].handle);
+    vkMapMemory(device, accelerationStructure.buffer.bufferMemory, 0, accelerationStructure.buffer.bufferSize, 0, &accelerationStructure.buffer.handle);
+}
+
+void renderer::createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerationStructureInstanceKHR> instances)
+{
+    topLevelAccelerationStructureBufferManager.bufferUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+    topLevelAccelerationStructureBufferManager.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR) * 30;
+
+    createBuffer(topLevelAccelerationStructureBufferManager);
+
+    vkMapMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, 0, topLevelAccelerationStructureBufferManager.bufferSize, 0, &topLevelAccelerationStructureBufferManager.handle);
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), topLevelAccelerationStructureBufferManager.bufferSize);
 }
 
 void renderer::createTransformBuffer()
@@ -1174,7 +1305,7 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = buffermanager.bufferSize;
-    bufferInfo.usage = buffermanager.bufferUsageFlags;
+    bufferInfo.usage = buffermanager.bufferUsageFlags | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffermanager.buffer) != VK_SUCCESS) {
@@ -1184,8 +1315,13 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(device, buffermanager.buffer, &memRequirements);
 
+    VkMemoryAllocateFlagsInfo memoryAllocateFlagsInfo{};
+    memoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+    memoryAllocateFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.pNext = &memoryAllocateFlagsInfo;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, buffermanager.memoryPropertyFlags);
 
@@ -1271,7 +1407,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         VkBuffer buffers[] = { vertexBuffers[i].buffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
-        vkCmdBuildAccelerationStructuresKHR(commandBuffer, objectCount, accelerationStructureBuildGeometryInfos.data(), accelerationStructureBuildRangeInfos.data());
+        //cmdBuildAccelerationStructuresEXT(commandBuffer, objectCount, accelerationStructureBuildGeometryInfos.data(), accelerationStructureBuildRangeInfos.data());
 
         vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT32);
 

@@ -141,12 +141,23 @@ private:
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
+	Buffermanager scratchBuffer;
+
 	std::vector<VkAccelerationStructureBuildGeometryInfoKHR> accelerationStructureBuildGeometryInfos;
+
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationStructureBuildRangeInfos;
-	std::vector<VkAccelerationStructureBuildSizesInfoKHR> accelerationStructureBuildSizesInfos;
-	std::vector<Buffermanager> accelerationStructureBufferManagers;
-	std::vector<VkAccelerationStructureKHR> bottomLevelAccelerationStructures;
-	std::vector<VkAccelerationStructureGeometryKHR> accelerationStructureGeometry;
+
+	std::vector<VkAccelerationStructureBuildSizesInfoKHR> bottomLevelAccelerationStructureBuildSizesInfos;
+	VkAccelerationStructureBuildSizesInfoKHR topLevelAccelerationStructureBuildSizesInfo;
+
+	std::vector<Buffermanager> bottomLevelAccelerationStructureBufferManagers;
+	Buffermanager topLevelAccelerationStructureBufferManager;
+
+	std::vector<AccelerationStructure> bottomLevelAccelerationStructures;
+	AccelerationStructure topLevelAccelerationStructures;
+
+	std::vector<VkAccelerationStructureGeometryKHR> bottomLevelAccelerationStructureGeometry;
+	VkAccelerationStructureGeometryKHR topLevelAccelerationStructureGeometry;
 	std::vector<uint32_t> maxPrimitveCounts;
 	
 
@@ -166,21 +177,26 @@ private:
 	void createTextureImages();
 	void createTextureImageViews();
 	void createTextureSampler();
-	void createAccelerationStructureGeometry(int index);
+	void createBottomLevelAccelerationStructureGeometry(int index);
 	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void createAccelerationStructures();
-	void creatBottomLevelAccelerationStructure(int index);
-	VkResult createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure);
-	void getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelerationStructureBuildTypeKHR buildType, const VkAccelerationStructureBuildGeometryInfoKHR* pBuildInfo,	const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR* pSizeInfo);
+	void createBottomLevelAccelerationStructure(int index);
+	void createTopLevelAccelerationStructureGeometry();
+	void createTopLevelAccelerationStructure(int index);
+	uint64_t getBufferDeviceAddress(VkBuffer buffer);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
 	Buffermanager createVertexbuffer(Mesh mesh);
 	Buffermanager createIndexBuffer(Mesh mesh);
-	void createAccelerationStructureBuffer(int index);
+	void createScratchBuffer(VkDeviceSize size);
+	void createAccelerationStructureBuffer(AccelerationStructure& accelerationStructure, VkAccelerationStructureBuildSizesInfoKHR buildSizeInfo);
+	void createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerationStructureInstanceKHR> instances);
 	void createTransformBuffer();
 	void createUniformBuffers();
+
 	void createDescriptorPool();
 	void createDescriptorSets();
 	void createBuffer(Buffermanager& bufferManager);
@@ -212,9 +228,15 @@ private:
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	VkFormat findDepthFormat();
 
+	VkDeviceAddress getAccelerationStructureDeviceAddressEXT(int index);
+	void cmdBuildAccelerationStructuresEXT(VkCommandBuffer commandBuffer, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos);
+	VkResult createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure);
+	void getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelerationStructureBuildTypeKHR buildType, const VkAccelerationStructureBuildGeometryInfoKHR* pBuildInfo, const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR* pSizeInfo);
+	void destroyAccelerationStructureEXT(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator);
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 public:

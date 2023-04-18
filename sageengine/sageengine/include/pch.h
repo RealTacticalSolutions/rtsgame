@@ -36,6 +36,7 @@
 #include "gamemath.h"
 #include "scene.h"
 #include "window.h"
+#include "accelerationstructure.h"
 #include "renderer.h"
 #include "application.h"
 #include "inputsystem.h"
