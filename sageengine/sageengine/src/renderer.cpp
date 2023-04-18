@@ -66,9 +66,10 @@ void renderer::cleanupVulkan()
     }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
+    cleanupAccelerationStructures();
+
     vkDestroyBuffer(device, transformBufferManager.buffer, nullptr);
     vkFreeMemory(device, transformBufferManager.bufferMemory, nullptr);
-
    
     for (size_t i = 0; i < objectCount; i++) {
         vkDestroyBuffer(device, indexBuffers[i].buffer, nullptr);
@@ -133,6 +134,24 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
     createFramebuffers();
     camera.aspectRatio = swapChainExtent.width / (float)swapChainExtent.height;
 
+}
+
+void renderer::cleanupAccelerationStructures()
+{
+    //Destroy TLAS
+    vkDestroyBuffer(device, topLevelAccelerationStructureBufferManager.buffer, nullptr);
+    vkFreeMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, nullptr);
+
+    vkDestroyBuffer(device, topLevelAccelerationStructures.buffer.buffer, nullptr);
+    vkFreeMemory(device, topLevelAccelerationStructures.buffer.bufferMemory, nullptr);
+    destroyAccelerationStructureEXT(topLevelAccelerationStructures.handle, nullptr);
+
+    //Destroy BLASes
+    for (auto blas : bottomLevelAccelerationStructures) {
+        vkDestroyBuffer(device, blas.buffer.buffer, nullptr);
+        vkFreeMemory(device, blas.buffer.bufferMemory, nullptr);
+        destroyAccelerationStructureEXT(blas.handle, nullptr);
+    }
 }
 
 
@@ -913,6 +932,16 @@ void renderer::createTopLevelAccelerationStructure(int index)
     getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &primitive_count, &topLevelAccelerationStructureBuildSizesInfo);
 
     createAccelerationStructureBuffer(topLevelAccelerationStructures, topLevelAccelerationStructureBuildSizesInfo);
+
+    VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
+    accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+    accelerationStructureCreateInfo.buffer = topLevelAccelerationStructures.buffer.buffer;
+    accelerationStructureCreateInfo.size = topLevelAccelerationStructureBuildSizesInfo.accelerationStructureSize;
+    accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+
+    if (createAccelerationStructureEXT(device, &accelerationStructureCreateInfo, nullptr, &topLevelAccelerationStructures.handle) != VK_SUCCESS) {
+        throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
+    }
 }
 
 uint64_t renderer::getBufferDeviceAddress(VkBuffer buffer)
@@ -962,7 +991,7 @@ void renderer::getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelera
     }
 }
 
-void renderer::destroyAccelerationStructureEXT(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator)
+void renderer::destroyAccelerationStructureEXT(VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator)
 {
     auto func = (PFN_vkDestroyAccelerationStructureKHR)vkGetInstanceProcAddr(instance, "vkDestroyAccelerationStructureKHR");
     if (func != nullptr) {
