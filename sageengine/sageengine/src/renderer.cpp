@@ -776,13 +776,17 @@ void renderer::createImage(uint32_t width, uint32_t height, VkFormat format, VkI
     vkBindImageMemory(device, image, imageMemory, 0);
 }
 
-void renderer::createScratchBuffer(VkDeviceSize size)
+Buffermanager renderer::createScratchBuffer(VkDeviceSize size)
 {
+    Buffermanager scratchBuffer{};
+
     scratchBuffer.bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     scratchBuffer.memoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     scratchBuffer.bufferSize = size;
 
     createBuffer(scratchBuffer);
+
+    return scratchBuffer;
 }
 
 
@@ -842,19 +846,21 @@ void renderer::createBottomLevelAccelerationStructure(int index)
 
     uint32_t geometryCount = renderObjects[index].mesh.indices.size() / 3;
 
-    VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfoKHR{};
-    accelerationStructureBuildGeometryInfoKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-    accelerationStructureBuildGeometryInfoKHR.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-    accelerationStructureBuildGeometryInfoKHR.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-    accelerationStructureBuildGeometryInfoKHR.geometryCount = 1;
-    accelerationStructureBuildGeometryInfoKHR.pGeometries = &bottomLevelAccelerationStructureGeometry[index];
+    VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+    accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    accelerationStructureBuildGeometryInfo.geometryCount = 1;
+    accelerationStructureBuildGeometryInfo.pGeometries = &bottomLevelAccelerationStructureGeometry[index];
 
-    maxPrimitveCounts.push_back(geometryCount);
+    const uint32_t maxPrimitveCount = geometryCount;
     bottomLevelAccelerationStructureBuildSizesInfos[index].sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfoKHR, maxPrimitveCounts.data(), &bottomLevelAccelerationStructureBuildSizesInfos[index]);
+    
+    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &maxPrimitveCount, &bottomLevelAccelerationStructureBuildSizesInfos[index]);
 
-    accelerationStructureBuildGeometryInfos.push_back(accelerationStructureBuildGeometryInfoKHR);
+    accelerationStructureBuildGeometryInfos.push_back(accelerationStructureBuildGeometryInfo);
 
     createAccelerationStructureBuffer(bottomLevelAccelerationStructures[index], bottomLevelAccelerationStructureBuildSizesInfos[index]);
 
@@ -869,6 +875,32 @@ void renderer::createBottomLevelAccelerationStructure(int index)
     if (createAccelerationStructureEXT(device, &accelerationStructureInfo, nullptr, &bottomLevelAccelerationStructures[index].handle) != VK_SUCCESS) {
         throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
     }
+
+    Buffermanager scratchBuffer = createScratchBuffer(bottomLevelAccelerationStructureBuildSizesInfos[index].buildScratchSize);
+
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = bottomLevelAccelerationStructures[index].handle;
+    accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = getBufferDeviceAddress(scratchBuffer.buffer);
+
+    //TODO offsets controleren
+    VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+    accelerationStructureBuildRangeInfo.primitiveCount = maxPrimitveCount;
+    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+    accelerationStructureBuildRangeInfo.firstVertex = 0;
+    accelerationStructureBuildRangeInfo.transformOffset = 0;
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+    VkCommandBuffer commandBuffer = beginNewCommandBuffer();
+
+    cmdBuildAccelerationStructuresEXT(
+        commandBuffer,
+        1,
+        &accelerationStructureBuildGeometryInfo,
+        accelerationBuildStructureRangeInfos.data());
+
+    flushCommandBuffer(commandBuffer);
+
+    vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
+    vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
 
     bottomLevelAccelerationStructures[index].deviceAddress = getAccelerationStructureDeviceAddressEXT(index);
 
@@ -942,6 +974,32 @@ void renderer::createTopLevelAccelerationStructure(int index)
     if (createAccelerationStructureEXT(device, &accelerationStructureCreateInfo, nullptr, &topLevelAccelerationStructures.handle) != VK_SUCCESS) {
         throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
     }
+
+    Buffermanager scratchBuffer = createScratchBuffer(topLevelAccelerationStructureBuildSizesInfo.buildScratchSize);
+
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructures.handle;
+    accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = getBufferDeviceAddress(scratchBuffer.buffer);
+
+    //TODO offsets controleren
+    VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+    accelerationStructureBuildRangeInfo.primitiveCount = 1;
+    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+    accelerationStructureBuildRangeInfo.firstVertex = 0;
+    accelerationStructureBuildRangeInfo.transformOffset = 0;
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+    VkCommandBuffer commandBuffer = beginNewCommandBuffer();
+
+    cmdBuildAccelerationStructuresEXT(
+        commandBuffer,
+        1,
+        &accelerationStructureBuildGeometryInfo,
+        accelerationBuildStructureRangeInfos.data());
+
+    flushCommandBuffer(commandBuffer);
+
+    vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
+    vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
 }
 
 uint64_t renderer::getBufferDeviceAddress(VkBuffer buffer)
@@ -1121,13 +1179,13 @@ Buffermanager renderer::createVertexbuffer(Mesh mesh)
 {
     Buffermanager stagingbufferManager = {
         sizeof(Vertex) * mesh.vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
     Buffermanager vertexbufferManager = {
         sizeof(Vertex)* mesh.vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
 
@@ -1151,13 +1209,13 @@ Buffermanager renderer::createIndexBuffer(Mesh mesh)
 {
     Buffermanager stagingbufferManager = {
         sizeof(uint32_t) * mesh.indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
     Buffermanager indexBufferManager = {
         sizeof(uint32_t)* mesh.indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
 
@@ -1517,6 +1575,55 @@ void renderer::updateTransformBuffer()
         }
     }
     memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
+}
+
+VkCommandBuffer renderer::beginNewCommandBuffer()
+{
+    VkCommandBuffer commandBuffer{};
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+
+    VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer));
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = 0;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+
+    return commandBuffer;
+}
+
+void renderer::flushCommandBuffer(VkCommandBuffer& commandBuffer)
+{
+    assert(commandBuffer != VK_NULL_HANDLE);
+
+    VK_CHECK(vkEndCommandBuffer(commandBuffer));
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    // Create fence to ensure that the command buffer has finished executing
+    VkFenceCreateInfo fenceCreateInfo = {};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.flags = 0;
+    VkFence fence;
+    VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &fence));
+
+    // Submit to the queue
+    VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence));
+    // Wait for the fence to signal that command buffer has finished executing
+    VK_CHECK(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+    vkDestroyFence(device, fence, nullptr);
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
 void renderer::drawFrame(GLFWwindow* window)

@@ -116,7 +116,7 @@ private:
 
 	Buffermanager transformBufferManager = {
 		0,
-		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
 	
@@ -140,8 +140,6 @@ private:
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
-
-	Buffermanager scratchBuffer;
 
 	std::vector<VkAccelerationStructureBuildGeometryInfoKHR> accelerationStructureBuildGeometryInfos;
 
@@ -193,7 +191,7 @@ private:
 
 	Buffermanager createVertexbuffer(Mesh mesh);
 	Buffermanager createIndexBuffer(Mesh mesh);
-	void createScratchBuffer(VkDeviceSize size);
+	Buffermanager createScratchBuffer(VkDeviceSize size);
 	void createAccelerationStructureBuffer(AccelerationStructure& accelerationStructure, VkAccelerationStructureBuildSizesInfoKHR buildSizeInfo);
 	void createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerationStructureInstanceKHR> instances);
 	void createTransformBuffer();
@@ -216,6 +214,9 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool hasStencilComponent(VkFormat format);
 	void updateTransformBuffer();
+
+	VkCommandBuffer beginNewCommandBuffer();
+	void flushCommandBuffer(VkCommandBuffer& commandBuffer);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	std::vector<const char*> getRequiredExtensions();
