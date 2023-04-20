@@ -23,6 +23,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
+    createComputeDescriptorSetLayout();
     createGraphicsPipeline();
     createComputePipeline();
     createDepthResources();
@@ -39,8 +40,10 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createTransformBuffer();
     createAccelerationStructures();
     createUniformBuffers();
+    createComputeShaderBuffers();
     createDescriptorPool();
     createDescriptorSets();
+    createComputeDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
     
@@ -157,9 +160,6 @@ void renderer::cleanupAccelerationStructures()
         destroyAccelerationStructureEXT(blas.handle, nullptr);
     }
 }
-
-
-
 
 void renderer::createInstance()
 {
@@ -624,8 +624,8 @@ void renderer::createComputePipeline()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    //pipelineLayoutInfo.setLayoutCount = 1;
-    //pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &computeDescriptorSetLayout;
     pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
     pipelineLayoutInfo.pushConstantRangeCount = 1;
 
@@ -1339,6 +1339,22 @@ void renderer::createUniformBuffers()
     }
 }
 
+//TODO frame in flight gpu workload
+void renderer::createComputeShaderBuffers()
+{
+    computeShaderBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        computeShaderBuffers[i].bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        computeShaderBuffers[i].memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        computeShaderBuffers[i].bufferSize = sizeof(glm::vec3) * 2;
+
+        createBuffer(computeShaderBuffers[i]);
+
+        vkMapMemory(device, computeShaderBuffers[i].bufferMemory, 0, computeShaderBuffers[i].bufferSize, 0, &computeShaderBuffers[i].handle);
+    }
+}
+
 void renderer::createDescriptorPool()
 {
     std::array<VkDescriptorPoolSize, 3> poolSizes{};
@@ -1347,13 +1363,13 @@ void renderer::createDescriptorPool()
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
     poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT);
 
     VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool));
 }
@@ -1368,11 +1384,7 @@ void renderer::createDescriptorSets()
     allocInfo.pSetLayouts = layouts.data();
 
     descriptorSets.resize(MAX_FRAMES_IN_FLIGHT * objectCount);
-    if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
-
-    
+    VK_CHECK(vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()));
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         size_t totalOffset = 0;
@@ -1425,6 +1437,54 @@ void renderer::createDescriptorSets()
             vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
         
+    }
+}
+
+void renderer::createComputeDescriptorSetLayout()
+{
+    std::array<VkDescriptorSetLayoutBinding, 1> layoutBindings{};
+    layoutBindings[0].binding = 0;
+    layoutBindings[0].descriptorCount = 1;
+    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    layoutBindings[0].pImmutableSamplers = nullptr;
+    layoutBindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = layoutBindings.data();
+
+    VK_CHECK(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &computeDescriptorSetLayout));
+}
+
+void renderer::createComputeDescriptorSets()
+{
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, computeDescriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    computeDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    VK_CHECK(vkAllocateDescriptorSets(device, &allocInfo, computeDescriptorSets.data()));
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorBufferInfo storageBufferInfo{};
+        storageBufferInfo.buffer = computeShaderBuffers[i].buffer;
+        storageBufferInfo.offset = 0;
+        storageBufferInfo.range = sizeof(glm::vec3) * 2;
+
+        std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].dstSet = computeDescriptorSets[i];
+        descriptorWrites[0].dstBinding = 0;
+        descriptorWrites[0].dstArrayElement = 0;
+        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pBufferInfo = &storageBufferInfo;
+
+        vkUpdateDescriptorSets(device, 1, descriptorWrites.data(), 0, nullptr);
     }
 }
 
@@ -1534,7 +1594,6 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         VkBuffer buffers[] = { vertexBuffers[i].buffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
-        //cmdBuildAccelerationStructuresEXT(commandBuffer, objectCount, accelerationStructureBuildGeometryInfos.data(), accelerationStructureBuildRangeInfos.data());
 
         vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT32);
 
@@ -1547,6 +1606,22 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     }
 
     vkCmdEndRenderPass(commandBuffer);
+
+    VK_CHECK(vkEndCommandBuffer(commandBuffer));
+}
+
+void renderer::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
+
+    //vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(glm::vec3) * 2, 0);
+
+    vkCmdDispatch(commandBuffer, 1, 1, 1);
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
@@ -1690,6 +1765,7 @@ void renderer::drawFrame(GLFWwindow* window)
 
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+    recordComputeCommandBuffer(commandBuffers[currentFrame]);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

@@ -100,7 +100,6 @@ private:
 
 	VkSwapchainKHR swapChain;
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 
@@ -111,8 +110,14 @@ private:
 	std::vector<VkCommandBuffer> commandBuffers;
 
 	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
 
+	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout computeDescriptorSetLayout;
+
+	std::vector<VkDescriptorSet> descriptorSets;
+	std::vector<VkDescriptorSet> computeDescriptorSets;
+
+	//buffermanagers
 	std::vector<Buffermanager> uniformBufferManagers;
 	std::vector<Buffermanager> vertexBuffers;
 	std::vector<Buffermanager> indexBuffers;
@@ -122,6 +127,8 @@ private:
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
+
+	std::vector<Buffermanager> computeShaderBuffers;
 	
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -193,6 +200,7 @@ private:
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
+	//Buffer creation functions
 	Buffermanager createVertexbuffer(Mesh mesh);
 	Buffermanager createIndexBuffer(Mesh mesh);
 	Buffermanager createScratchBuffer(VkDeviceSize size);
@@ -200,13 +208,17 @@ private:
 	void createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerationStructureInstanceKHR> instances);
 	void createTransformBuffer();
 	void createUniformBuffers();
+	void createComputeShaderBuffers();
 
 	void createDescriptorPool();
 	void createDescriptorSets();
+	void createComputeDescriptorSetLayout();
+	void createComputeDescriptorSets();
 	void createBuffer(Buffermanager& bufferManager);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
 	bool checkValidationLayerSupport();
