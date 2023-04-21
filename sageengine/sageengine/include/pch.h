@@ -27,6 +27,7 @@
 #include "vertex.h"
 #include "mesh.h"
 #include "renderobject.h"
+#include "raycast.h"
 #include "blueprint.h"
 #include "buffermanager.h"
 #include "properties.h"

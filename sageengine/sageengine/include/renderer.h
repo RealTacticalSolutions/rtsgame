@@ -28,6 +28,7 @@ private:
 
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
+
 	};
 
 	const std::vector<const char*> deviceExtensions = {
@@ -36,7 +37,8 @@ private:
 		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
 		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
 		VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-		VK_KHR_RAY_QUERY_EXTENSION_NAME
+		VK_KHR_RAY_QUERY_EXTENSION_NAME,
+		VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
 	};
 
 	std::vector<RenderObject>& renderObjects;
@@ -95,6 +97,7 @@ private:
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 
+	VkQueue computeQueue;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 
@@ -108,6 +111,7 @@ private:
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkCommandBuffer> computeCommandBuffers;
 
 	VkDescriptorPool descriptorPool;
 
@@ -132,8 +136,10 @@ private:
 	
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> computeFinishedSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
+	std::vector<VkFence> computeInFlightFences;
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
@@ -162,7 +168,7 @@ private:
 	Buffermanager topLevelAccelerationStructureBufferManager;
 
 	std::vector<AccelerationStructure> bottomLevelAccelerationStructures;
-	AccelerationStructure topLevelAccelerationStructures;
+	AccelerationStructure topLevelAccelerationStructure;
 
 	std::vector<VkAccelerationStructureGeometryKHR> bottomLevelAccelerationStructureGeometry;
 	VkAccelerationStructureGeometryKHR topLevelAccelerationStructureGeometry;
@@ -217,6 +223,7 @@ private:
 	void createBuffer(Buffermanager& bufferManager);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
+	void createComputeCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
 	void createSyncObjects();

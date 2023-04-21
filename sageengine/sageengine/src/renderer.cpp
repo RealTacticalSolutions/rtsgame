@@ -45,6 +45,7 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createDescriptorSets();
     createComputeDescriptorSets();
     createCommandBuffers();
+    createComputeCommandBuffers();
     createSyncObjects();
     
 }
@@ -149,9 +150,9 @@ void renderer::cleanupAccelerationStructures()
     vkDestroyBuffer(device, topLevelAccelerationStructureBufferManager.buffer, nullptr);
     vkFreeMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, topLevelAccelerationStructures.buffer.buffer, nullptr);
-    vkFreeMemory(device, topLevelAccelerationStructures.buffer.bufferMemory, nullptr);
-    destroyAccelerationStructureEXT(topLevelAccelerationStructures.handle, nullptr);
+    vkDestroyBuffer(device, topLevelAccelerationStructure.buffer.buffer, nullptr);
+    vkFreeMemory(device, topLevelAccelerationStructure.buffer.bufferMemory, nullptr);
+    destroyAccelerationStructureEXT(topLevelAccelerationStructure.handle, nullptr);
 
     //Destroy BLASes
     for (auto blas : bottomLevelAccelerationStructures) {
@@ -175,6 +176,13 @@ void renderer::createInstance()
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
+    VkValidationFeatureEnableEXT test[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+
+    VkValidationFeaturesEXT feat{};
+    feat.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+    feat.enabledValidationFeatureCount = 1;
+    feat.pEnabledValidationFeatures = test;
+
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
@@ -182,6 +190,7 @@ void renderer::createInstance()
     auto extensions = getRequiredExtensions();
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
+    createInfo.pNext = &feat;
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
     if (enableValidationLayers) {
@@ -204,7 +213,7 @@ void renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
 {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = debugCallback;
 }
@@ -267,7 +276,7 @@ void renderer::createLogicalDevice() {
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
-   
+       
     VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures{};
     accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
     accelerationStructureFeatures.accelerationStructure = VK_TRUE;
@@ -305,6 +314,7 @@ void renderer::createLogicalDevice() {
 
     VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
     
+    vkGetDeviceQueue(device, indices.graphicsAndComputeFamily.value(), 0, &computeQueue);
     vkGetDeviceQueue(device, indices.graphicsAndComputeFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
@@ -617,16 +627,16 @@ void renderer::createComputePipeline()
     computeShaderStageInfo.module = computeShaderModule;
     computeShaderStageInfo.pName = "main";
 
-    VkPushConstantRange pushConstant;
-    pushConstant.offset = 0;
-    pushConstant.size = sizeof(glm::vec3);
-    pushConstant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    VkPushConstantRange pushConstantRange;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(RayCast);
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &computeDescriptorSetLayout;
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
     pipelineLayoutInfo.pushConstantRangeCount = 1;
 
     VK_CHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &computePipelineLayout));
@@ -1003,21 +1013,21 @@ void renderer::createTopLevelAccelerationStructure(int index)
 
     getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &primitive_count, &topLevelAccelerationStructureBuildSizesInfo);
 
-    createAccelerationStructureBuffer(topLevelAccelerationStructures, topLevelAccelerationStructureBuildSizesInfo);
+    createAccelerationStructureBuffer(topLevelAccelerationStructure, topLevelAccelerationStructureBuildSizesInfo);
 
     VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
     accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-    accelerationStructureCreateInfo.buffer = topLevelAccelerationStructures.buffer.buffer;
+    accelerationStructureCreateInfo.buffer = topLevelAccelerationStructure.buffer.buffer;
     accelerationStructureCreateInfo.size = topLevelAccelerationStructureBuildSizesInfo.accelerationStructureSize;
     accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 
-    if (createAccelerationStructureEXT(device, &accelerationStructureCreateInfo, nullptr, &topLevelAccelerationStructures.handle) != VK_SUCCESS) {
+    if (createAccelerationStructureEXT(device, &accelerationStructureCreateInfo, nullptr, &topLevelAccelerationStructure.handle) != VK_SUCCESS) {
         throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
     }
 
     Buffermanager scratchBuffer = createScratchBuffer(topLevelAccelerationStructureBuildSizesInfo.buildScratchSize);
 
-    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructures.handle;
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructure.handle;
     accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = getBufferDeviceAddress(scratchBuffer.buffer);
 
     //TODO offsets controleren
@@ -1347,7 +1357,7 @@ void renderer::createComputeShaderBuffers()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         computeShaderBuffers[i].bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         computeShaderBuffers[i].memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        computeShaderBuffers[i].bufferSize = sizeof(glm::vec3) * 2;
+        computeShaderBuffers[i].bufferSize = sizeof(glm::vec4);
 
         createBuffer(computeShaderBuffers[i]);
 
@@ -1357,13 +1367,15 @@ void renderer::createComputeShaderBuffers()
 
 void renderer::createDescriptorPool()
 {
-    std::array<VkDescriptorPoolSize, 3> poolSizes{};
+    std::array<VkDescriptorPoolSize, 4> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
     poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT);
+    poolSizes[3].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    poolSizes[3].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1442,16 +1454,22 @@ void renderer::createDescriptorSets()
 
 void renderer::createComputeDescriptorSetLayout()
 {
-    std::array<VkDescriptorSetLayoutBinding, 1> layoutBindings{};
+    std::array<VkDescriptorSetLayoutBinding, 2> layoutBindings{};
     layoutBindings[0].binding = 0;
     layoutBindings[0].descriptorCount = 1;
-    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
     layoutBindings[0].pImmutableSamplers = nullptr;
     layoutBindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
+    layoutBindings[1].binding = 1;
+    layoutBindings[1].descriptorCount = 1;
+    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    layoutBindings[1].pImmutableSamplers = nullptr;
+    layoutBindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
+    layoutInfo.bindingCount = layoutBindings.size();
     layoutInfo.pBindings = layoutBindings.data();
 
     VK_CHECK(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &computeDescriptorSetLayout));
@@ -1473,19 +1491,33 @@ void renderer::createComputeDescriptorSets()
         VkDescriptorBufferInfo storageBufferInfo{};
         storageBufferInfo.buffer = computeShaderBuffers[i].buffer;
         storageBufferInfo.offset = 0;
-        storageBufferInfo.range = sizeof(glm::vec3) * 2;
+        storageBufferInfo.range = sizeof(glm::vec4);
 
-        std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = computeDescriptorSets[i];
-        descriptorWrites[0].dstBinding = 0;
+        descriptorWrites[0].dstBinding = 1;
         descriptorWrites[0].dstArrayElement = 0;
         descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptorWrites[0].descriptorCount = 1;
         descriptorWrites[0].pBufferInfo = &storageBufferInfo;
 
-        vkUpdateDescriptorSets(device, 1, descriptorWrites.data(), 0, nullptr);
+        VkWriteDescriptorSetAccelerationStructureKHR descriptorAccelerationStructureInfo{};
+        descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+        descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
+        descriptorAccelerationStructureInfo.pAccelerationStructures = &topLevelAccelerationStructure.handle;
+
+        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].dstSet = computeDescriptorSets[i];
+        descriptorWrites[1].dstBinding = 0;
+        descriptorWrites[1].dstArrayElement = 0;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+        descriptorWrites[1].descriptorCount = 1;
+        descriptorWrites[1].pNext = &descriptorAccelerationStructureInfo;
+
+        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
+
 }
 
 void renderer::createBuffer(Buffermanager& buffermanager) {
@@ -1547,6 +1579,20 @@ void renderer::createCommandBuffers()
     allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
     VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()));
+}
+
+void renderer::createComputeCommandBuffers()
+{
+    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)computeCommandBuffers.size();
+
+    VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, computeCommandBuffers.data()));
+    
 }
 
 void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1617,20 +1663,30 @@ void renderer::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
 
     VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
 
-    //vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(glm::vec3) * 2, 0);
+    RayCast raycast{};
+    raycast.direction = glm::vec3(4,8,7);
+    raycast.origin = glm::vec3(0,0,8);
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
+
+    vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(RayCast), &raycast);
 
     vkCmdDispatch(commandBuffer, 1, 1, 1);
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
+
 }
 
 void renderer::createSyncObjects()
 {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1644,12 +1700,8 @@ void renderer::createSyncObjects()
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]));
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
         VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
-        /*if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
-
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }*/
+        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &computeFinishedSemaphores[i])); 
+        VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &computeInFlightFences[i]));
     }
 }
 
@@ -1743,6 +1795,27 @@ void renderer::flushCommandBuffer(VkCommandBuffer& commandBuffer)
 
 void renderer::drawFrame(GLFWwindow* window)
 {
+    vkWaitForFences(device, 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+    updateTransformBuffer();
+    updateUniformBuffer(currentFrame);
+
+    vkResetFences(device, 1, &computeInFlightFences[currentFrame]);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], 0);
+    recordComputeCommandBuffer(computeCommandBuffers[currentFrame]);
+
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &computeCommandBuffers[currentFrame];
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &computeFinishedSemaphores[currentFrame];
+
+    VK_CHECK(vkQueueSubmit(computeQueue, 1, &submitInfo, computeInFlightFences[currentFrame]));
+
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -1756,23 +1829,20 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateTransformBuffer();
-    updateUniformBuffer(currentFrame);
-
-
-    // Only reset the fence if we are submitting work
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
+    // Only reset the fence if we are submitting work
+    
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-    recordComputeCommandBuffer(commandBuffers[currentFrame]);
 
-    VkSubmitInfo submitInfo{};
+    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+
+    submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    submitInfo.waitSemaphoreCount = 1;
+    VkSemaphore waitSemaphores[] = { computeFinishedSemaphores[currentFrame], imageAvailableSemaphores[currentFrame] };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    submitInfo.waitSemaphoreCount = 2;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 
@@ -1785,6 +1855,12 @@ void renderer::drawFrame(GLFWwindow* window)
 
     VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
 
+    bool test = false;
+
+    memcpy(&test, computeShaderBuffers[currentFrame].handle, sizeof(bool));
+
+    std::cout << "isHit:" << test << std::endl;
+
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -1795,7 +1871,6 @@ void renderer::drawFrame(GLFWwindow* window)
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
-
 
     result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
@@ -1954,6 +2029,8 @@ std::vector<const char*> renderer::getRequiredExtensions()
 
     if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        //extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+        //extensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
     }
 
     return extensions;
