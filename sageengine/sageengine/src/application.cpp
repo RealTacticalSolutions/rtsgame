@@ -80,9 +80,9 @@ void application::constructGameobjects()
 {
     scene.renderObjects.reserve(10);
 
-    scene.blueprintObject(ShapeTool::createSquare(0.5f), "../../../textures/1.jpg");
+    //scene.blueprintObject(ShapeTool::createSquare(3.0f), "../../../textures/1.jpg");
 
-    scene.blueprintObject(ShapeTool::createSquare(0.01f));
+    //scene.blueprintObject(ShapeTool::createSquare(0.01f));
 
     scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
 
@@ -117,7 +117,7 @@ void application::start()
 
     //scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
 
-    scene.instantiateObject(scene.bluePrints[2], glm::mat4(1.0f), glm::vec3(0.6f));
+    scene.instantiateObject(scene.bluePrints[0], glm::mat4(1.0f), glm::vec3(0.6f));
 }
 
 void application::cleanup()

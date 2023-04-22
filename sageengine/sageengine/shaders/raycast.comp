@@ -18,6 +18,18 @@ layout(binding = 1, std430) writeonly buffer isHitOut {
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 void main() {
-	 rayQueryInitializeEXT(rq, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, gl_RayFlagsCullBackFacingTrianglesEXT, push.origin, 0.1, push.direction, 10);
-	 hitOut.hit[0] = rayQueryProceedEXT(rq);;
+
+	vec3 D = normalize(push.direction);
+	vec3 dir = vec3(0,0,-1);
+
+	//debugPrintfEXT("origin %1.2v3f", push.direction);
+
+	rayQueryInitializeEXT(rq, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, push.origin, 0.01, D, 100);
+	rayQueryProceedEXT(rq);
+	if (rayQueryGetIntersectionTypeEXT(rq, true) == gl_RayQueryCommittedIntersectionTriangleEXT) {
+		hitOut.hit[0] = true;
+	}
+	else {
+		hitOut.hit[0] = false;
+	}
 }

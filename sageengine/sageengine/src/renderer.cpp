@@ -847,12 +847,12 @@ void renderer::createAccelerationStructures()
     bottomLevelAccelerationStructures.resize(objectCount);
     bottomLevelAccelerationStructureBuildSizesInfos.resize(objectCount);
 
-    createTopLevelAccelerationStructure(0);
-
     for (size_t i = 0; i < renderObjects.size(); i++)
     {
         createBottomLevelAccelerationStructure(i);
     }
+
+    createTopLevelAccelerationStructure(0);
 }
 
 
@@ -864,28 +864,20 @@ void renderer::createBottomLevelAccelerationStructureGeometry(int index)
     VkDeviceOrHostAddressConstKHR indexDataAdress{};
     indexDataAdress.deviceAddress = getBufferDeviceAddress(indexBuffers[index].buffer);
 
-    VkDeviceOrHostAddressConstKHR transformDataAdress{};
-    transformDataAdress.deviceAddress = getBufferDeviceAddress(transformBufferManager.buffer);
-
-    VkAccelerationStructureGeometryTrianglesDataKHR accelerationStructureGeometryTrianglesDataKHR{};
-    accelerationStructureGeometryTrianglesDataKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-    accelerationStructureGeometryTrianglesDataKHR.vertexFormat = VK_FORMAT_R8G8B8A8_SRGB;
-    accelerationStructureGeometryTrianglesDataKHR.vertexData = vertexDataAdress;
-    accelerationStructureGeometryTrianglesDataKHR.vertexStride = sizeof(Vertex);
-    accelerationStructureGeometryTrianglesDataKHR.maxVertex = renderObjects[index].mesh.vertices.size();
-    accelerationStructureGeometryTrianglesDataKHR.indexType = VK_INDEX_TYPE_UINT32;
-    accelerationStructureGeometryTrianglesDataKHR.indexData = indexDataAdress;
-    accelerationStructureGeometryTrianglesDataKHR.transformData = transformDataAdress;
-
-    VkAccelerationStructureGeometryDataKHR accelerationStructureGeometryDataKHR{};
-    accelerationStructureGeometryDataKHR.triangles = accelerationStructureGeometryTrianglesDataKHR;
-
     VkAccelerationStructureGeometryKHR accelerationStructureGeometryKHR{};
     accelerationStructureGeometryKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
     accelerationStructureGeometryKHR.pNext = nullptr;
     accelerationStructureGeometryKHR.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
     accelerationStructureGeometryKHR.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-    accelerationStructureGeometryKHR.geometry = accelerationStructureGeometryDataKHR;
+    accelerationStructureGeometryKHR.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+    accelerationStructureGeometryKHR.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+    accelerationStructureGeometryKHR.geometry.triangles.vertexData = vertexDataAdress;
+    accelerationStructureGeometryKHR.geometry.triangles.maxVertex = renderObjects[index].mesh.vertices.size();
+    accelerationStructureGeometryKHR.geometry.triangles.vertexStride = sizeof(Vertex);
+    accelerationStructureGeometryKHR.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+    accelerationStructureGeometryKHR.geometry.triangles.indexData = indexDataAdress;
+    accelerationStructureGeometryKHR.geometry.triangles.transformData.deviceAddress = 0;
+    accelerationStructureGeometryKHR.geometry.triangles.transformData.hostAddress = nullptr;
 
     bottomLevelAccelerationStructureGeometry.push_back(accelerationStructureGeometryKHR);
 }
@@ -1036,6 +1028,7 @@ void renderer::createTopLevelAccelerationStructure(int index)
     accelerationStructureBuildRangeInfo.primitiveOffset = 0;
     accelerationStructureBuildRangeInfo.firstVertex = 0;
     accelerationStructureBuildRangeInfo.transformOffset = 0;
+
     std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
 
     VkCommandBuffer commandBuffer = beginNewCommandBuffer();
@@ -1235,7 +1228,7 @@ Buffermanager renderer::createVertexbuffer(Mesh mesh)
 
     Buffermanager vertexbufferManager = {
         sizeof(Vertex)* mesh.vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
 
@@ -1265,7 +1258,7 @@ Buffermanager renderer::createIndexBuffer(Mesh mesh)
 
     Buffermanager indexBufferManager = {
         sizeof(uint32_t)* mesh.indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
 
@@ -1301,7 +1294,7 @@ void renderer::createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerat
 {
     topLevelAccelerationStructureBufferManager.bufferUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
     topLevelAccelerationStructureBufferManager.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR) * 30;
+    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR);
 
     createBuffer(topLevelAccelerationStructureBufferManager);
 
@@ -1667,8 +1660,8 @@ void renderer::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
 
     RayCast raycast{};
-    raycast.direction = glm::vec3(4,8,7);
-    raycast.origin = glm::vec3(0,0,8);
+    raycast.direction = glm::vec3(4,0,-1);
+    raycast.origin = glm::vec3(0,0,4);
 
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
 
