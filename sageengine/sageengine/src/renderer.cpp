@@ -93,8 +93,10 @@ void renderer::cleanupVulkan()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(device, raycastFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(device, inFlightFences[i], nullptr);
+        vkDestroyFence(device, raycastInFlightFences[i], nullptr);
     }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
@@ -176,12 +178,12 @@ void renderer::createInstance()
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
-    VkValidationFeatureEnableEXT test[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+    VkValidationFeatureEnableEXT print[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
 
     VkValidationFeaturesEXT feat{};
     feat.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
     feat.enabledValidationFeatureCount = 1;
-    feat.pEnabledValidationFeatures = test;
+    feat.pEnabledValidationFeatures = print;
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -1218,6 +1220,29 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
+{
+    vkResetFences(device, 1, &raycastInFlightFences[currentFrame]);
+
+    rayCasts.push_back({ origin, direction });
+
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], 0);
+    recordComputeCommandBuffer(computeCommandBuffers[currentFrame]);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &computeCommandBuffers[currentFrame];
+
+    VK_CHECK(vkQueueSubmit(computeQueue, 1, &submitInfo, raycastInFlightFences[currentFrame]));
+
+    vkWaitForFences(device, 1, &raycastInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    RayResult res{};
+    memcpy(&res, computeShaderBuffers[currentFrame].handle, sizeof(RayResult));
+
+    std::cout << "intersectionPoint:" << res.intersectionPoint.x << "," << res.intersectionPoint.y << "," << res.intersectionPoint.z << std::endl;
+}
+
 Buffermanager renderer::createVertexbuffer(Mesh mesh)
 {
     Buffermanager stagingbufferManager = {
@@ -1350,7 +1375,7 @@ void renderer::createComputeShaderBuffers()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         computeShaderBuffers[i].bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         computeShaderBuffers[i].memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        computeShaderBuffers[i].bufferSize = sizeof(glm::vec4);
+        computeShaderBuffers[i].bufferSize = sizeof(RayResult) * 2;
 
         createBuffer(computeShaderBuffers[i]);
 
@@ -1484,7 +1509,7 @@ void renderer::createComputeDescriptorSets()
         VkDescriptorBufferInfo storageBufferInfo{};
         storageBufferInfo.buffer = computeShaderBuffers[i].buffer;
         storageBufferInfo.offset = 0;
-        storageBufferInfo.range = sizeof(glm::vec4);
+        storageBufferInfo.range = sizeof(RayResult);
 
         std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1659,27 +1684,26 @@ void renderer::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
 
-    RayCast raycast{};
-    raycast.direction = glm::vec3(4,0,-1);
-    raycast.origin = glm::vec3(0,0,4);
-
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
 
-    vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(RayCast), &raycast);
+    if(rayCasts.size() > 0){
+        vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(RayCast), &rayCasts[0]);
+        vkCmdDispatch(commandBuffer, 1, 1, 1);
+    }
 
-    vkCmdDispatch(commandBuffer, 1, 1, 1);
 
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
+    rayCasts.clear();
 }
 
 void renderer::createSyncObjects()
 {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    raycastFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    raycastInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1693,9 +1717,11 @@ void renderer::createSyncObjects()
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]));
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
         VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
-        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &computeFinishedSemaphores[i])); 
-        VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &computeInFlightFences[i]));
+        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &raycastFinishedSemaphores[i])); 
+        VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &raycastInFlightFences[i]));
     }
+
+   
 }
 
 void renderer::updateUniformBuffer(uint32_t currentImage)
@@ -1788,26 +1814,10 @@ void renderer::flushCommandBuffer(VkCommandBuffer& commandBuffer)
 
 void renderer::drawFrame(GLFWwindow* window)
 {
-    vkWaitForFences(device, 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device, 1, &raycastInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     updateTransformBuffer();
     updateUniformBuffer(currentFrame);
-
-    vkResetFences(device, 1, &computeInFlightFences[currentFrame]);
-
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    vkResetCommandBuffer(computeCommandBuffers[currentFrame], 0);
-    recordComputeCommandBuffer(computeCommandBuffers[currentFrame]);
-
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &computeCommandBuffers[currentFrame];
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &computeFinishedSemaphores[currentFrame];
-
-    VK_CHECK(vkQueueSubmit(computeQueue, 1, &submitInfo, computeInFlightFences[currentFrame]));
 
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -1830,12 +1840,12 @@ void renderer::drawFrame(GLFWwindow* window)
 
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
-    submitInfo = {};
+    VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = { computeFinishedSemaphores[currentFrame], imageAvailableSemaphores[currentFrame] };
+    VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    submitInfo.waitSemaphoreCount = 2;
+    submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 
@@ -1848,11 +1858,7 @@ void renderer::drawFrame(GLFWwindow* window)
 
     VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
 
-    bool test = false;
 
-    memcpy(&test, computeShaderBuffers[currentFrame].handle, sizeof(bool));
-
-    std::cout << "isHit:" << test << std::endl;
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

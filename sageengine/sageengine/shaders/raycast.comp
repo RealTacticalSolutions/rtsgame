@@ -13,23 +13,26 @@ layout(binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(binding = 1, std430) writeonly buffer isHitOut {
 	bool hit[1];
-} hitOut;
+	vec3 intersectionpoint[1];
+} rayResult;
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 void main() {
 
 	vec3 D = normalize(push.direction);
-	vec3 dir = vec3(0,0,-1);
 
-	//debugPrintfEXT("origin %1.2v3f", push.direction);
+	//debugPrintfEXT("hello");
 
 	rayQueryInitializeEXT(rq, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, push.origin, 0.01, D, 100);
 	rayQueryProceedEXT(rq);
 	if (rayQueryGetIntersectionTypeEXT(rq, true) == gl_RayQueryCommittedIntersectionTriangleEXT) {
-		hitOut.hit[0] = true;
+		rayResult.hit[0] = true;
+		float distance = rayQueryGetIntersectionTEXT(rq, true);
+		rayResult.intersectionpoint[0] = push.origin + (D * distance);
 	}
 	else {
-		hitOut.hit[0] = false;
+		rayResult.hit[0] = false;
+		rayResult.intersectionpoint[0] = vec3(1,1,1);
 	}
 }

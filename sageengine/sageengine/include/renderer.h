@@ -136,10 +136,10 @@ private:
 	
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
-	std::vector<VkSemaphore> computeFinishedSemaphores;
+	std::vector<VkSemaphore> raycastFinishedSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
-	std::vector<VkFence> computeInFlightFences;
+	std::vector<VkFence> raycastInFlightFences;
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
@@ -174,6 +174,7 @@ private:
 	VkAccelerationStructureGeometryKHR topLevelAccelerationStructureGeometry;
 	std::vector<uint32_t> maxPrimitveCounts;
 	
+	std::vector<RayCast> rayCasts;
 
 	void cleanupVulkan();
 	void cleanupSwapChain();
@@ -285,8 +286,7 @@ public:
 	void drawFrame(GLFWwindow* window);
 
 	void createObject(RenderObject renderObject);
-	void instantiateObject();
-	void destroyObject();
+	void initRaycast(glm::vec3 origin, glm::vec3 direction);
 
 	VkDevice getDevice();
 };
