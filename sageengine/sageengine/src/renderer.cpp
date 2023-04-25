@@ -23,7 +23,9 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
+    createComputeDescriptorSetLayout();
     createGraphicsPipeline();
+    createComputePipeline();
     createDepthResources();
     createFramebuffers();
     createCommandPool();
@@ -36,10 +38,14 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     }
 
     createTransformBuffer();
+    createAccelerationStructures();
     createUniformBuffers();
+    createComputeShaderBuffers();
     createDescriptorPool();
     createDescriptorSets();
+    createComputeDescriptorSets();
     createCommandBuffers();
+    createComputeCommandBuffers();
     createSyncObjects();
     
 }
@@ -65,9 +71,10 @@ void renderer::cleanupVulkan()
     }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
+    cleanupAccelerationStructures();
+
     vkDestroyBuffer(device, transformBufferManager.buffer, nullptr);
     vkFreeMemory(device, transformBufferManager.bufferMemory, nullptr);
-
    
     for (size_t i = 0; i < objectCount; i++) {
         vkDestroyBuffer(device, indexBuffers[i].buffer, nullptr);
@@ -77,14 +84,19 @@ void renderer::cleanupVulkan()
         vkFreeMemory(device, vertexBuffers[i].bufferMemory, nullptr);
     }
 
+    vkDestroyPipeline(device, computePipeline, nullptr);
+    vkDestroyPipelineLayout(device, computePipelineLayout, nullptr);
+
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(device, raycastFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(device, inFlightFences[i], nullptr);
+        vkDestroyFence(device, raycastInFlightFences[i], nullptr);
     }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
@@ -134,6 +146,23 @@ void renderer::recreateSwapChain(GLFWwindow* window) {
 
 }
 
+void renderer::cleanupAccelerationStructures()
+{
+    //Destroy TLAS
+    vkDestroyBuffer(device, topLevelAccelerationStructureBufferManager.buffer, nullptr);
+    vkFreeMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, nullptr);
+
+    vkDestroyBuffer(device, topLevelAccelerationStructure.buffer.buffer, nullptr);
+    vkFreeMemory(device, topLevelAccelerationStructure.buffer.bufferMemory, nullptr);
+    destroyAccelerationStructureEXT(topLevelAccelerationStructure.handle, nullptr);
+
+    //Destroy BLASes
+    for (auto blas : bottomLevelAccelerationStructures) {
+        vkDestroyBuffer(device, blas.buffer.buffer, nullptr);
+        vkFreeMemory(device, blas.buffer.bufferMemory, nullptr);
+        destroyAccelerationStructureEXT(blas.handle, nullptr);
+    }
+}
 
 void renderer::createInstance()
 {
@@ -149,6 +178,13 @@ void renderer::createInstance()
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
+    VkValidationFeatureEnableEXT print[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+
+    VkValidationFeaturesEXT feat{};
+    feat.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+    feat.enabledValidationFeatureCount = 1;
+    feat.pEnabledValidationFeatures = print;
+
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
@@ -156,6 +192,7 @@ void renderer::createInstance()
     auto extensions = getRequiredExtensions();
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
+    createInfo.pNext = &feat;
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
     if (enableValidationLayers) {
@@ -178,7 +215,7 @@ void renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
 {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = debugCallback;
 }
@@ -226,7 +263,7 @@ void renderer::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsAndComputeFamily.value(), indices.presentFamily.value() };
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies)
@@ -241,6 +278,18 @@ void renderer::createLogicalDevice() {
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
+       
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures{};
+    accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+    accelerationStructureFeatures.accelerationStructure = VK_TRUE;
+
+    VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeatures{};
+    rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+    rayQueryFeatures.rayQuery = VK_TRUE;
+
+    VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures{};
+    bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+    bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -248,7 +297,11 @@ void renderer::createLogicalDevice() {
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.queueCreateInfoCount = 1;
 
+    //Binding all features in a pNext chain
     createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.pNext = (VkPhysicalDeviceAccelerationStructureFeaturesKHR*) &accelerationStructureFeatures;
+    accelerationStructureFeatures.pNext = (VkPhysicalDeviceRayQueryFeaturesKHR*) &rayQueryFeatures;
+    rayQueryFeatures.pNext = (VkPhysicalDeviceBufferDeviceAddressFeatures*)&bufferDeviceAddressFeatures;
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
@@ -263,7 +316,8 @@ void renderer::createLogicalDevice() {
 
     VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
     
-    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.graphicsAndComputeFamily.value(), 0, &computeQueue);
+    vkGetDeviceQueue(device, indices.graphicsAndComputeFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
@@ -291,9 +345,9 @@ void renderer::createSwapChain(GLFWwindow* window) {
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+    uint32_t queueFamilyIndices[] = { indices.graphicsAndComputeFamily.value(), indices.presentFamily.value() };
 
-    if (indices.graphicsFamily != indices.presentFamily) {
+    if (indices.graphicsAndComputeFamily != indices.presentFamily) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -447,6 +501,7 @@ void renderer::createGraphicsPipeline()
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+   
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -563,6 +618,41 @@ void renderer::createGraphicsPipeline()
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
+void renderer::createComputePipeline()
+{
+    auto computeShaderCode = readFile("../../../shaders/raycast.spv");
+    VkShaderModule computeShaderModule = createShaderModule(computeShaderCode);
+
+    VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
+    computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    computeShaderStageInfo.module = computeShaderModule;
+    computeShaderStageInfo.pName = "main";
+
+    VkPushConstantRange pushConstantRange;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(RayCast);
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &computeDescriptorSetLayout;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+
+    VK_CHECK(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &computePipelineLayout));
+
+    VkComputePipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    pipelineInfo.layout = computePipelineLayout;
+    pipelineInfo.stage = computeShaderStageInfo;
+
+    VK_CHECK(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &computePipeline));
+
+    vkDestroyShaderModule(device, computeShaderModule, nullptr);
+}
+
 void renderer::createFramebuffers()
 {
     swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -627,7 +717,7 @@ void renderer::createCommandPool()
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily.value();
 
     VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
 }
@@ -736,6 +826,280 @@ void renderer::createImage(uint32_t width, uint32_t height, VkFormat format, VkI
     }
 
     vkBindImageMemory(device, image, imageMemory, 0);
+}
+
+Buffermanager renderer::createScratchBuffer(VkDeviceSize size)
+{
+    Buffermanager scratchBuffer{};
+
+    scratchBuffer.bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    scratchBuffer.memoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    scratchBuffer.bufferSize = size;
+
+    createBuffer(scratchBuffer);
+
+    return scratchBuffer;
+}
+
+
+void renderer::createAccelerationStructures()
+{
+    bottomLevelAccelerationStructureBufferManagers.resize(objectCount);
+    bottomLevelAccelerationStructureBuildSizesInfos.resize(objectCount);
+    bottomLevelAccelerationStructures.resize(objectCount);
+    bottomLevelAccelerationStructureBuildSizesInfos.resize(objectCount);
+
+    for (size_t i = 0; i < renderObjects.size(); i++)
+    {
+        createBottomLevelAccelerationStructure(i);
+    }
+
+    createTopLevelAccelerationStructure(0);
+}
+
+
+void renderer::createBottomLevelAccelerationStructureGeometry(int index)
+{
+    VkDeviceOrHostAddressConstKHR vertexDataAdress{};
+    vertexDataAdress.deviceAddress = getBufferDeviceAddress(vertexBuffers[index].buffer);
+
+    VkDeviceOrHostAddressConstKHR indexDataAdress{};
+    indexDataAdress.deviceAddress = getBufferDeviceAddress(indexBuffers[index].buffer);
+
+    VkAccelerationStructureGeometryKHR accelerationStructureGeometryKHR{};
+    accelerationStructureGeometryKHR.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    accelerationStructureGeometryKHR.pNext = nullptr;
+    accelerationStructureGeometryKHR.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    accelerationStructureGeometryKHR.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+    accelerationStructureGeometryKHR.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+    accelerationStructureGeometryKHR.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+    accelerationStructureGeometryKHR.geometry.triangles.vertexData = vertexDataAdress;
+    accelerationStructureGeometryKHR.geometry.triangles.maxVertex = renderObjects[index].mesh.vertices.size();
+    accelerationStructureGeometryKHR.geometry.triangles.vertexStride = sizeof(Vertex);
+    accelerationStructureGeometryKHR.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
+    accelerationStructureGeometryKHR.geometry.triangles.indexData = indexDataAdress;
+    accelerationStructureGeometryKHR.geometry.triangles.transformData.deviceAddress = 0;
+    accelerationStructureGeometryKHR.geometry.triangles.transformData.hostAddress = nullptr;
+
+    bottomLevelAccelerationStructureGeometry.push_back(accelerationStructureGeometryKHR);
+}
+
+void renderer::createBottomLevelAccelerationStructure(int index)
+{
+    createBottomLevelAccelerationStructureGeometry(index);
+
+    uint32_t geometryCount = renderObjects[index].mesh.indices.size() / 3;
+
+    VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+    accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+    accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    accelerationStructureBuildGeometryInfo.geometryCount = 1;
+    accelerationStructureBuildGeometryInfo.pGeometries = &bottomLevelAccelerationStructureGeometry[index];
+
+    const uint32_t maxPrimitveCount = geometryCount;
+    bottomLevelAccelerationStructureBuildSizesInfos[index].sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+    
+    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &maxPrimitveCount, &bottomLevelAccelerationStructureBuildSizesInfos[index]);
+
+    accelerationStructureBuildGeometryInfos.push_back(accelerationStructureBuildGeometryInfo);
+
+    createAccelerationStructureBuffer(bottomLevelAccelerationStructures[index], bottomLevelAccelerationStructureBuildSizesInfos[index]);
+
+    VkAccelerationStructureCreateInfoKHR accelerationStructureInfo{};
+    accelerationStructureInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+    accelerationStructureInfo.buffer = bottomLevelAccelerationStructures[index].buffer.buffer;
+    accelerationStructureInfo.offset = 0;
+    accelerationStructureInfo.size = bottomLevelAccelerationStructureBuildSizesInfos[index].accelerationStructureSize;
+    accelerationStructureInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+
+
+    if (createAccelerationStructureEXT(device, &accelerationStructureInfo, nullptr, &bottomLevelAccelerationStructures[index].handle) != VK_SUCCESS) {
+        throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
+    }
+
+    Buffermanager scratchBuffer = createScratchBuffer(bottomLevelAccelerationStructureBuildSizesInfos[index].buildScratchSize);
+
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = bottomLevelAccelerationStructures[index].handle;
+    accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = getBufferDeviceAddress(scratchBuffer.buffer);
+
+    //TODO offsets controleren
+    VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+    accelerationStructureBuildRangeInfo.primitiveCount = maxPrimitveCount;
+    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+    accelerationStructureBuildRangeInfo.firstVertex = 0;
+    accelerationStructureBuildRangeInfo.transformOffset = 0;
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+    VkCommandBuffer commandBuffer = beginNewCommandBuffer();
+
+    cmdBuildAccelerationStructuresEXT(
+        commandBuffer,
+        1,
+        &accelerationStructureBuildGeometryInfo,
+        accelerationBuildStructureRangeInfos.data());
+
+    flushCommandBuffer(commandBuffer);
+
+    vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
+    vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
+
+    bottomLevelAccelerationStructures[index].deviceAddress = getAccelerationStructureDeviceAddressEXT(index);
+
+}
+
+void renderer::createTopLevelAccelerationStructureGeometry()
+{
+    //TODO: set maxobjectCount
+    std::vector<VkAccelerationStructureInstanceKHR> instances;
+
+    //creates all VkAccelerationStructureInstances
+    for (int i = 0; i < objectCount; i++) {
+        for (int j = 0; j < renderObjects[i].instanceCount; j++) {
+            VkTransformMatrixKHR vkTransform;
+            glm::mat4 transform = renderObjects[i].renderprops.instances[j];
+            VkAccelerationStructureInstanceKHR instance{};
+            memcpy(vkTransform.matrix, &transform, sizeof(vkTransform.matrix));
+            
+            instance.transform = vkTransform;
+            instance.instanceCustomIndex = 0;
+            instance.mask = 0xFF;
+            instance.instanceShaderBindingTableRecordOffset = 0;
+            instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+            instance.accelerationStructureReference = bottomLevelAccelerationStructures[0].deviceAddress;
+            instances.push_back(instance);
+        }
+    }
+
+    createTopLevelAccelerationStructureBuffer(instances);
+
+    VkDeviceOrHostAddressConstKHR instancesDataDeviceAddress{};
+    instancesDataDeviceAddress.deviceAddress = getBufferDeviceAddress(topLevelAccelerationStructureBufferManager.buffer);
+
+   
+    topLevelAccelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+    topLevelAccelerationStructureGeometry.pNext = nullptr;
+    topLevelAccelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+    topLevelAccelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+    topLevelAccelerationStructureGeometry.geometry.instances.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+    topLevelAccelerationStructureGeometry.geometry.instances.pNext = nullptr;
+    topLevelAccelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
+    topLevelAccelerationStructureGeometry.geometry.instances.data = instancesDataDeviceAddress;
+
+}
+
+void renderer::createTopLevelAccelerationStructure(int index)
+{
+    createTopLevelAccelerationStructureGeometry();
+
+    VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+    accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+    accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    accelerationStructureBuildGeometryInfo.geometryCount = 1;
+    accelerationStructureBuildGeometryInfo.pGeometries = &topLevelAccelerationStructureGeometry;
+
+    uint32_t primitive_count = 1;
+
+    topLevelAccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+
+    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &primitive_count, &topLevelAccelerationStructureBuildSizesInfo);
+
+    createAccelerationStructureBuffer(topLevelAccelerationStructure, topLevelAccelerationStructureBuildSizesInfo);
+
+    VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
+    accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+    accelerationStructureCreateInfo.buffer = topLevelAccelerationStructure.buffer.buffer;
+    accelerationStructureCreateInfo.size = topLevelAccelerationStructureBuildSizesInfo.accelerationStructureSize;
+    accelerationStructureCreateInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+
+    if (createAccelerationStructureEXT(device, &accelerationStructureCreateInfo, nullptr, &topLevelAccelerationStructure.handle) != VK_SUCCESS) {
+        throw std::runtime_error("failed to find extension function: createAccelerationStructureKHR()");
+    }
+
+    Buffermanager scratchBuffer = createScratchBuffer(topLevelAccelerationStructureBuildSizesInfo.buildScratchSize);
+
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructure.handle;
+    accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = getBufferDeviceAddress(scratchBuffer.buffer);
+
+    //TODO offsets controleren
+    VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+    accelerationStructureBuildRangeInfo.primitiveCount = 1;
+    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+    accelerationStructureBuildRangeInfo.firstVertex = 0;
+    accelerationStructureBuildRangeInfo.transformOffset = 0;
+
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+    VkCommandBuffer commandBuffer = beginNewCommandBuffer();
+
+    cmdBuildAccelerationStructuresEXT(
+        commandBuffer,
+        1,
+        &accelerationStructureBuildGeometryInfo,
+        accelerationBuildStructureRangeInfos.data());
+
+    flushCommandBuffer(commandBuffer);
+
+    vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
+    vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
+}
+
+uint64_t renderer::getBufferDeviceAddress(VkBuffer buffer)
+{
+    VkBufferDeviceAddressInfo bufferDeviceAddressInfo{};
+    bufferDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    bufferDeviceAddressInfo.buffer = buffer;
+    return vkGetBufferDeviceAddress(device, &bufferDeviceAddressInfo);
+}
+
+VkDeviceAddress renderer::getAccelerationStructureDeviceAddressEXT(int index)
+{
+    VkAccelerationStructureDeviceAddressInfoKHR deviceAdressInfo{};
+    deviceAdressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+    deviceAdressInfo.accelerationStructure = bottomLevelAccelerationStructures[index].handle;
+
+    auto func = (PFN_vkGetAccelerationStructureDeviceAddressKHR)vkGetInstanceProcAddr(instance, "vkGetAccelerationStructureDeviceAddressKHR");
+    if (func != nullptr) {
+        return func(device, &deviceAdressInfo);
+    }
+}
+
+void renderer::cmdBuildAccelerationStructuresEXT(VkCommandBuffer commandBuffer, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos)
+{
+    auto func = (PFN_vkCmdBuildAccelerationStructuresKHR)vkGetInstanceProcAddr(instance, "vkCmdBuildAccelerationStructuresKHR");
+    if (func != nullptr) {
+        return func(commandBuffer, infoCount, pInfos, ppBuildRangeInfos);
+    }
+}
+
+VkResult renderer::createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure)
+{
+    auto func = (PFN_vkCreateAccelerationStructureKHR)vkGetInstanceProcAddr(instance, "vkCreateAccelerationStructureKHR");
+    if (func != nullptr) {
+        return func(device, pCreateInfo, pAllocator, pAccelerationStructure);
+    }
+    else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
+void renderer::getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelerationStructureBuildTypeKHR buildType, const VkAccelerationStructureBuildGeometryInfoKHR* pBuildInfo, const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR* pSizeInfo)
+{
+    auto func = (PFN_vkGetAccelerationStructureBuildSizesKHR)vkGetInstanceProcAddr(instance, "vkGetAccelerationStructureBuildSizesKHR");
+    if (func != nullptr) {
+        return func(device, buildType, pBuildInfo, pMaxPrimitiveCounts, pSizeInfo);
+    }
+}
+
+void renderer::destroyAccelerationStructureEXT(VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator)
+{
+    auto func = (PFN_vkDestroyAccelerationStructureKHR)vkGetInstanceProcAddr(instance, "vkDestroyAccelerationStructureKHR");
+    if (func != nullptr) {
+        return func(device, accelerationStructure, pAllocator);
+    }
 }
 
 void renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
@@ -856,19 +1220,40 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
+{
+    vkResetFences(device, 1, &raycastInFlightFences[currentFrame]);
 
+    rayCasts.push_back({ origin, direction });
+
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], 0);
+    recordComputeCommandBuffer(computeCommandBuffers[currentFrame]);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &computeCommandBuffers[currentFrame];
+
+    VK_CHECK(vkQueueSubmit(computeQueue, 1, &submitInfo, raycastInFlightFences[currentFrame]));
+
+    vkWaitForFences(device, 1, &raycastInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    RayResult res{};
+    memcpy(&res, computeShaderBuffers[currentFrame].handle, sizeof(RayResult));
+
+    std::cout << "intersectionPoint:" << res.intersectionPoint.x << "," << res.intersectionPoint.y << "," << res.intersectionPoint.z << std::endl;
+}
 
 Buffermanager renderer::createVertexbuffer(Mesh mesh)
 {
     Buffermanager stagingbufferManager = {
         sizeof(Vertex) * mesh.vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
     Buffermanager vertexbufferManager = {
         sizeof(Vertex)* mesh.vertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
 
@@ -891,14 +1276,14 @@ Buffermanager renderer::createVertexbuffer(Mesh mesh)
 Buffermanager renderer::createIndexBuffer(Mesh mesh)
 {
     Buffermanager stagingbufferManager = {
-        sizeof(uint16_t) * mesh.indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        sizeof(uint32_t) * mesh.indices.size(),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
     };
 
     Buffermanager indexBufferManager = {
-        sizeof(uint16_t)* mesh.indices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        sizeof(uint32_t)* mesh.indices.size(),
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
 
@@ -918,6 +1303,30 @@ Buffermanager renderer::createIndexBuffer(Mesh mesh)
     return indexBufferManager;
 }
 
+void renderer::createAccelerationStructureBuffer(AccelerationStructure& accelerationStructure, VkAccelerationStructureBuildSizesInfoKHR buildSizeInfo)
+{
+    accelerationStructure.buffer.bufferUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+    accelerationStructure.buffer.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    accelerationStructure.buffer.bufferSize = buildSizeInfo.accelerationStructureSize;
+
+    createBuffer(accelerationStructure.buffer);
+
+    vkMapMemory(device, accelerationStructure.buffer.bufferMemory, 0, accelerationStructure.buffer.bufferSize, 0, &accelerationStructure.buffer.handle);
+}
+
+void renderer::createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerationStructureInstanceKHR> instances)
+{
+    topLevelAccelerationStructureBufferManager.bufferUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+    topLevelAccelerationStructureBufferManager.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR);
+
+    createBuffer(topLevelAccelerationStructureBufferManager);
+
+    vkMapMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, 0, topLevelAccelerationStructureBufferManager.bufferSize, 0, &topLevelAccelerationStructureBufferManager.handle);
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), topLevelAccelerationStructureBufferManager.bufferSize);
+}
+
 void renderer::createTransformBuffer()
 {
     transformBufferManager.bufferSize = sizeof(renderObjects[0].renderprops) * renderObjects.size();
@@ -935,7 +1344,6 @@ void renderer::createTransformBuffer()
         properties[i] = renderObjects[i].renderprops;
     }
 
-    void* data;
     vkMapMemory(device, transformBufferManager.bufferMemory, 0, transformBufferManager.bufferSize, 0, &transformBufferManager.handle);
     memcpy(transformBufferManager.handle, properties.data(), transformBufferManager.bufferSize);
    
@@ -959,21 +1367,39 @@ void renderer::createUniformBuffers()
     }
 }
 
+//TODO frame in flight gpu workload
+void renderer::createComputeShaderBuffers()
+{
+    computeShaderBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        computeShaderBuffers[i].bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        computeShaderBuffers[i].memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        computeShaderBuffers[i].bufferSize = sizeof(RayResult) * 2;
+
+        createBuffer(computeShaderBuffers[i]);
+
+        vkMapMemory(device, computeShaderBuffers[i].bufferMemory, 0, computeShaderBuffers[i].bufferSize, 0, &computeShaderBuffers[i].handle);
+    }
+}
+
 void renderer::createDescriptorPool()
 {
-    std::array<VkDescriptorPoolSize, 3> poolSizes{};
+    std::array<VkDescriptorPoolSize, 4> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
     poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT);
+    poolSizes[3].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    poolSizes[3].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount);
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT);
 
     VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool));
 }
@@ -988,11 +1414,7 @@ void renderer::createDescriptorSets()
     allocInfo.pSetLayouts = layouts.data();
 
     descriptorSets.resize(MAX_FRAMES_IN_FLIGHT * objectCount);
-    if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
-
-    
+    VK_CHECK(vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()));
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         size_t totalOffset = 0;
@@ -1048,12 +1470,79 @@ void renderer::createDescriptorSets()
     }
 }
 
+void renderer::createComputeDescriptorSetLayout()
+{
+    std::array<VkDescriptorSetLayoutBinding, 2> layoutBindings{};
+    layoutBindings[0].binding = 0;
+    layoutBindings[0].descriptorCount = 1;
+    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+    layoutBindings[0].pImmutableSamplers = nullptr;
+    layoutBindings[0].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    layoutBindings[1].binding = 1;
+    layoutBindings[1].descriptorCount = 1;
+    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    layoutBindings[1].pImmutableSamplers = nullptr;
+    layoutBindings[1].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = layoutBindings.size();
+    layoutInfo.pBindings = layoutBindings.data();
+
+    VK_CHECK(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &computeDescriptorSetLayout));
+}
+
+void renderer::createComputeDescriptorSets()
+{
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, computeDescriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    computeDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    VK_CHECK(vkAllocateDescriptorSets(device, &allocInfo, computeDescriptorSets.data()));
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorBufferInfo storageBufferInfo{};
+        storageBufferInfo.buffer = computeShaderBuffers[i].buffer;
+        storageBufferInfo.offset = 0;
+        storageBufferInfo.range = sizeof(RayResult);
+
+        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].dstSet = computeDescriptorSets[i];
+        descriptorWrites[0].dstBinding = 1;
+        descriptorWrites[0].dstArrayElement = 0;
+        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pBufferInfo = &storageBufferInfo;
+
+        VkWriteDescriptorSetAccelerationStructureKHR descriptorAccelerationStructureInfo{};
+        descriptorAccelerationStructureInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+        descriptorAccelerationStructureInfo.accelerationStructureCount = 1;
+        descriptorAccelerationStructureInfo.pAccelerationStructures = &topLevelAccelerationStructure.handle;
+
+        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].dstSet = computeDescriptorSets[i];
+        descriptorWrites[1].dstBinding = 0;
+        descriptorWrites[1].dstArrayElement = 0;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+        descriptorWrites[1].descriptorCount = 1;
+        descriptorWrites[1].pNext = &descriptorAccelerationStructureInfo;
+
+        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+
+}
 
 void renderer::createBuffer(Buffermanager& buffermanager) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = buffermanager.bufferSize;
-    bufferInfo.usage = buffermanager.bufferUsageFlags;
+    bufferInfo.usage = buffermanager.bufferUsageFlags | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffermanager.buffer) != VK_SUCCESS) {
@@ -1063,8 +1552,13 @@ void renderer::createBuffer(Buffermanager& buffermanager) {
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(device, buffermanager.buffer, &memRequirements);
 
+    VkMemoryAllocateFlagsInfo memoryAllocateFlagsInfo{};
+    memoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+    memoryAllocateFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.pNext = &memoryAllocateFlagsInfo;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, buffermanager.memoryPropertyFlags);
 
@@ -1079,15 +1573,6 @@ void renderer::createObject(RenderObject renderObject)
 {
     vertexBuffers.push_back(createVertexbuffer(renderObject.mesh));
     indexBuffers.push_back(createIndexBuffer(renderObject.mesh));
-}
-
-void renderer::instantiateObject()
-{
-
-}
-
-void renderer::destroyObject()
-{
 }
 
 void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -1112,6 +1597,20 @@ void renderer::createCommandBuffers()
     allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
     VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()));
+}
+
+void renderer::createComputeCommandBuffers()
+{
+    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)computeCommandBuffers.size();
+
+    VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, computeCommandBuffers.data()));
+    
 }
 
 void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1160,7 +1659,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffers[i].buffer, 0, VK_INDEX_TYPE_UINT32);
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * renderObjects.size() + i], 0, nullptr);
 
@@ -1175,11 +1674,36 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
 
+void renderer::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
+
+    if(rayCasts.size() > 0){
+        vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(RayCast), &rayCasts[0]);
+        vkCmdDispatch(commandBuffer, 1, 1, 1);
+    }
+
+
+    VK_CHECK(vkEndCommandBuffer(commandBuffer));
+
+    rayCasts.clear();
+}
+
 void renderer::createSyncObjects()
 {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    raycastFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    raycastInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1193,13 +1717,11 @@ void renderer::createSyncObjects()
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]));
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
         VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
-        /*if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
-
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }*/
+        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &raycastFinishedSemaphores[i])); 
+        VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &raycastInFlightFences[i]));
     }
+
+   
 }
 
 void renderer::updateUniformBuffer(uint32_t currentImage)
@@ -1222,9 +1744,13 @@ void renderer::updateTransformBuffer()
     // TODO: really light flickering of black 
     std::vector<RenderObject::RenderProps> props(renderObjects.size());
 
+	for (size_t i = 0; i < renderObjects.size(); i++) 
+    { 
+        renderObjects[i].instanceCount = 0; 
+    } 
+
     for (auto& gameObject : gameObjects) {
-        gameObject.renderObject->renderprops.instances[gameObject.instanceId] = gameObject.properties.transform;
-        gameObject.renderObject->renderprops.color[gameObject.instanceId] = glm::vec4(gameObject.properties.color, 1.0f);
+        gameObject.renderObject->addInstance(gameObject.properties.transform, glm::vec4(gameObject.properties.color, 1.0f));
     }
 
     for (size_t i = 0; i < renderObjects.size(); i++)
@@ -1237,8 +1763,62 @@ void renderer::updateTransformBuffer()
     memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
 }
 
+VkCommandBuffer renderer::beginNewCommandBuffer()
+{
+    VkCommandBuffer commandBuffer{};
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+
+    VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer));
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = 0;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+
+    return commandBuffer;
+}
+
+void renderer::flushCommandBuffer(VkCommandBuffer& commandBuffer)
+{
+    assert(commandBuffer != VK_NULL_HANDLE);
+
+    VK_CHECK(vkEndCommandBuffer(commandBuffer));
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    // Create fence to ensure that the command buffer has finished executing
+    VkFenceCreateInfo fenceCreateInfo = {};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceCreateInfo.flags = 0;
+    VkFence fence;
+    VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &fence));
+
+    // Submit to the queue
+    VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence));
+    // Wait for the fence to signal that command buffer has finished executing
+    VK_CHECK(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
+
+    vkDestroyFence(device, fence, nullptr);
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
 void renderer::drawFrame(GLFWwindow* window)
 {
+    vkWaitForFences(device, 1, &raycastInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+    updateTransformBuffer();
+    updateUniformBuffer(currentFrame);
+
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -1252,21 +1832,19 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateTransformBuffer();
-    updateUniformBuffer(currentFrame);
-
-
-    // Only reset the fence if we are submitting work
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
+    // Only reset the fence if we are submitting work
+    
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
+
     recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
@@ -1280,6 +1858,8 @@ void renderer::drawFrame(GLFWwindow* window)
 
     VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
 
+
+
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -1290,7 +1870,6 @@ void renderer::drawFrame(GLFWwindow* window)
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
-
 
     result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
@@ -1349,8 +1928,8 @@ renderer::QueueFamilyIndices renderer::findQueueFamilies(VkPhysicalDevice device
 
     int i = 0;
     for (const auto& queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
+        if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) {
+            indices.graphicsAndComputeFamily = i;
         }
 
         VkBool32 presentSupport = false;
@@ -1449,6 +2028,8 @@ std::vector<const char*> renderer::getRequiredExtensions()
 
     if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        //extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+        //extensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
     }
 
     return extensions;

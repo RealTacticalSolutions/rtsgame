@@ -5,7 +5,7 @@ Mesh ShapeTool::generatePlaneMesh() {
     return Mesh();
 }
 
-Mesh ShapeTool::generateLine(uint16_t indexoffset, float linewidth, float length, glm::vec3 position, float rotationDeg, glm::vec3 rotationAxis, glm::vec3 color) {
+Mesh ShapeTool::generateLine(uint32_t indexoffset, float linewidth, float length, glm::vec3 position, float rotationDeg, glm::vec3 rotationAxis, glm::vec3 color) {
     int i = indexoffset;
 
     Mesh mesh = { {
@@ -15,7 +15,7 @@ Mesh ShapeTool::generateLine(uint16_t indexoffset, float linewidth, float length
             {   {0.0f, length, 0.01f}, {1.0f, 1.0f, 1.0f}, {0.5f, 0.0f} },
         },
 
-        {(uint16_t)(i), (uint16_t)(i + 1), (uint16_t)(i + 2), (uint16_t)(i), (uint16_t)(i + 2), (uint16_t)(i + 3)}
+        {(uint32_t)(i), (uint32_t)(i + 1), (uint32_t)(i + 2), (uint32_t)(i), (uint32_t)(i + 2), (uint32_t)(i + 3)}
     };
 
     for (int i = 0; i < 4; i++) {
@@ -32,7 +32,7 @@ Mesh ShapeTool::generateGrid(glm::vec4 startingpos, glm::vec4 endpos, float cell
     size_t cellCountX = 10;
     size_t cellCountY = 10;
 
-    uint16_t indexOffset = 0;
+    uint32_t indexOffset = 0;
 
     float xLength = endpos.x - startingpos.x;
     float yLength = endpos.y - startingpos.y;
@@ -70,12 +70,17 @@ std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
     vertices[0].texCoord.y = 1.0f;
     vertices[3].texCoord.x = 1.0f;
 
+    vertices[0].normal = glm::vec3(0.0f, 0.0f, 1.0f);
+    vertices[1].normal = glm::vec3(0.0f, 0.0f, 1.0f);
+    vertices[2].normal = glm::vec3(0.0f, 0.0f, 1.0f);
+    vertices[3].normal = glm::vec3(0.0f, 0.0f, 1.0f);
+
     return vertices;
 }
 
-std::vector<uint16_t> ShapeTool::generateSquareIndicies() 
+std::vector<uint32_t> ShapeTool::generateSquareIndicies() 
 {
-    std::vector<uint16_t> indices;
+    std::vector<uint32_t> indices;
 
     indices.push_back(0);
     indices.push_back(1);
