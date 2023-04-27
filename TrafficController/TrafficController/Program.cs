@@ -48,7 +48,7 @@ public class Program {
     {
         int setup = 0;
 
-        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0 };
+        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0 };
 
         TrafficlightInfo[] trafficlightInfos = new TrafficlightInfo[lightIds.Length];
 
@@ -75,13 +75,14 @@ public class Program {
 
                 Thread.Sleep(1000);
 
-                byte[] buffer = new byte[2048];
+                byte[] buffer = new byte[8196];
 
                 int bytesRead = socket.Receive(buffer);
                 response = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                buffer = new byte[8196];
                 Console.WriteLine($"received:  {response}");
 
-                TrafficInfo[]? JsonResponse = JsonSerializer.Deserialize<TrafficInfo[]>(response);
+                var JsonResponse = JsonSerializer.Deserialize<TrafficInfo[]>(response);
 
                 foreach (TrafficInfo trafficInfo in JsonResponse)
                 {
@@ -116,6 +117,7 @@ public class Program {
                         trafficlightInfos[0].status = lightstatus.green;
                         trafficlightInfos[1].status = lightstatus.green;
                         trafficlightInfos[10].status = lightstatus.green;
+                        trafficlightInfos[27].status = lightstatus.green;
                         setup = 1;
                         break;
                     case 1:
@@ -179,8 +181,6 @@ public class Program {
 
     }
 }
-
-
 
 public class TrafficInfo
 {
