@@ -75,7 +75,7 @@ void client::startClient()
         std::vector<trafficStatusObject> messageclient;
         for (size_t i = 0; i < lights.size(); i++)
         {
-            messageclient.push_back(trafficStatusObject{ lights[i].id, lights[i].weight});
+            messageclient.push_back(trafficStatusObject{ std::stod(lights[i].id), lights[i].weight});
 
             //Randomize weight propbably remove this later
             lights[i].weight = distrclient(genclient);
@@ -123,17 +123,22 @@ void client::startClient()
         {
              nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
             for (const auto& obj : dataserver) {
-                message.push_back({ obj["id"], obj["status"] });
-                // Print the received data to the console
+                double id = obj["id"];
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(1) << id;
+                std::string id_str = ss.str();
+                message.push_back({id_str, obj["status"]});
+                // Print the received data to the console   
                 std::cout << "Received struct from server: id = " << obj["id"] << ", color = " << obj["status"] << std::endl;
             }
+            messagereadable = true;
             std::cout << "send message / data" << std::endl;
         }
 		catch (const std::exception e)
 		{
 			std::cout << "error parsing json" << std::endl;
 		}
-
+		
 
         
     }
