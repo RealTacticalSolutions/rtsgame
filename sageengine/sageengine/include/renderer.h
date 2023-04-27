@@ -11,11 +11,10 @@ private:
 	const bool enableValidationLayers = true;
 #endif
 
-	
 
 	Camera& camera;
 
-	const int MAX_FRAMES_IN_FLIGHT = 2;
+	const int MAX_FRAMES_IN_FLIGHT = 1;
 	int objectCount;
 
 	uint32_t currentFrame = 0;
@@ -28,7 +27,6 @@ private:
 
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
-
 	};
 
 	const std::vector<const char*> deviceExtensions = {
@@ -68,11 +66,12 @@ private:
 	}
 	
 	struct QueueFamilyIndices {
-		std::optional<uint32_t> graphicsAndComputeFamily;
+		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> computeFamily;
 		std::optional<uint32_t> presentFamily;
 
 		bool isComplete() {
-			return graphicsAndComputeFamily.has_value() && presentFamily.has_value();
+			return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
 		}
 	};
 
@@ -110,6 +109,7 @@ private:
 	VkPipeline computePipeline;
 
 	VkCommandPool commandPool;
+	VkCommandPool computeCommandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 	std::vector<VkCommandBuffer> computeCommandBuffers;
 
@@ -175,6 +175,11 @@ private:
 	std::vector<uint32_t> maxPrimitveCounts;
 	
 	std::vector<RayCast> rayCasts;
+	std::vector<VkAccelerationStructureInstanceKHR> instances;
+
+	VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+
+	bool yeet = false;
 
 	void cleanupVulkan();
 	void cleanupSwapChain();
@@ -201,11 +206,13 @@ private:
 	void createBottomLevelAccelerationStructure(int index);
 	void createTopLevelAccelerationStructureGeometry();
 	void createTopLevelAccelerationStructure(int index);
+	void updateTopLevelAccelerationStructure();
 	uint64_t getBufferDeviceAddress(VkBuffer buffer);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	VkCommandBuffer beginSingleTimeCommands();
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+	VkCommandBuffer beginSingleTimeCommands(VkCommandPool& commandpool);
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue& queue, VkCommandPool& pool);
 
 	//Buffer creation functions
 	Buffermanager createVertexbuffer(Mesh mesh);
@@ -238,9 +245,6 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool hasStencilComponent(VkFormat format);
 	void updateTransformBuffer();
-
-	VkCommandBuffer beginNewCommandBuffer();
-	void flushCommandBuffer(VkCommandBuffer& commandBuffer);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	std::vector<const char*> getRequiredExtensions();
@@ -287,6 +291,8 @@ public:
 
 	void createObject(RenderObject renderObject);
 	void initRaycast(glm::vec3 origin, glm::vec3 direction);
+	void addInstance();
+	void deleteInstance();
 
 	VkDevice getDevice();
 };

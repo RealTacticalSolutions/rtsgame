@@ -24,13 +24,13 @@ void application::mainLoop()
         drawFrame();
 
         glm::vec2 cursorPos = input.getCursorPos();
-        bool spacePressed = input.keyPressed(GLFW_KEY_SPACE);
-        bool test = input.keyDown(GLFW_KEY_SPACE);
+        bool spacePressed = input.keyDown(GLFW_KEY_SPACE);
+        bool dPressed = input.keyDown(GLFW_KEY_D);
 
         input.updateInput();
         //camera.rotateCamera(0.005f);
 
-        if (test) {
+        if (spacePressed) {
             int width = 0, height = 0;
             glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
             glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
@@ -38,6 +38,11 @@ void application::mainLoop()
             glm::vec3 direction = worldpos - camera.position;
             
             scene.renderer.get()->initRaycast(camera.position, direction);
+            
+        }
+
+        if (dPressed) {
+            scene.renderer.get()->addInstance();
         }
 
         fps++;
@@ -101,6 +106,7 @@ void application::initWindow()
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
 	vulkanrenderer->initVulkan(std::move(windowObject));
+    scene.instantiateObject(scene.bluePrints[0], glm::mat4(1.0f), glm::vec3(0.6f));
     scene.renderer = std::move(vulkanrenderer);
 }
 
@@ -114,7 +120,8 @@ void application::start()
 
     //scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
 
-    scene.instantiateObject(scene.bluePrints[0], glm::mat4(1.0f), glm::vec3(0.6f));
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, -0.4f, 0.0f)), glm::vec3(0.6f));
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.4f, 0.0f)), glm::vec3(0.6f));
 }
 
 void application::cleanup()

@@ -57,6 +57,9 @@ void renderer::cleanupVulkan()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyBuffer(device, uniformBufferManagers[i].buffer, nullptr);
         vkFreeMemory(device, uniformBufferManagers[i].bufferMemory, nullptr);
+
+        vkDestroyBuffer(device, computeShaderBuffers[i].buffer, nullptr);
+        vkFreeMemory(device, computeShaderBuffers[i].bufferMemory, nullptr);
     }
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
@@ -70,6 +73,7 @@ void renderer::cleanupVulkan()
         vkDestroyImageView(device, textureImageViews[i], nullptr);
     }
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(device, computeDescriptorSetLayout, nullptr);
 
     cleanupAccelerationStructures();
 
@@ -93,13 +97,13 @@ void renderer::cleanupVulkan()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(device, raycastFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(device, inFlightFences[i], nullptr);
         vkDestroyFence(device, raycastInFlightFences[i], nullptr);
     }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
+    vkDestroyCommandPool(device, computeCommandPool, nullptr);
 
     vkDestroyDevice(device, nullptr);
 
@@ -215,7 +219,7 @@ void renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
 {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = debugCallback;
 }
@@ -263,7 +267,7 @@ void renderer::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsAndComputeFamily.value(), indices.presentFamily.value() };
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value(), indices.computeFamily.value()};
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies)
@@ -316,8 +320,8 @@ void renderer::createLogicalDevice() {
 
     VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
     
-    vkGetDeviceQueue(device, indices.graphicsAndComputeFamily.value(), 0, &computeQueue);
-    vkGetDeviceQueue(device, indices.graphicsAndComputeFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.computeFamily.value(), 0, &computeQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
@@ -345,9 +349,9 @@ void renderer::createSwapChain(GLFWwindow* window) {
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-    uint32_t queueFamilyIndices[] = { indices.graphicsAndComputeFamily.value(), indices.presentFamily.value() };
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value(), indices.computeFamily.value()};
 
-    if (indices.graphicsAndComputeFamily != indices.presentFamily) {
+    if (indices.graphicsFamily != indices.presentFamily) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -717,9 +721,16 @@ void renderer::createCommandPool()
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily.value();
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
     VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
+
+    VkCommandPoolCreateInfo computePoolInfo{};
+    computePoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    computePoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    computePoolInfo.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
+
+    VK_CHECK(vkCreateCommandPool(device, &computePoolInfo, nullptr, &computeCommandPool));
 }
 
 void renderer::createTextureImages() {
@@ -933,7 +944,7 @@ void renderer::createBottomLevelAccelerationStructure(int index)
     accelerationStructureBuildRangeInfo.transformOffset = 0;
     std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
 
-    VkCommandBuffer commandBuffer = beginNewCommandBuffer();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(computeCommandPool);
 
     cmdBuildAccelerationStructuresEXT(
         commandBuffer,
@@ -941,7 +952,7 @@ void renderer::createBottomLevelAccelerationStructure(int index)
         &accelerationStructureBuildGeometryInfo,
         accelerationBuildStructureRangeInfos.data());
 
-    flushCommandBuffer(commandBuffer);
+    endSingleTimeCommands(commandBuffer, computeQueue, computeCommandPool);
 
     vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
     vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
@@ -952,19 +963,17 @@ void renderer::createBottomLevelAccelerationStructure(int index)
 
 void renderer::createTopLevelAccelerationStructureGeometry()
 {
-    //TODO: set maxobjectCount
-    std::vector<VkAccelerationStructureInstanceKHR> instances;
-
     //creates all VkAccelerationStructureInstances
     for (int i = 0; i < objectCount; i++) {
         for (int j = 0; j < renderObjects[i].instanceCount; j++) {
-            VkTransformMatrixKHR vkTransform;
             glm::mat4 transform = renderObjects[i].renderprops.instances[j];
+            transform = glm::transpose(transform);
+            VkTransformMatrixKHR vkTransform{};
             VkAccelerationStructureInstanceKHR instance{};
             memcpy(vkTransform.matrix, &transform, sizeof(vkTransform.matrix));
             
             instance.transform = vkTransform;
-            instance.instanceCustomIndex = 0;
+            instance.instanceCustomIndex = j;
             instance.mask = 0xFF;
             instance.instanceShaderBindingTableRecordOffset = 0;
             instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
@@ -977,7 +986,6 @@ void renderer::createTopLevelAccelerationStructureGeometry()
 
     VkDeviceOrHostAddressConstKHR instancesDataDeviceAddress{};
     instancesDataDeviceAddress.deviceAddress = getBufferDeviceAddress(topLevelAccelerationStructureBufferManager.buffer);
-
    
     topLevelAccelerationStructureGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
     topLevelAccelerationStructureGeometry.pNext = nullptr;
@@ -994,14 +1002,13 @@ void renderer::createTopLevelAccelerationStructure(int index)
 {
     createTopLevelAccelerationStructureGeometry();
 
-    VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
     accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     accelerationStructureBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-    accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     accelerationStructureBuildGeometryInfo.geometryCount = 1;
     accelerationStructureBuildGeometryInfo.pGeometries = &topLevelAccelerationStructureGeometry;
 
-    uint32_t primitive_count = 1;
+    uint32_t primitive_count = 3;
 
     topLevelAccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
@@ -1026,14 +1033,14 @@ void renderer::createTopLevelAccelerationStructure(int index)
 
     //TODO offsets controleren
     VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
-    accelerationStructureBuildRangeInfo.primitiveCount = 1;
+    accelerationStructureBuildRangeInfo.primitiveCount = primitive_count;
     accelerationStructureBuildRangeInfo.primitiveOffset = 0;
     accelerationStructureBuildRangeInfo.firstVertex = 0;
     accelerationStructureBuildRangeInfo.transformOffset = 0;
 
     std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
 
-    VkCommandBuffer commandBuffer = beginNewCommandBuffer();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(computeCommandPool);
 
     cmdBuildAccelerationStructuresEXT(
         commandBuffer,
@@ -1041,7 +1048,46 @@ void renderer::createTopLevelAccelerationStructure(int index)
         &accelerationStructureBuildGeometryInfo,
         accelerationBuildStructureRangeInfos.data());
 
-    flushCommandBuffer(commandBuffer);
+    endSingleTimeCommands(commandBuffer, computeQueue, computeCommandPool);
+
+    vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
+    vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
+}
+
+void renderer::updateTopLevelAccelerationStructure()
+{
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * 3);
+
+    uint32_t primitive_count = 3;
+    getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &primitive_count, &topLevelAccelerationStructureBuildSizesInfo);
+
+    VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+    accelerationStructureBuildRangeInfo.primitiveCount = primitive_count;
+    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+    accelerationStructureBuildRangeInfo.firstVertex = 0;
+    accelerationStructureBuildRangeInfo.transformOffset = 0;
+
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(computeCommandPool);
+
+    accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
+    accelerationStructureBuildGeometryInfo.srcAccelerationStructure = topLevelAccelerationStructure.handle;
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructure.handle;
+
+    Buffermanager scratchBuffer = createScratchBuffer(topLevelAccelerationStructureBuildSizesInfo.buildScratchSize);
+
+    accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructure.handle;
+    accelerationStructureBuildGeometryInfo.scratchData.deviceAddress = getBufferDeviceAddress(scratchBuffer.buffer);
+
+    cmdBuildAccelerationStructuresEXT(
+        commandBuffer,
+        1,
+        &accelerationStructureBuildGeometryInfo,
+        accelerationBuildStructureRangeInfos.data());
+
+
+    endSingleTimeCommands(commandBuffer, computeQueue, computeCommandPool);
 
     vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
     vkFreeMemory(device, scratchBuffer.bufferMemory, nullptr);
@@ -1103,7 +1149,7 @@ void renderer::destroyAccelerationStructureEXT(VkAccelerationStructureKHR accele
 }
 
 void renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1148,7 +1194,7 @@ void renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayo
         1, &barrier
     );
 
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(commandBuffer, graphicsQueue, commandPool);
 }
 
 uint32_t renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -1165,7 +1211,7 @@ uint32_t renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
 }
 
 void renderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -1184,14 +1230,14 @@ void renderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
 
     vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(commandBuffer,graphicsQueue, commandPool);
 }
 
-VkCommandBuffer renderer::beginSingleTimeCommands() {
+VkCommandBuffer renderer::beginSingleTimeCommands(VkCommandPool& commandpool) {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = commandpool;
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
@@ -1206,22 +1252,33 @@ VkCommandBuffer renderer::beginSingleTimeCommands() {
     return commandBuffer;
 }
 
-void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue& queue, VkCommandPool& pool) {
+    
     vkEndCommandBuffer(commandBuffer);
+
+    VkFence fence;
+    VkFenceCreateInfo fenceCreateInfo{};
+    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    vkCreateFence(device, &fenceCreateInfo, nullptr, &fence);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(graphicsQueue);
+    vkQueueSubmit(queue, 1, &submitInfo, fence);
 
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+    vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+    vkDestroyFence(device, fence, nullptr);
+
+    vkFreeCommandBuffers(device, pool, 1, &commandBuffer);
+
+    std::cout << "help";
 }
 
 void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
 {
+    vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &raycastInFlightFences[currentFrame]);
 
     rayCasts.push_back({ origin, direction });
@@ -1237,10 +1294,35 @@ void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
     VK_CHECK(vkQueueSubmit(computeQueue, 1, &submitInfo, raycastInFlightFences[currentFrame]));
 
     vkWaitForFences(device, 1, &raycastInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkQueueWaitIdle(computeQueue);
+
     RayResult res{};
     memcpy(&res, computeShaderBuffers[currentFrame].handle, sizeof(RayResult));
 
     std::cout << "intersectionPoint:" << res.intersectionPoint.x << "," << res.intersectionPoint.y << "," << res.intersectionPoint.z << std::endl;
+}
+
+void renderer::addInstance()
+{
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::transpose(transform);
+    VkTransformMatrixKHR vkTransform{};
+    VkAccelerationStructureInstanceKHR instance{};
+    memcpy(vkTransform.matrix, &transform, sizeof(vkTransform.matrix));
+
+    instance.transform = vkTransform;
+    instance.instanceCustomIndex = 2;
+    instance.mask = 0xFF;
+    instance.instanceShaderBindingTableRecordOffset = 0;
+    instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+    instance.accelerationStructureReference = bottomLevelAccelerationStructures[0].deviceAddress;
+    instances.push_back(instance);
+
+    updateTopLevelAccelerationStructure();
+}
+
+void renderer::deleteInstance()
+{
 }
 
 Buffermanager renderer::createVertexbuffer(Mesh mesh)
@@ -1319,12 +1401,12 @@ void renderer::createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerat
 {
     topLevelAccelerationStructureBufferManager.bufferUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
     topLevelAccelerationStructureBufferManager.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR);
+    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR) * 20;
 
     createBuffer(topLevelAccelerationStructureBufferManager);
 
     vkMapMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, 0, topLevelAccelerationStructureBufferManager.bufferSize, 0, &topLevelAccelerationStructureBufferManager.handle);
-    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), topLevelAccelerationStructureBufferManager.bufferSize);
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * instances.size());
 }
 
 void renderer::createTransformBuffer()
@@ -1576,13 +1658,13 @@ void renderer::createObject(RenderObject renderObject)
 }
 
 void renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool);
 
     VkBufferCopy copyRegion{};
     copyRegion.size = size;
     vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(commandBuffer, graphicsQueue, commandPool);
 }
 
 
@@ -1701,7 +1783,6 @@ void renderer::createSyncObjects()
 {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    raycastFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
     raycastInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -1717,19 +1798,12 @@ void renderer::createSyncObjects()
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]));
         VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
         VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
-        VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &raycastFinishedSemaphores[i])); 
         VK_CHECK(vkCreateFence(device, &fenceInfo, nullptr, &raycastInFlightFences[i]));
     }
-
-   
 }
 
 void renderer::updateUniformBuffer(uint32_t currentImage)
 {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -1763,63 +1837,16 @@ void renderer::updateTransformBuffer()
     memcpy(transformBufferManager.handle, props.data(), sizeof(RenderObject::RenderProps) * renderObjects.size());
 }
 
-VkCommandBuffer renderer::beginNewCommandBuffer()
-{
-    VkCommandBuffer commandBuffer{};
-
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
-
-    VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer));
-
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = 0;
-    beginInfo.pInheritanceInfo = nullptr;
-
-    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-
-    return commandBuffer;
-}
-
-void renderer::flushCommandBuffer(VkCommandBuffer& commandBuffer)
-{
-    assert(commandBuffer != VK_NULL_HANDLE);
-
-    VK_CHECK(vkEndCommandBuffer(commandBuffer));
-
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    // Create fence to ensure that the command buffer has finished executing
-    VkFenceCreateInfo fenceCreateInfo = {};
-    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceCreateInfo.flags = 0;
-    VkFence fence;
-    VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &fence));
-
-    // Submit to the queue
-    VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence));
-    // Wait for the fence to signal that command buffer has finished executing
-    VK_CHECK(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX));
-
-    vkDestroyFence(device, fence, nullptr);
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-}
-
 void renderer::drawFrame(GLFWwindow* window)
 {
-    vkWaitForFences(device, 1, &raycastInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
+ 
+    vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     updateTransformBuffer();
     updateUniformBuffer(currentFrame);
 
-    vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -1832,8 +1859,6 @@ void renderer::drawFrame(GLFWwindow* window)
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
     // Only reset the fence if we are submitting work
     
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
@@ -1844,7 +1869,7 @@ void renderer::drawFrame(GLFWwindow* window)
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
@@ -1856,9 +1881,8 @@ void renderer::drawFrame(GLFWwindow* window)
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
+    vkDeviceWaitIdle(device);
     VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
-
-
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1928,8 +1952,12 @@ renderer::QueueFamilyIndices renderer::findQueueFamilies(VkPhysicalDevice device
 
     int i = 0;
     for (const auto& queueFamily : queueFamilies) {
-        if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)) {
-            indices.graphicsAndComputeFamily = i;
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+        }
+
+        if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+            indices.computeFamily = i;
         }
 
         VkBool32 presentSupport = false;
