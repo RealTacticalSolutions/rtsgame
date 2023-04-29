@@ -1086,7 +1086,6 @@ void renderer::updateTopLevelAccelerationStructure()
         &accelerationStructureBuildGeometryInfo,
         accelerationBuildStructureRangeInfos.data());
 
-
     endSingleTimeCommands(commandBuffer, computeQueue, computeCommandPool);
 
     vkDestroyBuffer(device, scratchBuffer.buffer, nullptr);
@@ -1401,12 +1400,12 @@ void renderer::createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerat
 {
     topLevelAccelerationStructureBufferManager.bufferUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
     topLevelAccelerationStructureBufferManager.memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR) * 20;
+    topLevelAccelerationStructureBufferManager.bufferSize = sizeof(VkAccelerationStructureInstanceKHR) * 30;
 
     createBuffer(topLevelAccelerationStructureBufferManager);
 
     vkMapMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, 0, topLevelAccelerationStructureBufferManager.bufferSize, 0, &topLevelAccelerationStructureBufferManager.handle);
-    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * instances.size());
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), topLevelAccelerationStructureBufferManager.bufferSize);
 }
 
 void renderer::createTransformBuffer()
@@ -1839,14 +1838,9 @@ void renderer::updateTransformBuffer()
 
 void renderer::drawFrame(GLFWwindow* window)
 {
-
- 
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     updateTransformBuffer();
     updateUniformBuffer(currentFrame);
-
-    vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -1860,6 +1854,7 @@ void renderer::drawFrame(GLFWwindow* window)
     }
 
     // Only reset the fence if we are submitting work
+    vkResetFences(device, 1, &inFlightFences[currentFrame]);
     
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 
@@ -1881,7 +1876,6 @@ void renderer::drawFrame(GLFWwindow* window)
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkDeviceWaitIdle(device);
     VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
 
     VkPresentInfoKHR presentInfo{};
