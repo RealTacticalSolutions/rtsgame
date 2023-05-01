@@ -35,6 +35,7 @@ private:
 
 	std::vector<glm::vec3> lightspos =
 	{ 
+<<<<<<< HEAD
 	glm::vec3(4.102f, -0.116f,1.0f),//1.1
 	glm::vec3(2.70f, -0.062f,1.0f),//2.1
 	glm::vec3(4.200f, 0.200f,1.0f),//42.0 
@@ -64,6 +65,36 @@ private:
 	glm::vec3(2.408f, 0.826f,1.0f),//31.2
 	glm::vec3(2.420f, -1.513f,1.0f),//32.1
 	glm::vec3(2.212f, -0.138f,1.0f),//32.2
+=======
+	glm::vec3(0.52f,0.18f,1.0f),//1.1
+	glm::vec3(0.52f,0.0f,1.0f),//2.1
+	glm::vec3(0.52f,0.35f,1.0f),//42.0 
+	glm::vec3(0.10f,0.50f,1.0f),//12.1 
+	glm::vec3(-0.18f,0.50f,1.0f),//11.1
+	glm::vec3(-0.38f,0.50f,1.0f),//10.1 
+	glm::vec3(-0.50f,0.0f,1.0f),//9.1 
+	glm::vec3(-0.50f,-0.20f,1.0f),//8.1 
+	glm::vec3(-0.50f,-0.40f,1.0f),//7.1 
+	glm::vec3(0.16f,-0.54f,1.0f),//6.1 
+	glm::vec3(0.34f,-0.54f,1.0f),//5.1 
+	glm::vec3(-1.4f,0.8f,1.0f),//35.1
+	glm::vec3(-1.4f,0.6f,1.0f),//35.2
+	glm::vec3(-1.4f,0.4f,1.0f),//36.1
+	glm::vec3(-1.4f,0.2f,1.0f),//36.2
+	glm::vec3(-1.4f,0.0f,1.0f),//37.1
+	glm::vec3(-1.4f,-0.2f,1.0f),//37.2
+	glm::vec3(-1.4f,-0.4f,1.0f),//38.1
+	glm::vec3(-1.4f,-0.6f,1.0f),//38.2
+	glm::vec3(-1.4f,-0.8f,1.0f),//31.1
+	glm::vec3(-1.2f,0.8f,1.0f),//31.2
+	glm::vec3(-1.2f,0.6f,1.0f),//32.1
+	glm::vec3(-1.2f,0.4f,1.0f),//32.2
+	glm::vec3(-1.2f,0.2f,1.0f),//86.1
+	glm::vec3(-1.2f,-0.0f,1.0f),//26.1
+	glm::vec3(-1.2f,-0.2f,1.0f),//88.1
+	glm::vec3(-1.2f,-0.4f,1.0f),//28.1
+	glm::vec3(-1.2f,-0.6f,1.0f)//22.0
+>>>>>>> cc3687e1125de3e1febd78d518fd13010683de8f
 
 	};
 
@@ -74,7 +105,7 @@ private:
 	void updateWayPointsBikes(double delta);
 	void updateWayPointsPeople(double delta);
 	void initWayPoints();
-	void addTrafficLight(std::string id, int index, double weight, int status);
+	void addTrafficLight(std::string id, int index, int weight, int status);
 	void removeCarObject(int index);
 public:
 	

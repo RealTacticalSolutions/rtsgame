@@ -4,6 +4,8 @@ using System.Text.Json.Serialization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+
 public enum lightstatus
 {
     red,
@@ -11,14 +13,42 @@ public enum lightstatus
     green
 }
 
+
+
 public class Program {
 
 
-    public static void Main()
+    static IPAddress ipAddress;
+    static IPEndPoint ipEndPoint;
+    static Socket listener;
+    static Socket socket;
+
+    public static void InitSocket()
+    {
+       ipAddress = (Dns.Resolve(IPAddress.Any.ToString())).AddressList[2]; ;
+       ipEndPoint = new(ipAddress, 11000);
+       listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+
+        Console.WriteLine(ipAddress.MapToIPv4().ToString());
+
+        listener.Bind(ipEndPoint);
+
+        listener.Listen(10);
+
+        socket = listener.Accept();
+
+
+        socket.ReceiveTimeout = 10000;
+        socket.SendTimeout = 5000;
+
+    }
+
+    public static void Tick()
     {
         int setup = 0;
 
-        double[] lightIds = {1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 42,};
+        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0 };
 
         TrafficlightInfo[] trafficlightInfos = new TrafficlightInfo[lightIds.Length];
 
@@ -31,55 +61,49 @@ public class Program {
             };
         }
 
-        IPAddress ipAddress = IPAddress.Parse("141.252.214.92");
-        IPEndPoint ipEndPoint = new(ipAddress, 11000);
-
-        Socket listener = new Socket(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-        listener.Bind(ipEndPoint);
-
-        listener.Listen(10);
 
         int sendResult;
         int receiveResult;
 
         string response;
 
-        Socket socket = listener.Accept();
-
-        socket.ReceiveTimeout = 1000;
-        socket.SendTimeout = 1000;
-
-        Console.WriteLine("connection succeeded");
 
         while (socket.Connected)
-        { 
+        {
             try
             {
 
-                Thread.Sleep(3000);
+                Thread.Sleep(1000);
+
+                byte[] buffer = new byte[8196];
+
+                int bytesRead = socket.Receive(buffer);
+                response = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                buffer = new byte[8196];
+                Console.WriteLine($"received:  {response}");
+
+                var JsonResponse = JsonSerializer.Deserialize<TrafficInfo[]>(response);
+
+                foreach (TrafficInfo trafficInfo in JsonResponse)
+                {
+                    Console.WriteLine($"LightId: {trafficInfo.id} Weight: {trafficInfo.weight} ");
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"receiving failed error: {e}");
+            }
+            try
+            {
 
                 string message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightInfos);
                 message += '\n';
                 byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
                 if (socket.Connected)
                 {
-                    Console.WriteLine("Sending data");
+                    Console.WriteLine($"\n Sending data {message}");
                     sendResult = socket.Send(data);
-                }
-
-                byte[] buffer = new byte[2048];
-
-                int bytesRead = socket.Receive(buffer);
-                response = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Console.WriteLine($"received:  {response}");
-                
-                TrafficInfo[]? JsonResponse = JsonSerializer.Deserialize<TrafficInfo[]>(response);
-
-                foreach (TrafficInfo trafficInfo in JsonResponse)
-                {
-                    Console.WriteLine($"LightId: {trafficInfo.id} Weight: {trafficInfo.weight} ");
-
                 }
 
                 foreach (TrafficlightInfo info in trafficlightInfos)
@@ -87,11 +111,13 @@ public class Program {
                     info.status = lightstatus.red;
                 }
 
-                switch(setup) {
+                switch (setup)
+                {
                     case 0:
                         trafficlightInfos[0].status = lightstatus.green;
                         trafficlightInfos[1].status = lightstatus.green;
                         trafficlightInfos[10].status = lightstatus.green;
+                        trafficlightInfos[27].status = lightstatus.green;
                         setup = 1;
                         break;
                     case 1:
@@ -109,7 +135,7 @@ public class Program {
                         trafficlightInfos[7].status = lightstatus.green;
                         trafficlightInfos[8].status = lightstatus.green;
                         trafficlightInfos[9].status = lightstatus.green;
-                        setup = 4;
+                        setup = 0;
                         break;
                 }
             }
@@ -119,16 +145,43 @@ public class Program {
                 {
 
                 }
+                Console.WriteLine("Sending failed");
                 Console.WriteLine("ERROR: " + e);
+
             }
         }
-
-        Console.ReadLine();
-
         socket.Shutdown(SocketShutdown.Both);
         socket.Close();
     }
+
+    public static void Main()
+    {
+
+        InitSocket();
+        Console.WriteLine("connection succeeded");
+
+        Tick();
+
+        while (true)
+        {
+            Console.WriteLine("Connection has been closed do you want to reconnect?   Y/N");
+            string retry = Console.ReadLine();
+            if (retry == "y" || retry == "Y")
+            {
+                listener.Listen(10);
+                socket = listener.Accept();
+                Tick();
+            }
+            else
+            {
+                break;
+            }
+        }
+
+
+    }
 }
+
 public class TrafficInfo
 {
     public double id { get; set; }
