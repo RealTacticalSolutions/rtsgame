@@ -8,20 +8,18 @@
 std::mutex g_mutex;
 std::condition_variable g_conditionVariable;
 
-<<<<<<< HEAD
-bool g_serverReady = false;
-=======
+
 bool messagereadable = false;
 
-bool g_serverReady = true;
->>>>>>> cc3687e1125de3e1febd78d518fd13010683de8f
+bool g_serverReady = false;
+
 bool server_running = true;
 bool client_running = true;
 
 
 void CrossRoadLevel::init()
 {
-    IP = "141.252.221.5";
+    IP = "127.0.0.1";
     
     PORT = "11000";
     SERVER_PORT = "11000";
@@ -29,25 +27,15 @@ void CrossRoadLevel::init()
     myClient = new client(IP, PORT, message_ref, lights);
     myServer = new server(SERVER_PORT, lights);
 
-    //serverThread = std::thread(&server::startServer, *myServer);
+    serverThread = std::thread(&server::startServer, *myServer);
     clientThread = std::thread(&client::startClient, *myClient);
 }
 
 void CrossRoadLevel::mainLoop()
 {
-<<<<<<< HEAD
-
-    //Todo probably crashed because message object gets cleared, probably need a message buffer that only reads when the last one is handled
-    for (messageObject m : message_ref)
-    {
-        //if(m.id.size() != 0 || m.color != -1 || m.color >2)
-        if (m.id != "0" || m.id != "")
-=======
-    
     try {
         //Todo probably crashed because message object gets cleared, probably need a message buffer that only reads when the last one is handled
         if (messagereadable)
->>>>>>> cc3687e1125de3e1febd78d518fd13010683de8f
         {
             for (messageObject m : message_ref)
             {
@@ -94,7 +82,7 @@ void CrossRoadLevel::cleanup()
 {
     server_running = false;
     client_running = false;
-    //serverThread.join();
+    serverThread.join();
     clientThread.join();
     //delete myClient;
     //delete myServer;
