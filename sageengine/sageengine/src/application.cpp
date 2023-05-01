@@ -45,6 +45,7 @@ void application::mainLoop()
 		updateTest(currentFrameTime);
 		updateWayPoints(delta);
 		updateWayPointsBikes(delta);
+		updateLightWeights();
 		drawFrame();
 
 		glm::vec2 cursorPos = input.getCursorPos();
@@ -211,10 +212,6 @@ void application::start()
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[27]), glm::vec3(1.0f, 0.0f, 0.0f)); //22.0
 	addTrafficLight("22.0", scene.gameObjects.size() - 1, 0, 0);
 
-
-	spawnpoint = paths[0].getWayPointPosition(0);
-	scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f), paths[0]);
-
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,2.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 	////spawnpoint = paths[1].getWayPointPosition(0);
 	//spawnpoint = glm::vec3(1.0f, 0.0f, 1.0f);
@@ -232,7 +229,8 @@ void application::updateTest(const double currentFrameTime)
 	if (carcount < maxinstances && 0.1 < (currentFrameTime - lastSpawnTime))
 	{
 		int pathindex = dicar(gen);
-		spawnpoint = paths[pathindex].getWayPointPosition(0);
+		spawnpoint = paths[pathindex]->getWayPointPosition(0);
+		addWeight(paths[pathindex]->getTrafficLightId());
 		scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
 		lastSpawnTime = currentFrameTime;
 		carcount += 1;
@@ -300,7 +298,8 @@ void application::updateWayPoints(double delta)
 	std::vector<std::pair<size_t, Car*>> cars;
 	for (size_t i = 0; i < scene.gameObjects.size(); i++)
 	{
-		if (Car* car = dynamic_cast<Car*>(scene.gameObjects[i].get())) {
+		if (Car* car = dynamic_cast<Car*>(scene.gameObjects[i].get()))
+		{
 			cars.emplace_back(i, car);
 		}
 	}
@@ -308,7 +307,7 @@ void application::updateWayPoints(double delta)
 	std::vector<int> carstoremove;
 	for (auto& [index, car] : cars)
 	{
-		
+
 		if (car->getWayPointSize() < 1)
 		{
 			throw std::runtime_error("Waypoint index must be not < 1");
@@ -317,54 +316,88 @@ void application::updateWayPoints(double delta)
 		int currentpoint = car->getCurrentWayPoint();
 
 		// Set the target position
-		WayPoints waypoints = car->getWayPoints();
-		glm::vec3 target(waypoints.getWayPointPosition(currentpoint));	
+		WayPoints* waypoints = car->getWayPoints();
+
+
+		glm::vec3 target(waypoints->getWayPointPosition(currentpoint));
 
 		// Get the current position of the object
 		glm::vec3 position = glm::vec3(car->properties.transform[3]);
 
 		// Calculate the direction from the current position to the target position
-		glm::vec3 direction = glm::normalize(target - position);
+		glm::vec3 direction;
+		if (glm::length(position - target) != 0.0f) {
+			direction = glm::normalize(target - position);
+		}
+		else {
+			// Handle the case where position and target are the same vector
+			direction = glm::vec3(0.000001f); // set direction to a default value
+			// Todo:: causes some bugs when reaching endpoint removing alot of once for exmaple
+		}
 
 		// Set the velocity
-		float velocity = 50.0f * (delta /60);
+		float velocity = 50.0f * (delta / 60);
 
 		// Calculate the new position based on the direction and velocity
 		glm::vec3 new_pos = position + direction * velocity;
 
-		if (approxEqual(position, target, 0.05f))
+
+		bool removed = false;
+		if (approxEqual(position, target, 0.00005f))
 		{
-			std::string lightid = waypoints.getLightId(currentpoint);
-			if (!( lightid == "-1"))
+
+			WayPointType pointType = waypoints->getEnum(currentpoint);
+
+			std::string lightid;
+			int nextwaypoint;
+			WayPoint test = waypoints->getWayPoint(currentpoint);
+			int nextindex = displit(rd);
+
+
+			switch (pointType)
 			{
-				if (scene.gameObjects[getId(lights,lightid)]->properties.color == getColor(RED))
-				{
-					continue;
-				}
-			}
-			int nextwaypoint = currentpoint + 1;
-			if (nextwaypoint > waypoints.getSize() - 1)
-			{
-				// Todo: destruct object probably
-				//scene.removeObject(index);
+			case General:
+				car->setCurrentWayPoint(currentpoint + 1);
+				break;
+			case EndPoint:
 				carstoremove.push_back(index);
-				continue;
+				removed = true;
+				break;
+			case SplitPoint:
+				car->setWayPoint(test.getNewPath(nextindex));
+				break;
+			case TrafficPoint:
+				//todo:: also remove from weight
+				lightid = waypoints->getLightId(currentpoint);
+				if (!(lightid == "-1"))
+				{
+					if (scene.gameObjects[getId(lights, lightid)]->properties.color == getColor(RED))
+					{
+						continue;
+					}
+					else
+					{
+						car->setCurrentWayPoint(currentpoint + 1);
+					}
+				}
+				break;
+			default:
+				//scene.gameObjects[index].properties.transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+				break;
 			}
-			car->setCurrentWayPoint(nextwaypoint);
-			//scene.gameObjects[index].properties.transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 1.0f));
 		}
-		else
+		if (!removed)
 		{
-			// Update the position of the object using glm::translate
 			scene.gameObjects[index]->properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
 		}
-		
 	}
+
 	for (size_t i = 0; i < carstoremove.size(); i++)
 	{
 		scene.removeObject(carstoremove[i]);
-		carcount - 1;
+		carcount -= 1;
 	}
+
 }
 
 // Updates bike waypoints
@@ -447,6 +480,7 @@ void application::updateWayPointsBikes(double delta)
 				bike->setWayPoint(test.getNewPath(nextindex));
 				break;
 			case TrafficPoint:
+				//todo:: also remove from weight
 				lightid = waypoints->getLightId(currentpoint);
 				if (!(lightid == "-1"))
 				{
@@ -709,18 +743,19 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(8.8874737812391, -1.856144397543, 1.0f), EndPoint),
 	};
 
-	paths.push_back(waypoints0);
-	paths.push_back(waypoints1);
-	paths.push_back(waypoints2);
-	paths.push_back(waypoints3);
-	paths.push_back(waypoints4);
-	paths.push_back(waypoints5);
-	paths.push_back(waypoints6);
-	paths.push_back(waypoints7);
-	paths.push_back(waypoints8);
-	paths.push_back(waypoints9);
-	paths.push_back(waypoints10);
-	paths.push_back(waypoints11);
+	
+	paths.push_back(new WayPoints(waypoints0,"1.1"));
+	paths.push_back(new WayPoints(waypoints1,"2.1"));
+	paths.push_back(new WayPoints(waypoints2,"42.0"));
+	paths.push_back(new WayPoints(waypoints3,"12.1"));
+	paths.push_back(new WayPoints(waypoints4,"11.1"));
+	paths.push_back(new WayPoints(waypoints5,"10.1"));
+	paths.push_back(new WayPoints(waypoints6,"9.1"));
+	paths.push_back(new WayPoints(waypoints7,"8.1"));
+	paths.push_back(new WayPoints(waypoints8,"7.1"));
+	paths.push_back(new WayPoints(waypoints9,"6.1"));
+	paths.push_back(new WayPoints(waypoints10,"5.1"));
+	paths.push_back(new WayPoints(waypoints11,"5.1"));
 
 	WayPoints* splitbottomlefteast = new WayPoints
 	({
@@ -861,3 +896,15 @@ void application::addTrafficLight(std::string id, int index, int weight, int sta
 {
 	lights.push_back(TrafficLight{id, index, weight, status});
 }
+
+
+void application::updateLightWeights()
+{
+
+};
+
+void application::addWeight(std::string id)
+{
+	//todo fix right weight
+	lights[0].weight += 1;
+};

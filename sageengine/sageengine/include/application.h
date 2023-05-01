@@ -26,7 +26,7 @@ private:
 	Camera camera;
 	std::vector<messageObject> message;
 
-	std::vector<WayPoints> paths;
+	std::vector<WayPoints*> paths;
 	std::vector<WayPoints*> bikepaths;
 
 	glm::vec3 spawnpoint = glm::vec3(0.34f,-1.0f,1.0f);
@@ -76,6 +76,8 @@ private:
 	void initWayPoints();
 	void addTrafficLight(std::string id, int index, int weight, int status);
 	void removeCarObject(int index);
+	void updateLightWeights();
+	void addWeight(std::string id);
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()

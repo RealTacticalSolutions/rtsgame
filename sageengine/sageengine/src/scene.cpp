@@ -26,7 +26,7 @@ void Scene::instantiateObject(BluePrint bluePrint, glm::mat4 transform, glm::vec
 	bluePrint.renderObject.renderprops.color[instanceId] = glm::vec4(color, 1.0f);
 	bluePrint.renderObject.renderprops.instances[instanceId] = transform;
 }
-void Scene::instantiateCar(BluePrint bluePrint, glm::mat4 transform, glm::vec3 color, WayPoints& path)
+void Scene::instantiateCar(BluePrint bluePrint, glm::mat4 transform, glm::vec3 color, WayPoints* path)
 {
 	bluePrint.renderObject.instanceCount += 1;
 	int instanceId = bluePrint.renderObject.instanceCount - 1;

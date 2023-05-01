@@ -47,6 +47,12 @@ std::string WayPoints::getLightId(int index)
 
 }
 
+std::string WayPoints::getTrafficLightId() const
+{
+	return trafficlight;
+
+}
+
 WayPointType WayPoints::getEnum(int index)
 {
 	return waypoints[index].getEnum();

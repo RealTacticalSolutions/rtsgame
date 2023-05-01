@@ -76,9 +76,6 @@ void client::startClient()
         for (size_t i = 0; i < lights.size(); i++)
         {
             messageclient.push_back(trafficStatusObject{ std::stod(lights[i].id), lights[i].weight});
-
-            //Randomize weight propbably remove this later
-            lights[i].weight = distrclient(genclient);
         }
         nlohmann::json dataclient;
         client::to_json_traffic(dataclient, messageclient);

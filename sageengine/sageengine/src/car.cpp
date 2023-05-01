@@ -4,10 +4,10 @@
 
 int Car::getWayPointSize()
 {
-	return this->waypoints.getSize();
+	return this->waypoints->getSize();
 }
 
-WayPoints& Car::getWayPoints()
+WayPoints* Car::getWayPoints()
 {
 	return this->waypoints;
 }
@@ -20,4 +20,10 @@ int Car::getCurrentWayPoint()
 void Car::setCurrentWayPoint(int waypoint)
 {
 	this->currentwaypoint = waypoint;
+}
+
+void Car::setWayPoint(WayPoints* newwaypoints)
+{
+	this->waypoints = newwaypoints;
+	this->currentwaypoint = 0;
 }
