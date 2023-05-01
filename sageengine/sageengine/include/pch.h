@@ -36,6 +36,7 @@
 #include "collisionType.h"
 #include "gameObject.h"
 #include "car.h"
+#include "bike.h"
 #include "shapetool.h"
 #include "intersection.h"
 #include "camera.h"

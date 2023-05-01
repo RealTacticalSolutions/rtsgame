@@ -25,4 +25,5 @@ public:
 	void addWayPoint(WayPoint pos);
 	void addWayPoints(std::vector<WayPoint> positions);
 	std::string getLightId(int index);
+	WayPointType getEnum(int index);
 };

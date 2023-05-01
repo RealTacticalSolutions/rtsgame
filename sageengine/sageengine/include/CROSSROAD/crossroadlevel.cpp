@@ -8,7 +8,7 @@
 std::mutex g_mutex;
 std::condition_variable g_conditionVariable;
 
-bool g_serverReady = true;
+bool g_serverReady = false;
 bool server_running = true;
 bool client_running = true;
 
@@ -29,12 +29,12 @@ void CrossRoadLevel::init()
 
 void CrossRoadLevel::mainLoop()
 {
-    
+
     //Todo probably crashed because message object gets cleared, probably need a message buffer that only reads when the last one is handled
     for (messageObject m : message_ref)
     {
         //if(m.id.size() != 0 || m.color != -1 || m.color >2)
-        if (m.id != "0")
+        if (m.id != "0" || m.id != "")
         {
             try
             {

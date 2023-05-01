@@ -46,3 +46,8 @@ std::string WayPoints::getLightId(int index)
 	return waypoints[index].getLightId();
 
 }
+
+WayPointType WayPoints::getEnum(int index)
+{
+	return waypoints[index].getEnum();
+}
