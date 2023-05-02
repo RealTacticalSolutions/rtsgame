@@ -377,6 +377,7 @@ void application::updateWayPoints(double delta)
 					}
 					else
 					{
+						removeWeight(lightid);
 						car->setCurrentWayPoint(currentpoint + 1);
 					}
 				}
@@ -905,6 +906,20 @@ void application::updateLightWeights()
 
 void application::addWeight(std::string id)
 {
-	//todo fix right weight
-	lights[0].weight += 1;
+	int index = getLightIndex(lights, id);
+	if (index != -1)
+	{
+		lights[index].weight++;
+	}
+
+};
+
+void application::removeWeight(std::string id)
+{
+	int index = getLightIndex(lights, id);
+	if (index != -1)
+	{
+		lights[index].weight--;
+	}
+
 };

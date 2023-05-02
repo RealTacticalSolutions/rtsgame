@@ -48,3 +48,15 @@ static int getId(std::vector<TrafficLight>& lights, const std::string& id)
 	}
 	return -1;
 };
+
+static int getLightIndex(std::vector<TrafficLight>& lights, const std::string& id)
+{
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		if (lights[i].id == id)
+		{
+			return i;
+		}
+	}
+	return -1;
+};

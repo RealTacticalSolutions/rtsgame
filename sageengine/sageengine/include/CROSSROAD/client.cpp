@@ -127,7 +127,7 @@ void client::startClient()
                 id_str = ss.str(); // convert the id double back to a string with one decimal point
                 message.push_back({ id_str, obj["status"] });
                 // Print the received data to the console   
-                std::cout << "Received struct from server: id = " << id << ", color = " << obj["status"] << std::endl;
+                //std::cout << "Received struct from server: id = " << id << ", color = " << obj["status"] << std::endl;
             }
             messagereadable = true;
             std::cout << "send message / data" << std::endl;

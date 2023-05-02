@@ -78,6 +78,7 @@ private:
 	void removeCarObject(int index);
 	void updateLightWeights();
 	void addWeight(std::string id);
+	void removeWeight(std::string id);
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()
