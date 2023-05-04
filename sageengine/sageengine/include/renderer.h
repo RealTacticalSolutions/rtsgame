@@ -290,7 +290,7 @@ public:
 	void drawFrame(GLFWwindow* window);
 
 	void createObject(RenderObject renderObject);
-	void initRaycast(glm::vec3 origin, glm::vec3 direction);
+	RayResult initRaycast(glm::vec3 origin, glm::vec3 direction);
 	void addInstance(glm::mat4 transform);
 	void deleteInstance();
 

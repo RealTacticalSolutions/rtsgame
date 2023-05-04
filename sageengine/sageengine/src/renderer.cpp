@@ -1275,7 +1275,7 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue& que
     std::cout << "help";
 }
 
-void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
+RayResult renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
 {
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &raycastInFlightFences[currentFrame]);
@@ -1298,7 +1298,7 @@ void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
     RayResult res{};
     memcpy(&res, computeShaderBuffers[currentFrame].handle, sizeof(RayResult));
 
-    std::cout << "intersectionPoint:" << res.intersectionPoint.x << "," << res.intersectionPoint.y << "," << res.intersectionPoint.z << std::endl;
+    return res;
 }
 
 void renderer::addInstance(glm::mat4 transform)
