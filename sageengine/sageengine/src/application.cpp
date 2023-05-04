@@ -112,7 +112,7 @@ void application::mainLoop()
 
         if (ePressed) {
             glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.1f, -0.5f, 0.0f));
-            scene.instantiateObject(scene.bluePrints[0], matrix, glm::vec3(0.6f));
+            scene.instantiateObject(scene.bluePrints[4], matrix, glm::vec3(0.6f));
             scene.renderer.get()->addInstance(matrix);
         }
 
@@ -174,7 +174,7 @@ void application::constructGameobjects()
 
     //scene.blueprintObject(ShapeTool::createSquare(0.01f));
 
-	//scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
+	
 
 	scene.blueprintObject(loadModel("../../../models/car.obj"));
 
@@ -182,6 +182,7 @@ void application::constructGameobjects()
 
 	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/bike.jpg");
 
+	scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
 	
 	
 
@@ -195,6 +196,7 @@ void application::constructGameobjects()
 void application::initWindow()
 {
     constructGameobjects();
+	initWayPoints();
     start();
     int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 15.0f));
