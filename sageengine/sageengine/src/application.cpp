@@ -42,7 +42,9 @@ void application::mainLoop()
         }
 
         if (dPressed) {
-            scene.renderer.get()->addInstance();
+            glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.1f, -0.5f, 0.0f));
+            scene.instantiateObject(scene.bluePrints[0], matrix, glm::vec3(0.6f));
+            scene.renderer.get()->addInstance(matrix);
         }
 
         fps++;
@@ -106,7 +108,6 @@ void application::initWindow()
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
 	vulkanrenderer->initVulkan(std::move(windowObject));
-    scene.instantiateObject(scene.bluePrints[0], glm::mat4(1.0f), glm::vec3(0.6f));
     scene.renderer = std::move(vulkanrenderer);
 }
 
@@ -121,7 +122,7 @@ void application::start()
     //scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
 
     scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, -0.4f, 0.0f)), glm::vec3(0.6f));
-    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.4f, 0.0f)), glm::vec3(0.6f));
+    //scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.4f, 0.0f)), glm::vec3(0.6f));
 }
 
 void application::cleanup()

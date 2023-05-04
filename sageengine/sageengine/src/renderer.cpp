@@ -1056,9 +1056,9 @@ void renderer::createTopLevelAccelerationStructure(int index)
 
 void renderer::updateTopLevelAccelerationStructure()
 {
-    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * 3);
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * instances.size());
 
-    uint32_t primitive_count = 3;
+    uint32_t primitive_count = instances.size();
     getAccelerationStructureBuildSizesEXT(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &accelerationStructureBuildGeometryInfo, &primitive_count, &topLevelAccelerationStructureBuildSizesInfo);
 
     VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
@@ -1071,8 +1071,8 @@ void renderer::updateTopLevelAccelerationStructure()
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(computeCommandPool);
 
-    accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
-    accelerationStructureBuildGeometryInfo.srcAccelerationStructure = topLevelAccelerationStructure.handle;
+    accelerationStructureBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    accelerationStructureBuildGeometryInfo.srcAccelerationStructure = VK_NULL_HANDLE;
     accelerationStructureBuildGeometryInfo.dstAccelerationStructure = topLevelAccelerationStructure.handle;
 
     Buffermanager scratchBuffer = createScratchBuffer(topLevelAccelerationStructureBuildSizesInfo.buildScratchSize);
@@ -1301,9 +1301,8 @@ void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
     std::cout << "intersectionPoint:" << res.intersectionPoint.x << "," << res.intersectionPoint.y << "," << res.intersectionPoint.z << std::endl;
 }
 
-void renderer::addInstance()
+void renderer::addInstance(glm::mat4 transform)
 {
-    glm::mat4 transform = glm::mat4(1.0f);
     transform = glm::transpose(transform);
     VkTransformMatrixKHR vkTransform{};
     VkAccelerationStructureInstanceKHR instance{};
@@ -1405,7 +1404,7 @@ void renderer::createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerat
     createBuffer(topLevelAccelerationStructureBufferManager);
 
     vkMapMemory(device, topLevelAccelerationStructureBufferManager.bufferMemory, 0, topLevelAccelerationStructureBufferManager.bufferSize, 0, &topLevelAccelerationStructureBufferManager.handle);
-    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), topLevelAccelerationStructureBufferManager.bufferSize);
+    memcpy(topLevelAccelerationStructureBufferManager.handle, instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * instances.size());
 }
 
 void renderer::createTransformBuffer()

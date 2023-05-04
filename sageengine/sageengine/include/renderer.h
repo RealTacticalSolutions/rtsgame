@@ -291,7 +291,7 @@ public:
 
 	void createObject(RenderObject renderObject);
 	void initRaycast(glm::vec3 origin, glm::vec3 direction);
-	void addInstance();
+	void addInstance(glm::mat4 transform);
 	void deleteInstance();
 
 	VkDevice getDevice();
