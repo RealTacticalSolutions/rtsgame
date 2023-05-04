@@ -17,10 +17,26 @@ std::uniform_int_distribution<> dicar(0, 11); // define the range
 std::uniform_int_distribution<> dibike(0, 1); // define the range
 std::uniform_int_distribution<> displit(0, 1); // define the range
 
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
 void application::mainLoop()
 {
 
+
 	CrossRoadLevel level(message, scene.gameObjects, lights);
+
+    float cameraSpeed = 2.0f;
+    float sensitivity = 0.1f;
+    glm::vec2 centerPos = glm::vec2(WIDTH, HEIGHT) / 2.0f;
+    glm::vec2 lastCursorPos = centerPos;
+    
+    while (!windowObject->shouldClose())
+    {
+        double currentFrameTime = glfwGetTime();
+        double delta = currentFrameTime - lastFrameTime;
+        lastFrameTime = currentFrameTime;
 
 	level.init();
 	
@@ -76,6 +92,99 @@ void application::mainLoop()
 	}
 	vkDeviceWaitIdle(scene.renderer->getDevice());
 	level.cleanup();
+
+        glm::vec2 cursorPos = input.getCursorPos();
+        bool spacePressed = input.keyDown(GLFW_KEY_SPACE);
+        bool ePressed = input.keyDown(GLFW_KEY_E);
+        bool isRotating = input.mouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
+        bool isLookingAt = input.mouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+
+        bool w = input.keyPressed(GLFW_KEY_W);
+        bool a = input.keyPressed(GLFW_KEY_A);
+        bool s = input.keyPressed(GLFW_KEY_S);
+        bool d = input.keyPressed(GLFW_KEY_D);
+
+        input.updateInput();
+        //camera.rotateCamera(0.005f);
+
+        // Move camera position using WASD keys
+        if (w)
+        {
+            camera.moveForward(delta, cameraSpeed);
+        }
+        if (a)
+        {
+            camera.moveLeft(delta, cameraSpeed );
+        }
+        if (s)
+        {
+            camera.moveBackward(delta, cameraSpeed );
+        }
+        if (d)
+        {
+            camera.moveRight(delta, cameraSpeed );
+        }
+
+        if (spacePressed) {
+            int width = 0, height = 0;
+            glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
+            glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
+
+            glm::vec3 direction = worldpos - camera.position;
+            
+            scene.renderer.get()->initRaycast(camera.position, direction);
+            
+        }
+
+        if (ePressed) {
+            glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.1f, -0.5f, 0.0f));
+            scene.instantiateObject(scene.bluePrints[0], matrix, glm::vec3(0.6f));
+            scene.renderer.get()->addInstance(matrix);
+        }
+
+        glm::vec2 cursorDelta = cursorPos - lastCursorPos;
+        lastCursorPos = cursorPos;
+        if (isRotating) {
+            
+            // Calculate rotation angles based on deltaX and deltaY
+           
+            float yaw = cursorDelta.x * sensitivity;
+            float pitch = cursorDelta.y * sensitivity;
+
+            // Get camera position, look position and up vector
+            glm::vec3 position = camera.getPosition();
+            glm::vec3 lookPosition = camera.getLookPosition();
+            glm::vec3 upVector = camera.getUpVector();
+
+            // Update camera orientation
+            camera.rotateAround(-yaw, pitch, upVector);
+        }
+
+        if (isLookingAt)
+        {
+            camera.moveLookAt(cursorDelta, sensitivity);
+        }
+
+
+        fps++;
+        if (currentFrameTime - lastSecondTime >= 1.0)
+        {                   
+            snprintf(windowTitle, 256, "FPS: %d", fps);
+            glfwSetWindowTitle(windowObject->getWindow(), windowTitle);
+            fps = 0;
+            lastSecondTime = currentFrameTime;
+        }
+    }
+    vkDeviceWaitIdle(scene.renderer->getDevice());
+
+}
+
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
 }
 
 void application::drawFrame()
@@ -95,9 +204,17 @@ void application::constructGameobjects()
 {
 	scene.renderObjects.reserve(10);
 
+<<<<<<< HEAD
 	scene.blueprintObject(ShapeTool::createRectangle(3.2f, 1.8f), "../../../textures/kruispunt.png");
 
 	scene.blueprintObject(ShapeTool::createSquare(0.07f), "../../../textures/light.jpg");
+=======
+    //scene.blueprintObject(ShapeTool::createSquare(3.0f), "../../../textures/1.jpg");
+
+    //scene.blueprintObject(ShapeTool::createSquare(0.01f));
+
+    scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
+>>>>>>> feature/raycastdynamic
 
 	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/car.jpg");
 
@@ -112,11 +229,19 @@ void application::constructGameobjects()
 
 void application::initWindow()
 {
+<<<<<<< HEAD
 	constructGameobjects();
 	initWayPoints();
 	start();
 	int objectCount = scene.bluePrints.size();
 	camera.setPosition(glm::vec3(0.0f, 0.0f, 15.0f));
+=======
+    constructGameobjects();
+    start();
+    int objectCount = scene.bluePrints.size();
+    camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
+    //camera.rotateCamera(180.0f);
+>>>>>>> feature/raycastdynamic
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
@@ -126,6 +251,7 @@ void application::initWindow()
 
 void application::start()
 {
+<<<<<<< HEAD
 	scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[0]), glm::vec3(1.0f, 0.0f, 0.0f)); //1.1
@@ -218,13 +344,85 @@ void application::start()
 	//scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
 	//cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, paths[1] });
 
+=======
+    //scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    //scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+   // scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+    //scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
+
+    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, -0.4f, 0.0f)), glm::vec3(0.6f));
+    //scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.4f, 0.0f)), glm::vec3(0.6f));
+>>>>>>> feature/raycastdynamic
 }
 
 void application::cleanup()
 {
 }
 
+<<<<<<< HEAD
 void application::updateTest(const double currentFrameTime)
+=======
+Mesh application::loadModel(char* path) {
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path)) {
+        throw std::runtime_error(warn + err);
+    }
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            vertex.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]
+            };
+
+            vertex.texCoord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+            };
+
+            vertex.color = { 1.0f, 1.0f, 1.0f };
+
+            if (index.normal_index >= 0) {
+                vertex.normal = {
+                    attrib.normals[3 * index.normal_index + 0],
+                    attrib.normals[3 * index.normal_index + 1],
+                    attrib.normals[3 * index.normal_index + 2]
+                };
+            }
+           
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
+
+    return Mesh({
+        vertices, indices
+    });
+}
+
+
+
+/*void application::updateTest()
+>>>>>>> feature/raycastdynamic
 {
 	if (carcount < maxinstances && 0.1 < (currentFrameTime - lastSpawnTime))
 	{

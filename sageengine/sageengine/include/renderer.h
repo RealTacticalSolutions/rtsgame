@@ -11,9 +11,10 @@ private:
 	const bool enableValidationLayers = true;
 #endif
 
+
 	Camera& camera;
 
-	const int MAX_FRAMES_IN_FLIGHT = 2;
+	const int MAX_FRAMES_IN_FLIGHT = 1;
 	int objectCount;
 
 	uint32_t currentFrame = 0;
@@ -29,7 +30,13 @@ private:
 	};
 
 	const std::vector<const char*> deviceExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+		VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+		VK_KHR_RAY_QUERY_EXTENSION_NAME,
+		VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
 	};
 
 	std::vector<RenderObject>& renderObjects;
@@ -60,10 +67,11 @@ private:
 	
 	struct QueueFamilyIndices {
 		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> computeFamily;
 		std::optional<uint32_t> presentFamily;
 
 		bool isComplete() {
-			return graphicsFamily.has_value() && presentFamily.has_value();
+			return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
 		}
 	};
 
@@ -88,36 +96,51 @@ private:
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 
+	VkQueue computeQueue;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 
 	VkSwapchainKHR swapChain;
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 	VkPipeline graphicsPipelineLINE;
 
+	VkPipelineLayout computePipelineLayout;
+	VkPipeline computePipeline;
+
 	VkCommandPool commandPool;
+	VkCommandPool computeCommandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkCommandBuffer> computeCommandBuffers;
 
 	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
 
+	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout computeDescriptorSetLayout;
+
+	std::vector<VkDescriptorSet> descriptorSets;
+	std::vector<VkDescriptorSet> computeDescriptorSets;
+
+	//buffermanagers
 	std::vector<Buffermanager> uniformBufferManagers;
 	std::vector<Buffermanager> vertexBuffers;
 	std::vector<Buffermanager> indexBuffers;
 
 	Buffermanager transformBufferManager = {
 		0,
-		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	};
+
+	std::vector<Buffermanager> computeShaderBuffers;
 	
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> raycastFinishedSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
+	std::vector<VkFence> raycastInFlightFences;
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
@@ -135,8 +158,34 @@ private:
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
+	std::vector<VkAccelerationStructureBuildGeometryInfoKHR> accelerationStructureBuildGeometryInfos;
+
+	std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationStructureBuildRangeInfos;
+
+	std::vector<VkAccelerationStructureBuildSizesInfoKHR> bottomLevelAccelerationStructureBuildSizesInfos;
+	VkAccelerationStructureBuildSizesInfoKHR topLevelAccelerationStructureBuildSizesInfo;
+
+	std::vector<Buffermanager> bottomLevelAccelerationStructureBufferManagers;
+	Buffermanager topLevelAccelerationStructureBufferManager;
+
+	std::vector<AccelerationStructure> bottomLevelAccelerationStructures;
+	AccelerationStructure topLevelAccelerationStructure;
+
+	std::vector<VkAccelerationStructureGeometryKHR> bottomLevelAccelerationStructureGeometry;
+	VkAccelerationStructureGeometryKHR topLevelAccelerationStructureGeometry;
+	std::vector<uint32_t> maxPrimitveCounts;
+	
+	std::vector<RayCast> rayCasts;
+	std::vector<VkAccelerationStructureInstanceKHR> instances;
+
+	VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
+
+	bool yeet = false;
+
 	void cleanupVulkan();
 	void cleanupSwapChain();
+	void cleanupAccelerationStructures();
+
 	void recreateSwapChain(GLFWwindow* window);
 	void createInstance();
 	void createSwapChain(GLFWwindow* window);
@@ -145,27 +194,47 @@ private:
 	void createRenderPass();
 	void createDescriptorSetLayout();
 	void createGraphicsPipeline();
+	void createComputePipeline();
 	void createFramebuffers();
 	void createDepthResources();
 	void createCommandPool();
 	void createTextureImages();
 	void createTextureImageViews();
 	void createTextureSampler();
+	void createBottomLevelAccelerationStructureGeometry(int index);
 	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void createAccelerationStructures();
+	void createBottomLevelAccelerationStructure(int index);
+	void createTopLevelAccelerationStructureGeometry();
+	void createTopLevelAccelerationStructure(int index);
+	void updateTopLevelAccelerationStructure();
+	uint64_t getBufferDeviceAddress(VkBuffer buffer);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	VkCommandBuffer beginSingleTimeCommands();
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+	VkCommandBuffer beginSingleTimeCommands(VkCommandPool& commandpool);
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue& queue, VkCommandPool& pool);
+
+	//Buffer creation functions
 	Buffermanager createVertexbuffer(Mesh mesh);
 	Buffermanager createIndexBuffer(Mesh mesh);
+	Buffermanager createScratchBuffer(VkDeviceSize size);
+	void createAccelerationStructureBuffer(AccelerationStructure& accelerationStructure, VkAccelerationStructureBuildSizesInfoKHR buildSizeInfo);
+	void createTopLevelAccelerationStructureBuffer(std::vector<VkAccelerationStructureInstanceKHR> instances);
 	void createTransformBuffer();
 	void createUniformBuffers();
+	void createComputeShaderBuffers();
+
 	void createDescriptorPool();
 	void createDescriptorSets();
+	void createComputeDescriptorSetLayout();
+	void createComputeDescriptorSets();
 	void createBuffer(Buffermanager& bufferManager);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createCommandBuffers();
+	void createComputeCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
 	bool checkValidationLayerSupport();
@@ -191,8 +260,15 @@ private:
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	VkFormat findDepthFormat();
 
+	VkDeviceAddress getAccelerationStructureDeviceAddressEXT(int index);
+	void cmdBuildAccelerationStructuresEXT(VkCommandBuffer commandBuffer, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos);
+	VkResult createAccelerationStructureEXT(VkDevice device, const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure);
+	void getAccelerationStructureBuildSizesEXT(VkDevice device, VkAccelerationStructureBuildTypeKHR buildType, const VkAccelerationStructureBuildGeometryInfoKHR* pBuildInfo, const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR* pSizeInfo);
+	void destroyAccelerationStructureEXT(VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator);
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 public:
@@ -215,8 +291,9 @@ public:
 	void drawFrame(GLFWwindow* window);
 
 	void createObject(RenderObject renderObject);
-	void instantiateObject();
-	void destroyObject();
+	void initRaycast(glm::vec3 origin, glm::vec3 direction);
+	void addInstance(glm::mat4 transform);
+	void deleteInstance();
 
 	VkDevice getDevice();
 };
