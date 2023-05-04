@@ -8,8 +8,8 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(set = 0, binding = 2) buffer StorageBufferObject {
-    mat4 model[30];
-    vec4 color[30];
+    mat4 model[200];
+    vec4 color[200];
 } sbo;
 
 layout(location = 0) in vec3 inPosition;

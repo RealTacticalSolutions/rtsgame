@@ -6,7 +6,7 @@
 
 #include <random>
 static double lastSpawnTime = 0.0;
-const int maxinstances = 30;
+const int maxinstances = 200;
 static int carcount = 2;
 static int bikecount = 0;
 
@@ -189,12 +189,15 @@ void application::constructGameobjects()
 
     //scene.blueprintObject(ShapeTool::createSquare(0.01f));
 
-	scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
+	//scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
 
+	scene.blueprintObject(loadModel("../../../models/car.obj"));
 
-	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/car.jpg");
+	//scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/car.jpg");
 
 	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/bike.jpg");
+
+	
 	
 
 	/* glm::vec4 gridStart = glm::vec4(scene.gameObjects[0].mesh.vertices[0].pos, 1.0f) * scene.gameObjects[0].properties.transform;
@@ -310,6 +313,7 @@ void application::start()
 	addTrafficLight("32.2", scene.gameObjects.size() - 1, 0, 0);
 
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,2.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
 	////spawnpoint = paths[1].getWayPointPosition(0);
 	//spawnpoint = glm::vec3(1.0f, 0.0f, 1.0f);
 	//scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -378,12 +382,14 @@ Mesh application::loadModel(char* path) {
 
 void application::updateTest(const double currentFrameTime)
 {
-	if (carcount < maxinstances && 0.1 < (currentFrameTime - lastSpawnTime))
+	if (carcount < 10 && 0.1 < (currentFrameTime - lastSpawnTime))
 	{
 		int pathindex = dicar(gen);
 		spawnpoint = paths[pathindex]->getWayPointPosition(0);
 		addWeight(paths[pathindex]->getTrafficLightId());
-		scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+		//scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.005f, 0.005f, 0.005f)), spawnpoint * glm::vec3(100.0f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+		scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f),spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+
 		lastSpawnTime = currentFrameTime;
 		carcount += 1;
 	}
@@ -541,7 +547,7 @@ void application::updateWayPoints(double delta)
 		}
 		if (!removed)
 		{
-			scene.gameObjects[index]->properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
+			scene.gameObjects[index]->properties.transform = glm::scale(glm::translate(glm::mat4(1.0f), new_pos), glm::vec3(0.005f, 0.005f, 0.005f));
 		}
 	}
 
@@ -667,233 +673,235 @@ void application::updateWayPointsBikes(double delta)
 }
 void application::initWayPoints()
 {	
+
+	float z = 0.01f;
 	/*1.1*/std::vector<WayPoint> waypoints0 = { 
-		WayPoint(glm::vec3(8.900f, -0.700f, 1.0f)),
-		WayPoint(glm::vec3(7.4478754277318, -0.6424615826693, 1.0f)),
-		WayPoint(glm::vec3(6.2655008610581, -0.5189857576686, 1.0f)),
-		WayPoint(glm::vec3(5.2365356527187, -0.3543513243343, 1.0f)),
+		WayPoint(glm::vec3(8.900f, -0.700f, z)),
+		WayPoint(glm::vec3(7.4478754277318, -0.6424615826693, z)),
+		WayPoint(glm::vec3(6.2655008610581, -0.5189857576686, z)),
+		WayPoint(glm::vec3(5.2365356527187, -0.3543513243343, z)),
 		WayPoint(lightspos[0], TrafficPoint,"1.1"),
-		WayPoint(glm::vec3(3.3427633065728, 0.1018627834836, 1.0f)),
-		WayPoint(glm::vec3(2.1123779288658, 0.4602762711748, 1.0f)),
-		WayPoint(glm::vec3(1.3160580937782, 0.8873932736309, 1.0f)),
-		WayPoint(glm::vec3(0.8756129718504, 1.2858154516885, 1.0f)),
-		WayPoint(glm::vec3(0.7087367039929, 1.7901965769456, 1.0f)),
-		WayPoint(glm::vec3(0.8421507086444, 2.3470550311434, 1.0f)),
-		WayPoint(glm::vec3(1.0625738467643, 2.9561189654222, 1.0f)),
-		WayPoint(glm::vec3(1.2249908959054, 3.5361798552115, 1.0f)),
-		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, 1.0f)),
-		WayPoint(glm::vec3(1.5, 4.5, 1.0f)),
-		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, 1.0f), EndPoint),
+		WayPoint(glm::vec3(3.3427633065728, 0.1018627834836, z)),
+		WayPoint(glm::vec3(2.1123779288658, 0.4602762711748, z)),
+		WayPoint(glm::vec3(1.3160580937782, 0.8873932736309, z)),
+		WayPoint(glm::vec3(0.8756129718504, 1.2858154516885, z)),
+		WayPoint(glm::vec3(0.7087367039929, 1.7901965769456, z)),
+		WayPoint(glm::vec3(0.8421507086444, 2.3470550311434, z)),
+		WayPoint(glm::vec3(1.0625738467643, 2.9561189654222, z)),
+		WayPoint(glm::vec3(1.2249908959054, 3.5361798552115, z)),
+		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, z)),
+		WayPoint(glm::vec3(1.5, 4.5, z)),
+		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, z), EndPoint),
 		};
 
 	/*2.2*/std::vector<WayPoint> waypoints1 = {
-		WayPoint(glm::vec3(8.8884344127193, -1.0405179236746,1.0f)),
-		WayPoint(glm::vec3(7.4326575402666, -0.9775453872072,1.0f)),
-		WayPoint(glm::vec3(6.2224943088012, -0.8660220713649,1.0f)),
-		WayPoint(glm::vec3(5.1626464011562, -0.6761999051331,1.0f)),
-		WayPoint(glm::vec3(4.0004148395579, -0.451847328123,1.0f)),
-		WayPoint(glm::vec3(3.2612318668167, -0.2322161308921,1.0f)),
+		WayPoint(glm::vec3(8.8884344127193, -1.0405179236746,z)),
+		WayPoint(glm::vec3(7.4326575402666, -0.9775453872072,z)),
+		WayPoint(glm::vec3(6.2224943088012, -0.8660220713649,z)),
+		WayPoint(glm::vec3(5.1626464011562, -0.6761999051331,z)),
+		WayPoint(glm::vec3(4.0004148395579, -0.451847328123,z)),
+		WayPoint(glm::vec3(3.2612318668167, -0.2322161308921,z)),
 		WayPoint(lightspos[1], TrafficPoint,"2.1"),
-		WayPoint(glm::vec3(2.1452134152702, 0.1408750779783,1.0f)),
-		WayPoint(glm::vec3(1.1848670970973, 0.5360175734766,1.0f)),
-		WayPoint(glm::vec3(0.4716218013583, 0.9954568477721,1.0f)),
-		WayPoint(glm::vec3(-0.1702132612523, 1.4263391275666,1.0f)),
-		WayPoint(glm::vec3(-0.861420251756, 1.9021049781731,1.0f)),
-		WayPoint(glm::vec3(-1.7612950821041, 2.2980994907728,1.0f)),
-		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597,1.0f)),
-		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602,1.0f)),
-		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311,1.0f)),
-		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315,1.0f)),
-		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177,1.0f)),
-		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893,1.0f)),
-		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692,1.0f), EndPoint),
+		WayPoint(glm::vec3(2.1452134152702, 0.1408750779783,z)),
+		WayPoint(glm::vec3(1.1848670970973, 0.5360175734766,z)),
+		WayPoint(glm::vec3(0.4716218013583, 0.9954568477721,z)),
+		WayPoint(glm::vec3(-0.1702132612523, 1.4263391275666,z)),
+		WayPoint(glm::vec3(-0.861420251756, 1.9021049781731,z)),
+		WayPoint(glm::vec3(-1.7612950821041, 2.2980994907728,z)),
+		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597,z)),
+		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602,z)),
+		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311,z)),
+		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315,z)),
+		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177,z)),
+		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893,z)),
+		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692,z), EndPoint),
 	};
 
 	/*42.0*/std::vector<WayPoint> waypoints2 = {
-		WayPoint(glm::vec3(8.9319992123494, -0.3680709702589, 1.0f)),
-		WayPoint(glm::vec3(7.4912544025147, -0.3045805210119, 1.0f)),
-		WayPoint(glm::vec3(6.3484263160696, -0.2069029067858, 1.0f)),
-		WayPoint(glm::vec3(5.318416914837, -0.010425862561, 1.0f)),
+		WayPoint(glm::vec3(8.9319992123494, -0.3680709702589, z)),
+		WayPoint(glm::vec3(7.4912544025147, -0.3045805210119, z)),
+		WayPoint(glm::vec3(6.3484263160696, -0.2069029067858, z)),
+		WayPoint(glm::vec3(5.318416914837, -0.010425862561, z)),
 		WayPoint(lightspos[2],TrafficPoint, "42.0"),
-		WayPoint(glm::vec3(3.3919943110171, 0.3643813307881, 1.0f)),
-		WayPoint(glm::vec3(2.7219530917216, 0.5014352165531, 1.0f)),
-		WayPoint(glm::vec3(2.0444515233664, 0.656908353773, 1.0f)),
-		WayPoint(glm::vec3(1.2987120313702, 0.8011683918534, 1.0f)),
-		WayPoint(glm::vec3(0.4716218013583, 0.9954568477721, 1.0f)),
-		WayPoint(glm::vec3(-0.1702132612523, 1.4263391275666, 1.0f)),
-		WayPoint(glm::vec3(-0.861420251756, 1.9021049781731, 1.0f)),
-		WayPoint(glm::vec3(-1.7612950821041, 2.2980994907728, 1.0f)),
-		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597, 1.0f)),
-		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602, 1.0f)),
-		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311, 1.0f)),
-		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315, 1.0f)),
-		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177, 1.0f)),
-		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893, 1.0f)),
-		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, 1.0f), EndPoint),
+		WayPoint(glm::vec3(3.3919943110171, 0.3643813307881, z)),
+		WayPoint(glm::vec3(2.7219530917216, 0.5014352165531, z)),
+		WayPoint(glm::vec3(2.0444515233664, 0.656908353773, z)),
+		WayPoint(glm::vec3(1.2987120313702, 0.8011683918534, z)),
+		WayPoint(glm::vec3(0.4716218013583, 0.9954568477721, z)),
+		WayPoint(glm::vec3(-0.1702132612523, 1.4263391275666, z)),
+		WayPoint(glm::vec3(-0.861420251756, 1.9021049781731, z)),
+		WayPoint(glm::vec3(-1.7612950821041, 2.2980994907728, z)),
+		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597, z)),
+		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602, z)),
+		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311, z)),
+		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315, z)),
+		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177, z)),
+		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893, z)),
+		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, z), EndPoint),
 	};
 
 	/*12.1*/std::vector<WayPoint> waypoints3 = {
-		WayPoint(glm::vec3(0.8050734055799, 5.1258486936268, 1.0f)),
-		WayPoint(glm::vec3(0.6828668579084, 4.8167380142225, 1.0f)),
-		WayPoint(glm::vec3(0.5678489306882, 4.5004387143669, 1.0f)),
-		WayPoint(glm::vec3(0.4456423830168, 4.1841394145114, 1.0f)),
-		WayPoint(glm::vec3(0.3521903171504, 3.8534628737533, 1.0f)),
+		WayPoint(glm::vec3(0.8050734055799, 5.1258486936268, z)),
+		WayPoint(glm::vec3(0.6828668579084, 4.8167380142225, z)),
+		WayPoint(glm::vec3(0.5678489306882, 4.5004387143669, z)),
+		WayPoint(glm::vec3(0.4456423830168, 4.1841394145114, z)),
+		WayPoint(glm::vec3(0.3521903171504, 3.8534628737533, z)),
 		WayPoint(lightspos[3],TrafficPoint, "12.1"),
-		WayPoint(glm::vec3(0.0071365354898, 2.8398673901253, 1.0f)),
-		WayPoint(glm::vec3(-0.1725789757918, 2.121005344999, 1.0f)),
-		WayPoint(glm::vec3(-0.1006927712792, 0.9995805546021, 1.0f)),
-		WayPoint(glm::vec3(0.5, 0.5, 1.0f)),
-		WayPoint(glm::vec3(1.5167468302549, -0.1577873380512, 1.0f)),
-		WayPoint(glm::vec3(2.8969619568972, -0.6250476673833, 1.0f)),
-		WayPoint(glm::vec3(3.9150145814307, -0.9485812186457, 1.0f)),
-		WayPoint(glm::vec3(5.0717994586123, -1.1533795633564, 1.0f)),
-		WayPoint(glm::vec3(6.2216386423922, -1.3319260204651, 1.0f)),
-		WayPoint(glm::vec3(7.5000312752903, -1.431912036446, 1.0f)),
-		WayPoint(glm::vec3(8.9053226669936, -1.5835048929068, 1.0f), EndPoint),
+		WayPoint(glm::vec3(0.0071365354898, 2.8398673901253, z)),
+		WayPoint(glm::vec3(-0.1725789757918, 2.121005344999, z)),
+		WayPoint(glm::vec3(-0.1006927712792, 0.9995805546021, z)),
+		WayPoint(glm::vec3(0.5, 0.5, z)),
+		WayPoint(glm::vec3(1.5167468302549, -0.1577873380512, z)),
+		WayPoint(glm::vec3(2.8969619568972, -0.6250476673833, z)),
+		WayPoint(glm::vec3(3.9150145814307, -0.9485812186457, z)),
+		WayPoint(glm::vec3(5.0717994586123, -1.1533795633564, z)),
+		WayPoint(glm::vec3(6.2216386423922, -1.3319260204651, z)),
+		WayPoint(glm::vec3(7.5000312752903, -1.431912036446, z)),
+		WayPoint(glm::vec3(8.9053226669936, -1.5835048929068, z), EndPoint),
 	};
 
 	/*11.1*/std::vector<WayPoint> waypoints4 = {
-		WayPoint(glm::vec3(0.4669236053687, 5.1642258616477, 1.0f)),
-		WayPoint(glm::vec3(0.2344505862627, 4.6262168745737, 1.0f)),
-		WayPoint(glm::vec3(0, 4, 1.0f)),
+		WayPoint(glm::vec3(0.4669236053687, 5.1642258616477, z)),
+		WayPoint(glm::vec3(0.2344505862627, 4.6262168745737, z)),
+		WayPoint(glm::vec3(0, 4, z)),
 		WayPoint(lightspos[4],TrafficPoint, "11.1"),
-		WayPoint(glm::vec3(-0.3984978107211, 2.7101986259739, 1.0f)),
-		WayPoint(glm::vec3(-0.496179609616, 2.371185323927, 1.0f)),
-		WayPoint(glm::vec3(-0.5996073966811, 1.790840518728, 1.0f)),
-		WayPoint(glm::vec3(-0.5847540684125, 1.2537304455903, 1.0f)),
-		WayPoint(glm::vec3(-0.411610035793, 0.2086450894768, 1.0f)),
-		WayPoint(glm::vec3(-0.1365356998153, -0.4790407504676, 1.0f)),
-		WayPoint(glm::vec3(0.1179080609641, -1.2286183160069, 1.0f)),
-		WayPoint(glm::vec3(0.2829526625507, -1.8956735807528, 1.0f)),/* stoplicht alarm trein*/
-		WayPoint(glm::vec3(0.4891385172183, -3.2306959961184, 1.0f)),
-		WayPoint(glm::vec3(0.5995569026235, -4.136126756441, 1.0f)),
-		WayPoint(glm::vec3(0.6731691595603, -4.8354431973405, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-0.3984978107211, 2.7101986259739, z)),
+		WayPoint(glm::vec3(-0.496179609616, 2.371185323927, z)),
+		WayPoint(glm::vec3(-0.5996073966811, 1.790840518728, z)),
+		WayPoint(glm::vec3(-0.5847540684125, 1.2537304455903, z)),
+		WayPoint(glm::vec3(-0.411610035793, 0.2086450894768, z)),
+		WayPoint(glm::vec3(-0.1365356998153, -0.4790407504676, z)),
+		WayPoint(glm::vec3(0.1179080609641, -1.2286183160069, z)),
+		WayPoint(glm::vec3(0.2829526625507, -1.8956735807528, z)),/* stoplicht alarm trein*/
+		WayPoint(glm::vec3(0.4891385172183, -3.2306959961184, z)),
+		WayPoint(glm::vec3(0.5995569026235, -4.136126756441, z)),
+		WayPoint(glm::vec3(0.6731691595603, -4.8354431973405, z), EndPoint),
 	};
 
 	/*10.1*/std::vector<WayPoint> waypoints5 = {
-		WayPoint(glm::vec3(-0.0253063308747, 5.1897813612963, 1.0f)),
-		WayPoint(glm::vec3(-0.1649131931962, 4.6871966569388, 1.0f)),
-		WayPoint(glm::vec3(-0.3254610848659, 4.247435040626, 1.0f)),
+		WayPoint(glm::vec3(-0.0253063308747, 5.1897813612963, z)),
+		WayPoint(glm::vec3(-0.1649131931962, 4.6871966569388, z)),
+		WayPoint(glm::vec3(-0.3254610848659, 4.247435040626, z)),
 		WayPoint(lightspos[5],TrafficPoint, "10.1"),
-		WayPoint(glm::vec3(-0.7722030442948, 2.9630519072679, 1.0f)),
-		WayPoint(glm::vec3(-1.1212202000986, 2.6489364670445, 1.0f)),
-		WayPoint(glm::vec3(-1.798313482358, 2.4674475460265, 1.0f)),
-		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597, 1.0f)),
-		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602, 1.0f)),
-		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311, 1.0f)),
-		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315, 1.0f)),
-		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177, 1.0f)),
-		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893, 1.0f)),
-		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-0.7722030442948, 2.9630519072679, z)),
+		WayPoint(glm::vec3(-1.1212202000986, 2.6489364670445, z)),
+		WayPoint(glm::vec3(-1.798313482358, 2.4674475460265, z)),
+		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597, z)),
+		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602, z)),
+		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311, z)),
+		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315, z)),
+		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177, z)),
+		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893, z)),
+		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, z), EndPoint),
 	};
 
 	/*9.1*/std::vector<WayPoint> waypoints6 = {
-		WayPoint(glm::vec3(-8.9691922928002, 2.4267362142895, 1.0f)),
-		WayPoint(glm::vec3(-8, 2.5, 1.0f)),
-		WayPoint(glm::vec3(-6.7786220366297, 2.5245295292971, 1.0f)),
-		WayPoint(glm::vec3(-5.2999163931711, 2.5150062509722, 1.0f)),
-		WayPoint(glm::vec3(-4.3416053637149, 2.3747656125152, 1.0f)),
+		WayPoint(glm::vec3(-8.9691922928002, 2.4267362142895, z)),
+		WayPoint(glm::vec3(-8, 2.5, z)),
+		WayPoint(glm::vec3(-6.7786220366297, 2.5245295292971, z)),
+		WayPoint(glm::vec3(-5.2999163931711, 2.5150062509722, z)),
+		WayPoint(glm::vec3(-4.3416053637149, 2.3747656125152, z)),
 		WayPoint(lightspos[6],TrafficPoint, "9.1"),
-		WayPoint(glm::vec3(-2.1639406497961, 1.8617126121981, 1.0f)),
-		WayPoint(glm::vec3(-1.1382749591211, 1.4665019790939, 1.0f)),
-		WayPoint(glm::vec3(0.0574076777885, 1.1628177737991, 1.0f)),
-		WayPoint(glm::vec3(0.8287741504193, 1.6496024409932, 1.0f)),
-		WayPoint(glm::vec3(0.9860430428974, 2.3198674827452, 1.0f)),
-		WayPoint(glm::vec3(1.0625738467643, 2.9561189654222, 1.0f)),
-		WayPoint(glm::vec3(1.2249908959054, 3.5361798552115, 1.0f)),
-		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, 1.0f)),
-		WayPoint(glm::vec3(1.5, 4.5, 1.0f)),
-		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-2.1639406497961, 1.8617126121981, z)),
+		WayPoint(glm::vec3(-1.1382749591211, 1.4665019790939, z)),
+		WayPoint(glm::vec3(0.0574076777885, 1.1628177737991, z)),
+		WayPoint(glm::vec3(0.8287741504193, 1.6496024409932, z)),
+		WayPoint(glm::vec3(0.9860430428974, 2.3198674827452, z)),
+		WayPoint(glm::vec3(1.0625738467643, 2.9561189654222, z)),
+		WayPoint(glm::vec3(1.2249908959054, 3.5361798552115, z)),
+		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, z)),
+		WayPoint(glm::vec3(1.5, 4.5, z)),
+		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, z), EndPoint),
 	};
 
 	/*8.1*/std::vector<WayPoint> waypoints7 = {
-		WayPoint(glm::vec3(-8.9780707032107, 2.1583753153014, 1.0f)),
-		WayPoint(glm::vec3(-8.004874671439, 2.20703511689, 1.0f)),
-		WayPoint(glm::vec3(-6.7762146813271, 2.2131175920885, 1.0f)),
-		WayPoint(glm::vec3(-5.343248389402, 2.2229762623933, 1.0f)),
-		WayPoint(glm::vec3(-4.399270258002, 2.1091351142144, 1.0f)),
+		WayPoint(glm::vec3(-8.9780707032107, 2.1583753153014, z)),
+		WayPoint(glm::vec3(-8.004874671439, 2.20703511689, z)),
+		WayPoint(glm::vec3(-6.7762146813271, 2.2131175920885, z)),
+		WayPoint(glm::vec3(-5.343248389402, 2.2229762623933, z)),
+		WayPoint(glm::vec3(-4.399270258002, 2.1091351142144, z)),
 		WayPoint(lightspos[7],TrafficPoint, "8.1"),
-		WayPoint(glm::vec3(-2.2869957301227, 1.5459950739404, 1.0f)),
-		WayPoint(glm::vec3(-1.2383506206657, 1.1278909894656, 1.0f)),
-		WayPoint(glm::vec3(0.0127139351519, 0.4098887226485, 1.0f)),
-		WayPoint(glm::vec3(1.4004623072924, -0.5387729565644, 1.0f)),
-		WayPoint(glm::vec3(2.8887496340606, -1.1692631299271, 1.0f)),
-		WayPoint(glm::vec3(3.866764134345, -1.4053972197196, 1.0f)),
-		WayPoint(glm::vec3(5.0466861540049, -1.582958300348, 1.0f)),
-		WayPoint(glm::vec3(6.2353914982127, -1.6954067884867, 1.0f)),
-		WayPoint(glm::vec3(7.4997180666451, -1.7690467585517, 1.0f)),
-		WayPoint(glm::vec3(8.8874737812391, -1.856144397543, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-2.2869957301227, 1.5459950739404, z)),
+		WayPoint(glm::vec3(-1.2383506206657, 1.1278909894656, z)),
+		WayPoint(glm::vec3(0.0127139351519, 0.4098887226485, z)),
+		WayPoint(glm::vec3(1.4004623072924, -0.5387729565644, z)),
+		WayPoint(glm::vec3(2.8887496340606, -1.1692631299271, z)),
+		WayPoint(glm::vec3(3.866764134345, -1.4053972197196, z)),
+		WayPoint(glm::vec3(5.0466861540049, -1.582958300348, z)),
+		WayPoint(glm::vec3(6.2353914982127, -1.6954067884867, z)),
+		WayPoint(glm::vec3(7.4997180666451, -1.7690467585517, z)),
+		WayPoint(glm::vec3(8.8874737812391, -1.856144397543, z), EndPoint),
 	};
 
 	/*7.1*/std::vector<WayPoint> waypoints8 = {
-		WayPoint(glm::vec3(-8.9799509541348, 1.8638907449656, 1.0f)),
-		WayPoint(glm::vec3(-8.0092260770107, 1.9098422184389, 1.0f)),
-		WayPoint(glm::vec3(-6.7915120299675, 1.8811225475181, 1.0f)),
-		WayPoint(glm::vec3(-5.3476404158956, 1.8646852362819, 1.0f)),
-		WayPoint(glm::vec3(-4.4729201713039, 1.8044710500736, 1.0f)),
+		WayPoint(glm::vec3(-8.9799509541348, 1.8638907449656, z)),
+		WayPoint(glm::vec3(-8.0092260770107, 1.9098422184389, z)),
+		WayPoint(glm::vec3(-6.7915120299675, 1.8811225475181, z)),
+		WayPoint(glm::vec3(-5.3476404158956, 1.8646852362819, z)),
+		WayPoint(glm::vec3(-4.4729201713039, 1.8044710500736, z)),
 		WayPoint(lightspos[8],TrafficPoint, "7.1"),
-		WayPoint(glm::vec3(-2.4430587150794, 1.2529594145626, 1.0f)),
-		WayPoint(glm::vec3(-1.2106040861149, 0.6939262654901, 1.0f)),
-		WayPoint(glm::vec3(-0.1365356998153, -0.4790407504676, 1.0f)),
-		WayPoint(glm::vec3(0.1179080609641, -1.2286183160069, 1.0f)),
-		WayPoint(glm::vec3(0.2829526625507, -1.8956735807528, 1.0f)), /*stoplicht trein*/
-		WayPoint(glm::vec3(0.4891385172183, -3.2306959961184, 1.0f)),
-		WayPoint(glm::vec3(0.5995569026235, -4.136126756441, 1.0f)),
-		WayPoint(glm::vec3(0.6731691595603, -4.8354431973405, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-2.4430587150794, 1.2529594145626, z)),
+		WayPoint(glm::vec3(-1.2106040861149, 0.6939262654901, z)),
+		WayPoint(glm::vec3(-0.1365356998153, -0.4790407504676, z)),
+		WayPoint(glm::vec3(0.1179080609641, -1.2286183160069, z)),
+		WayPoint(glm::vec3(0.2829526625507, -1.8956735807528, z)), /*stoplicht trein*/
+		WayPoint(glm::vec3(0.4891385172183, -3.2306959961184, z)),
+		WayPoint(glm::vec3(0.5995569026235, -4.136126756441, z)),
+		WayPoint(glm::vec3(0.6731691595603, -4.8354431973405, z), EndPoint),
 	};
 
 	/*6.1*/std::vector<WayPoint> waypoints9 = {
-		WayPoint(glm::vec3(1.3776995029531, -5.0033607423968, 1.0f)),
-		WayPoint(glm::vec3(1.240331711901, -4.3623110508202, 1.0f)),
+		WayPoint(glm::vec3(1.3776995029531, -5.0033607423968, z)),
+		WayPoint(glm::vec3(1.240331711901, -4.3623110508202, z)),
 		WayPoint(lightspos[9],TrafficPoint, "6.1"),
-		WayPoint(glm::vec3(0.8151456919778, -2.2363809512042, 1.0f)),
-		WayPoint(glm::vec3(0.5991551629872, -1.1745396523912, 1.0f)),
-		WayPoint(glm::vec3(0.3731326989372, -0.1527297628317, 1.0f)),
-		WayPoint(glm::vec3(0.1730853724156, 0.6489100254638, 1.0f)),
-		WayPoint(glm::vec3(0.0574076777885, 1.1628177737991, 1.0f)),
-		WayPoint(glm::vec3(-0.1702132612523, 1.4263391275666, 1.0f)),
-		WayPoint(glm::vec3(-0.861420251756, 1.9021049781731, 1.0f)),
-		WayPoint(glm::vec3(-1.7612950821041, 2.2980994907728, 1.0f)),
-		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597, 1.0f)),
-		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602, 1.0f)),
-		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311, 1.0f)),
-		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315, 1.0f)),
-		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177, 1.0f)),
-		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893, 1.0f)),
-		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, 1.0f), EndPoint),
+		WayPoint(glm::vec3(0.8151456919778, -2.2363809512042, z)),
+		WayPoint(glm::vec3(0.5991551629872, -1.1745396523912, z)),
+		WayPoint(glm::vec3(0.3731326989372, -0.1527297628317, z)),
+		WayPoint(glm::vec3(0.1730853724156, 0.6489100254638, z)),
+		WayPoint(glm::vec3(0.0574076777885, 1.1628177737991, z)),
+		WayPoint(glm::vec3(-0.1702132612523, 1.4263391275666, z)),
+		WayPoint(glm::vec3(-0.861420251756, 1.9021049781731, z)),
+		WayPoint(glm::vec3(-1.7612950821041, 2.2980994907728, z)),
+		WayPoint(glm::vec3(-2.9670375511151, 2.6695367442597, z)),
+		WayPoint(glm::vec3(-3.9996644447838, 2.9172218813602, z)),
+		WayPoint(glm::vec3(-5.2610950837471, 2.9975677819311, z)),
+		WayPoint(glm::vec3(-6.2734534309406, 2.9413256515315, z)),
+		WayPoint(glm::vec3(-7.1652929272777, 2.8690143410177, z)),
+		WayPoint(glm::vec3(-7.9767865230439, 2.8368759807893, z)),
+		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, z), EndPoint),
 	};
 
 	/*5.1*/std::vector<WayPoint> waypoints10 = {
-		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,1.0f)),
-		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,1.0f)),
+		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,z)),
+		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,z)),
 		WayPoint(lightspos[10],TrafficPoint, "5.1"),
-		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588,1.0f)),
-		WayPoint(glm::vec3(1.0165189064083, -1.1373448322266,1.0f)),
-		WayPoint(glm::vec3(0.9059514575216, -0.4729394361205,1.0f)),
-		WayPoint(glm::vec3(0.8963982678125, 0.2362759914028,1.0f)),
-		WayPoint(glm::vec3(0.8, 0.8,1.0f)),
-		WayPoint(glm::vec3(0.8287741504193, 1.6496024409932,1.0f)),
-		WayPoint(glm::vec3(0.9860430428974, 2.3198674827452,1.0f)),
-		WayPoint(glm::vec3(1.0625738467643, 2.9561189654222, 1.0f)),
-		WayPoint(glm::vec3(1.2249908959054, 3.5361798552115, 1.0f)),
-		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, 1.0f)),
-		WayPoint(glm::vec3(1.5, 4.5, 1.0f)),
-		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, 1.0f), EndPoint),
+		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588,z)),
+		WayPoint(glm::vec3(1.0165189064083, -1.1373448322266,z)),
+		WayPoint(glm::vec3(0.9059514575216, -0.4729394361205,z)),
+		WayPoint(glm::vec3(0.8963982678125, 0.2362759914028,z)),
+		WayPoint(glm::vec3(0.8, 0.8,z)),
+		WayPoint(glm::vec3(0.8287741504193, 1.6496024409932,z)),
+		WayPoint(glm::vec3(0.9860430428974, 2.3198674827452,z)),
+		WayPoint(glm::vec3(1.0625738467643, 2.9561189654222, z)),
+		WayPoint(glm::vec3(1.2249908959054, 3.5361798552115, z)),
+		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, z)),
+		WayPoint(glm::vec3(1.5, 4.5, z)),
+		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, z), EndPoint),
 	};
 
 	/*5.1 Right turn*/std::vector<WayPoint> waypoints11 = {
-		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,1.0f)),
-		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,1.0f)),
+		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,z)),
+		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,z)),
 		WayPoint(lightspos[10],TrafficPoint, "5.1"),
-		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588, 1.0f)),
-		WayPoint(glm::vec3(1.5812641907014, -1.4308044560153, 1.0f)),
-		WayPoint(glm::vec3(2.3360846157252, -1.0728039115754, 1.0f)),
-		WayPoint(glm::vec3(2.8887496340606, -1.1692631299271, 1.0f)),
-		WayPoint(glm::vec3(3.866764134345, -1.4053972197196, 1.0f)),
-		WayPoint(glm::vec3(5.0466861540049, -1.582958300348, 1.0f)),
-		WayPoint(glm::vec3(6.2353914982127, -1.6954067884867, 1.0f)),
-		WayPoint(glm::vec3(7.4997180666451, -1.7690467585517, 1.0f)),
-		WayPoint(glm::vec3(8.8874737812391, -1.856144397543, 1.0f), EndPoint),
+		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588, z)),
+		WayPoint(glm::vec3(1.5812641907014, -1.4308044560153, z)),
+		WayPoint(glm::vec3(2.3360846157252, -1.0728039115754, z)),
+		WayPoint(glm::vec3(2.8887496340606, -1.1692631299271, z)),
+		WayPoint(glm::vec3(3.866764134345, -1.4053972197196, z)),
+		WayPoint(glm::vec3(5.0466861540049, -1.582958300348, z)),
+		WayPoint(glm::vec3(6.2353914982127, -1.6954067884867, z)),
+		WayPoint(glm::vec3(7.4997180666451, -1.7690467585517, z)),
+		WayPoint(glm::vec3(8.8874737812391, -1.856144397543, z), EndPoint),
 	};
 
 	
@@ -912,64 +920,64 @@ void application::initWayPoints()
 
 	WayPoints* splitbottomlefteast = new WayPoints
 	({
-		WayPoint(glm::vec3(-3.1716065658536, 0.7320769193107, 1.0f)),
-		WayPoint(glm::vec3(-2.771603394783, 0.5026633359026, 1.0f)),
-		WayPoint(glm::vec3(-2.1480690398787, 0.114424963981, 1.0f)),
-		WayPoint(glm::vec3(-1.6657122747641, -0.2796958075151, 1.0f)),
-		WayPoint(glm::vec3(-1.0972404482609, -0.825638718659, 1.0f)),
-		WayPoint(glm::vec3(-0.6318822333853, -1.5689015030759, 1.0f)),
-		WayPoint(glm::vec3(-0.4861123584039, -2.2304724741452, 1.0f)),// trein stoplicht
-		WayPoint(glm::vec3(-0.4069809685429, -3.2807699599339, 1.0f)),
-		WayPoint(glm::vec3(-0.4474318935296, -4.3324940095897, 1.0f)),
-		WayPoint(glm::vec3(-0.4474318935296, -4.7673414531974, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-3.1716065658536, 0.7320769193107, z)),
+		WayPoint(glm::vec3(-2.771603394783, 0.5026633359026, z)),
+		WayPoint(glm::vec3(-2.1480690398787, 0.114424963981, z)),
+		WayPoint(glm::vec3(-1.6657122747641, -0.2796958075151, z)),
+		WayPoint(glm::vec3(-1.0972404482609, -0.825638718659, z)),
+		WayPoint(glm::vec3(-0.6318822333853, -1.5689015030759, z)),
+		WayPoint(glm::vec3(-0.4861123584039, -2.2304724741452, z)),// trein stoplicht
+		WayPoint(glm::vec3(-0.4069809685429, -3.2807699599339, z)),
+		WayPoint(glm::vec3(-0.4474318935296, -4.3324940095897, z)),
+		WayPoint(glm::vec3(-0.4474318935296, -4.7673414531974, z), EndPoint),
 	});
 
 	WayPoints* splitbottomleftwest = new WayPoints
 	({
-		WayPoint(glm::vec3(-3.6280620229767, 1.1423242118342,1.0f)),
-		WayPoint(glm::vec3(-3.976072853295, 1.2317722135855,1.0f)),
-		WayPoint(glm::vec3(-4.5145460336825, 1.4063942620235,1.0f)),
-		WayPoint(glm::vec3(-5, 1.5,1.0f)),
-		WayPoint(glm::vec3(-5.5109123079851, 1.5989270832386,1.0f)),
-		WayPoint(glm::vec3(-6.0658491843453, 1.6742888812628,1.0f)),
-		WayPoint(glm::vec3(-6.6413392783484, 1.7359485341917,1.0f)),
-		WayPoint(glm::vec3(-7.2921911703757, 1.7565017518347,1.0f)),
-		WayPoint(glm::vec3(-7.8128726839976, 1.7565017518347,1.0f)),
-		WayPoint(glm::vec3(-8.2376391819523, 1.77020389693,1.0f)),
-		WayPoint(glm::vec3(-8.861086783789, 1.7770549694776,1.0f), EndPoint),
+		WayPoint(glm::vec3(-3.6280620229767, 1.1423242118342,z)),
+		WayPoint(glm::vec3(-3.976072853295, 1.2317722135855,z)),
+		WayPoint(glm::vec3(-4.5145460336825, 1.4063942620235,z)),
+		WayPoint(glm::vec3(-5, 1.5,z)),
+		WayPoint(glm::vec3(-5.5109123079851, 1.5989270832386,z)),
+		WayPoint(glm::vec3(-6.0658491843453, 1.6742888812628,z)),
+		WayPoint(glm::vec3(-6.6413392783484, 1.7359485341917,z)),
+		WayPoint(glm::vec3(-7.2921911703757, 1.7565017518347,z)),
+		WayPoint(glm::vec3(-7.8128726839976, 1.7565017518347,z)),
+		WayPoint(glm::vec3(-8.2376391819523, 1.77020389693,z)),
+		WayPoint(glm::vec3(-8.861086783789, 1.7770549694776,z), EndPoint),
 		});
 
 
 
 	WayPoints* splittopleftsouth = new WayPoints
 	({
-		WayPoint(glm::vec3(-2.065470863149, 3.5176804247066, 1.0f)),
-		WayPoint(glm::vec3(-2.1554209614952, 3.2523276345853, 1.0f)),
-		WayPoint(glm::vec3(-2.2498685647587, 3.000467359216, 1.0f)),
+		WayPoint(glm::vec3(-2.065470863149, 3.5176804247066, z)),
+		WayPoint(glm::vec3(-2.1554209614952, 3.2523276345853, z)),
+		WayPoint(glm::vec3(-2.2498685647587, 3.000467359216, z)),
 		WayPoint(lightspos[16], TrafficPoint, "26.1"), // stoplicht
-		WayPoint(glm::vec3(-2.5587026270678, 2.1877021252659, 1.0f)),
-		WayPoint(glm::vec3(-2.9746230861281, 1.2518585251281, 1.0f)),
-		WayPoint(glm::vec3(-3.0958109530275, 0.957077473291,1.0f), SplitPoint, "-1", std::vector<WayPoints*>{splitbottomlefteast,splitbottomleftwest}),
+		WayPoint(glm::vec3(-2.5587026270678, 2.1877021252659, z)),
+		WayPoint(glm::vec3(-2.9746230861281, 1.2518585251281, z)),
+		WayPoint(glm::vec3(-3.0958109530275, 0.957077473291,z), SplitPoint, "-1", std::vector<WayPoints*>{splitbottomlefteast,splitbottomleftwest}),
 	});
 
 	WayPoints* splittopleftnorth = new WayPoints
 	({
-		WayPoint(glm::vec3(-1.6, 3.8, 1.0f)),
-		WayPoint(glm::vec3(-1.400323189565, 4.2560510035559, 1.0f)),
-		WayPoint(glm::vec3(-1.2375001483952, 4.717382953537, 1.0f)),
-		WayPoint(glm::vec3(-1.0520627959519, 5.0701662094048, 1.0f), EndPoint),
+		WayPoint(glm::vec3(-1.6, 3.8, z)),
+		WayPoint(glm::vec3(-1.400323189565, 4.2560510035559, z)),
+		WayPoint(glm::vec3(-1.2375001483952, 4.717382953537, z)),
+		WayPoint(glm::vec3(-1.0520627959519, 5.0701662094048, z), EndPoint),
 	});
 
 
 
 	WayPoints* splittoprightwest = new WayPoints
 	({
-	WayPoint(glm::vec3(1.620997583112, 2.5319778394301, 1.0f)),
+	WayPoint(glm::vec3(1.620997583112, 2.5319778394301, z)),
 	WayPoint(lightspos[18], TrafficPoint, "28.1"),
-	WayPoint(glm::vec3(0.7026257657899, 2.7811597497058, 1.0f)),
-	WayPoint(glm::vec3(-1, 3.2, 1.0f)),
-	WayPoint(glm::vec3(-1.4243749428383, 3.3045982503358, 1.0f)),
-	WayPoint(glm::vec3(-1.7369176884792, 3.3977600302865, 1.0f), SplitPoint, "-1",std::vector<WayPoints*>{splittopleftnorth,splittopleftsouth})
+	WayPoint(glm::vec3(0.7026257657899, 2.7811597497058, z)),
+	WayPoint(glm::vec3(-1, 3.2, z)),
+	WayPoint(glm::vec3(-1.4243749428383, 3.3045982503358, z)),
+	WayPoint(glm::vec3(-1.7369176884792, 3.3977600302865, z), SplitPoint, "-1",std::vector<WayPoints*>{splittopleftnorth,splittopleftsouth})
 	});
 
 
@@ -978,11 +986,11 @@ void application::initWayPoints()
 	{*/
 	WayPoints* splittoprightnorth = new WayPoints
 	({
-		WayPoint(glm::vec3(2.0073804759653, 2.4268303862112,1.0f)), //split
-		WayPoint(glm::vec3(2.3203058348275, 3.2435438115671, 1.0f)),
-		WayPoint(glm::vec3(2.5667800763747, 3.9231287637771, 1.0f)),
-		WayPoint(glm::vec3(2.8037206037346, 4.5710885732921, 1.0f)),
-		WayPoint(glm::vec3(3.0001301134159, 5.0658727922079, 1.0f), EndPoint),
+		WayPoint(glm::vec3(2.0073804759653, 2.4268303862112,z)), //split
+		WayPoint(glm::vec3(2.3203058348275, 3.2435438115671, z)),
+		WayPoint(glm::vec3(2.5667800763747, 3.9231287637771, z)),
+		WayPoint(glm::vec3(2.8037206037346, 4.5710885732921, z)),
+		WayPoint(glm::vec3(3.0001301134159, 5.0658727922079, z), EndPoint),
 	});
 
 
@@ -990,7 +998,7 @@ void application::initWayPoints()
 	{*/
 	WayPoints* splittoprightnorth2 = new WayPoints
 	({
-		WayPoint(glm::vec3(2.0073804759653, 2.4268303862112,1.0f), SplitPoint, "-1",std::vector<WayPoints*>{splittoprightwest,splittoprightnorth}), //split
+		WayPoint(glm::vec3(2.0073804759653, 2.4268303862112,z), SplitPoint, "-1",std::vector<WayPoints*>{splittoprightwest,splittoprightnorth}), //split
 
 	});
 
@@ -1000,45 +1008,45 @@ void application::initWayPoints()
 	({
 	/*std::vector<WayPoint> splittoprighteast =
 	{*/
-		WayPoint(glm::vec3(2.8760401888494, 0.834518921357,1.0f)),
-		WayPoint(glm::vec3(4.038781641347, 0.6220950021507,1.0f)),
-		WayPoint(glm::vec3(5.4215626090726, 0.3515345179165,1.0f)),
-		WayPoint(glm::vec3(6.8265891492556, 0.0936533925303,1.0f)),
-		WayPoint(glm::vec3(7.9008314469685, 0.0659310106539,1.0f)),
-		WayPoint(glm::vec3(8.8919065990519, 0.0312780333083,1.0f), EndPoint),
+		WayPoint(glm::vec3(2.8760401888494, 0.834518921357,z)),
+		WayPoint(glm::vec3(4.038781641347, 0.6220950021507,z)),
+		WayPoint(glm::vec3(5.4215626090726, 0.3515345179165,z)),
+		WayPoint(glm::vec3(6.8265891492556, 0.0936533925303,z)),
+		WayPoint(glm::vec3(7.9008314469685, 0.0659310106539,z)),
+		WayPoint(glm::vec3(8.8919065990519, 0.0312780333083,z), EndPoint),
 
 	});
 
 
 	std::vector<WayPoint> bikewaypoints0 = {
-		WayPoint(glm::vec3(2.3649879308739, -4.964727604776, 1.0f)),
-		WayPoint(glm::vec3(2.1376245552665, -4.0227936201166, 1.0f)),
-		WayPoint(glm::vec3(2.0206948192398, -3.3212152039565, 1.0f)), /*train 99.0*/
-		WayPoint(glm::vec3(1.8712846009835, -2.3013280619459, 1.0f)),
-		WayPoint(glm::vec3(2.3000269664146, -1.7686481533799, 1.0f)),
+		WayPoint(glm::vec3(2.3649879308739, -4.964727604776, z)),
+		WayPoint(glm::vec3(2.1376245552665, -4.0227936201166, z)),
+		WayPoint(glm::vec3(2.0206948192398, -3.3212152039565, z)), /*train 99.0*/
+		WayPoint(glm::vec3(1.8712846009835, -2.3013280619459, z)),
+		WayPoint(glm::vec3(2.3000269664146, -1.7686481533799, z)),
 		WayPoint(lightspos[23],TrafficPoint, "22.0"),
-		WayPoint(glm::vec3(2.0833062265068, -0.100244858336, 1.0f)),
-		WayPoint(glm::vec3(1.923963216694, 1.103253546383, 1.0f), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprightnorth2,splittoprighteast }),
+		WayPoint(glm::vec3(2.0833062265068, -0.100244858336, z)),
+		WayPoint(glm::vec3(1.923963216694, 1.103253546383, z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprightnorth2,splittoprighteast }),
 	};
 
 	bikepaths.push_back(new WayPoints(bikewaypoints0));
 
 	WayPoints* splittoprighteast2 = new WayPoints
 	({
-		WayPoint(glm::vec3(1.7344430133265, 2.2393929296822,1.0f)),
-		WayPoint(glm::vec3(1.6525194775252, 1.8775639798928,1.0f)),
-		WayPoint(glm::vec3(1.659346438842, 1.5771776819545,1.0f)),
-		WayPoint(glm::vec3(1.720789090693, 1.2563105000659,1.0f), SplitPoint, "-1",std::vector<WayPoints*>{ splittoprighteast,splittoprighteast }), //split
+		WayPoint(glm::vec3(1.7344430133265, 2.2393929296822,z)),
+		WayPoint(glm::vec3(1.6525194775252, 1.8775639798928,z)),
+		WayPoint(glm::vec3(1.659346438842, 1.5771776819545,z)),
+		WayPoint(glm::vec3(1.720789090693, 1.2563105000659,z), SplitPoint, "-1",std::vector<WayPoints*>{ splittoprighteast,splittoprighteast }), //split
 		});
 
 
 
 	std::vector<WayPoint> bikewaypoints1 = {
-		WayPoint(glm::vec3(2.8677185919119, 5.0589279535122, 1.0f)),
-		WayPoint(glm::vec3(2.6560827910917, 4.6151754679215, 1.0f)),
-		WayPoint(glm::vec3(2.430793067638, 3.9597871815106, 1.0f)),
-		WayPoint(glm::vec3(2.2055033441843, 3.297571933783, 1.0f)),
-		WayPoint(glm::vec3(1.905117046246, 2.4715096144527, 1.0f), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprightwest,splittoprighteast2 }) //split
+		WayPoint(glm::vec3(2.8677185919119, 5.0589279535122, z)),
+		WayPoint(glm::vec3(2.6560827910917, 4.6151754679215, z)),
+		WayPoint(glm::vec3(2.430793067638, 3.9597871815106, z)),
+		WayPoint(glm::vec3(2.2055033441843, 3.297571933783, z)),
+		WayPoint(glm::vec3(1.905117046246, 2.4715096144527, z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprightwest,splittoprighteast2 }) //split
 	};
 
 	bikepaths.push_back(new WayPoints(bikewaypoints1));
