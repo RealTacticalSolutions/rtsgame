@@ -31,9 +31,9 @@ static glm::vec3 getColor(int color)
 	case 0:
 		return glm::vec3(1.0f, 0.0f, 0.0f);
 	case 1:
-		return glm::vec3(0.0f, 1.0f, 0.0f);
-	case 2:
 		return glm::vec3(1.0f, 0.5f, 0.0f);
+	case 2:
+		return glm::vec3(0.0f, 1.0f, 0.0f);
 	}
 };
 

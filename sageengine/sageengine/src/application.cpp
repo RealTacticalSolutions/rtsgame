@@ -14,7 +14,7 @@ std::random_device rd; // obtain a random number from hardware
 std::mt19937 gen(rd()); // seed the generator
 
 std::uniform_int_distribution<> dicar(0, 11); // define the range
-std::uniform_int_distribution<> dibike(0, 0); // define the range
+std::uniform_int_distribution<> dibike(0, 1); // define the range
 std::uniform_int_distribution<> displit(0, 1); // define the range
 
 void application::mainLoop()
@@ -161,56 +161,56 @@ void application::start()
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[10]), glm::vec3(1.0f, 0.0f, 0.0f)); //5.1
 	addTrafficLight("5.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[11]), glm::vec3(1.0f, 0.0f, 0.0f)); //35.1
-	addTrafficLight("35.1", scene.gameObjects.size() - 1, 0, 0);
-	
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[12]), glm::vec3(1.0f, 0.0f, 0.0f)); //35.2
-	addTrafficLight("35.2", scene.gameObjects.size() - 1, 0, 0);
-	
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[13]), glm::vec3(1.0f, 0.0f, 0.0f)); //36.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[11]), glm::vec3(1.0f, 0.0f, 0.0f)); //36.1
 	addTrafficLight("36.1", scene.gameObjects.size() - 1, 0, 0);
 	
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[14]), glm::vec3(1.0f, 0.0f, 0.0f)); //36.2
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[12]), glm::vec3(1.0f, 0.0f, 0.0f)); //36.2
 	addTrafficLight("36.2", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[15]), glm::vec3(1.0f, 0.0f, 0.0f)); //37.1
-	addTrafficLight("37.1", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[16]), glm::vec3(1.0f, 0.0f, 0.0f)); //37.2
-	addTrafficLight("37.2", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[17]), glm::vec3(1.0f, 0.0f, 0.0f)); //38.1
-	addTrafficLight("38.1", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[18]), glm::vec3(1.0f, 0.0f, 0.0f)); //38.2
-	addTrafficLight("38.2", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[19]), glm::vec3(1.0f, 0.0f, 0.0f)); //31.1
-	addTrafficLight("31.1", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[20]), glm::vec3(1.0f, 0.0f, 0.0f)); //31.2
-	addTrafficLight("31.2", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[21]), glm::vec3(1.0f, 0.0f, 0.0f)); //32.1
-	addTrafficLight("32.1", scene.gameObjects.size() - 1, 0, 0);
-
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[22]), glm::vec3(1.0f, 0.0f, 0.0f)); //32.2
-	addTrafficLight("32.2", scene.gameObjects.size() - 1, 0, 0);
 	
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[23]), glm::vec3(1.0f, 0.0f, 0.0f)); //86.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[13]), glm::vec3(1.0f, 0.0f, 0.0f)); //35.1
+	addTrafficLight("35.1", scene.gameObjects.size() - 1, 0, 0);
+	
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[14]), glm::vec3(1.0f, 0.0f, 0.0f)); //35.2
+	addTrafficLight("35.2", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[15]), glm::vec3(1.0f, 0.0f, 0.0f)); //86.1
 	addTrafficLight("86.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[24]), glm::vec3(1.0f, 0.0f, 0.0f)); //26.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[16]), glm::vec3(1.0f, 0.0f, 0.0f)); //26.1
 	addTrafficLight("26.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[25]), glm::vec3(1.0f, 0.0f, 0.0f)); //88.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[17]), glm::vec3(1.0f, 0.0f, 0.0f)); //88.1
 	addTrafficLight("88.1", scene.gameObjects.size() - 1, 0, 0);
 
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[26]), glm::vec3(1.0f, 0.0f, 0.0f)); //28.1
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[18]), glm::vec3(1.0f, 0.0f, 0.0f)); //28.1
 	addTrafficLight("28.1", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[19]), glm::vec3(1.0f, 0.0f, 0.0f)); //37.1
+	addTrafficLight("37.1", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[20]), glm::vec3(1.0f, 0.0f, 0.0f)); //37.2
+	addTrafficLight("37.2", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[21]), glm::vec3(1.0f, 0.0f, 0.0f)); //38.1
+	addTrafficLight("38.1", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[22]), glm::vec3(1.0f, 0.0f, 0.0f)); //38.2
+	addTrafficLight("38.2", scene.gameObjects.size() - 1, 0, 0);
 	
-	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[27]), glm::vec3(1.0f, 0.0f, 0.0f)); //22.0
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[23]), glm::vec3(1.0f, 0.0f, 0.0f)); //22.0
 	addTrafficLight("22.0", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[24]), glm::vec3(1.0f, 0.0f, 0.0f)); //31.1
+	addTrafficLight("31.1", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[25]), glm::vec3(1.0f, 0.0f, 0.0f)); //31.2
+	addTrafficLight("31.2", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[26]), glm::vec3(1.0f, 0.0f, 0.0f)); //32.1
+	addTrafficLight("32.1", scene.gameObjects.size() - 1, 0, 0);
+	
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[27]), glm::vec3(1.0f, 0.0f, 0.0f)); //32.2
+	addTrafficLight("32.2", scene.gameObjects.size() - 1, 0, 0);
 
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,2.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 	////spawnpoint = paths[1].getWayPointPosition(0);
@@ -236,10 +236,10 @@ void application::updateTest(const double currentFrameTime)
 		carcount += 1;
 	}
 
-	if (bikecount < maxinstances && 0.1 < (currentFrameTime - lastSpawnTime))
+	if (bikecount < 5 && 0.1 < (currentFrameTime - lastSpawnTime))
 	{
 		int pathindex = dibike(gen);
-		pathindex = 1;
+		//pathindex = 1;
 		spawnpoint = bikepaths[pathindex]->getWayPointPosition(0);
 		scene.instantiateBike(scene.bluePrints[3], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), bikepaths[pathindex]);
 		lastSpawnTime = currentFrameTime;

@@ -122,9 +122,10 @@ void client::startClient()
             for (const auto& obj : dataserver) {
                 std::string id_str = obj["id"]; // read the id as a string
                 double id = std::stod(id_str);  // convert the id string to a double
+                //double id = obj["id"];
                 std::stringstream ss;
                 ss << std::fixed << std::setprecision(1) << id;
-                id_str = ss.str(); // convert the id double back to a string with one decimal point
+                 id_str = ss.str(); // convert the id double back to a string with one decimal point
                 message.push_back({ id_str, obj["status"] });
                 // Print the received data to the console   
                 //std::cout << "Received struct from server: id = " << id << ", color = " << obj["status"] << std::endl;
