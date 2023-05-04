@@ -23,22 +23,12 @@ std::uniform_int_distribution<> displit(0, 1); // define the range
 
 void application::mainLoop()
 {
-
-
 	CrossRoadLevel level(message, scene.gameObjects, lights);
 
     float cameraSpeed = 2.0f;
     float sensitivity = 0.1f;
     glm::vec2 centerPos = glm::vec2(WIDTH, HEIGHT) / 2.0f;
-    glm::vec2 lastCursorPos = centerPos;
-    
-    while (!windowObject->shouldClose())
-    {
-        double currentFrameTime = glfwGetTime();
-        double delta = currentFrameTime - lastFrameTime;
-        lastFrameTime = currentFrameTime;
-
-	level.init();
+    glm::vec2 lastCursorPos = centerPos;	
 	
 
 	double lastFrameTime = glfwGetTime();
@@ -46,14 +36,14 @@ void application::mainLoop()
 	int fps = 0;
 	char windowTitle[256];
 	Input input = Input(windowObject.get()->getWindow());
-
+	level.init();
 	while (!windowObject->shouldClose())
 	{
 		double currentFrameTime = glfwGetTime();
 		double delta = currentFrameTime - lastFrameTime;
 		lastFrameTime = currentFrameTime;
 		
-
+		
 		//updateColorAddition(0, glm::vec3(0.0001f, 0.0001f, 0.0001f));
 		glfwPollEvents();
 
@@ -64,22 +54,8 @@ void application::mainLoop()
 		updateLightWeights();
 		drawFrame();
 
-		glm::vec2 cursorPos = input.getCursorPos();
-		bool spacePressed = input.keyPressed(GLFW_KEY_SPACE);
-		bool test = input.keyDown(GLFW_KEY_SPACE);
+		
 
-		input.updateInput();
-
-		if (test) {
-			scene.removeObject(0);
-			int width = 0, height = 0;
-
-			glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
-			glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
-			// std::cout << "cursor X: " << cursorPos.x << "  cursor Y: " << cursorPos.y << std::endl;
-			 //std::cout << "world X: " << worldpos.x << "  world Y: " << worldpos.y << "  world Z: " << worldpos.z << std::endl;
-			 //scene.addObject();
-		}
 
 		fps++;
 		if (currentFrameTime - lastSecondTime >= 1.0)
@@ -89,11 +65,9 @@ void application::mainLoop()
 			fps = 0;
 			lastSecondTime = currentFrameTime;
 		}
-	}
-	vkDeviceWaitIdle(scene.renderer->getDevice());
-	level.cleanup();
-
-        glm::vec2 cursorPos = input.getCursorPos();
+	
+	
+		glm::vec2 cursorPos = input.getCursorPos();
         bool spacePressed = input.keyDown(GLFW_KEY_SPACE);
         bool ePressed = input.keyDown(GLFW_KEY_E);
         bool isRotating = input.mouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
@@ -177,6 +151,8 @@ void application::mainLoop()
     }
     vkDeviceWaitIdle(scene.renderer->getDevice());
 
+	level.cleanup();
+
 }
 
 namespace std {
@@ -204,21 +180,22 @@ void application::constructGameobjects()
 {
 	scene.renderObjects.reserve(10);
 
-<<<<<<< HEAD
+
 	scene.blueprintObject(ShapeTool::createRectangle(3.2f, 1.8f), "../../../textures/kruispunt.png");
 
 	scene.blueprintObject(ShapeTool::createSquare(0.07f), "../../../textures/light.jpg");
-=======
+
     //scene.blueprintObject(ShapeTool::createSquare(3.0f), "../../../textures/1.jpg");
 
     //scene.blueprintObject(ShapeTool::createSquare(0.01f));
 
-    scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
->>>>>>> feature/raycastdynamic
+	scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
+
 
 	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/car.jpg");
 
 	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/bike.jpg");
+	
 
 	/* glm::vec4 gridStart = glm::vec4(scene.gameObjects[0].mesh.vertices[0].pos, 1.0f) * scene.gameObjects[0].properties.transform;
 	 glm::vec4 gridEnd = glm::vec4(scene.gameObjects[0].mesh.vertices[2].pos, 1.0f) * scene.gameObjects[0].properties.transform;
@@ -229,19 +206,13 @@ void application::constructGameobjects()
 
 void application::initWindow()
 {
-<<<<<<< HEAD
+
 	constructGameobjects();
 	initWayPoints();
 	start();
 	int objectCount = scene.bluePrints.size();
 	camera.setPosition(glm::vec3(0.0f, 0.0f, 15.0f));
-=======
-    constructGameobjects();
-    start();
-    int objectCount = scene.bluePrints.size();
-    camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
-    //camera.rotateCamera(180.0f);
->>>>>>> feature/raycastdynamic
+
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
@@ -251,7 +222,7 @@ void application::initWindow()
 
 void application::start()
 {
-<<<<<<< HEAD
+
 	scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[0]), glm::vec3(1.0f, 0.0f, 0.0f)); //1.1
@@ -344,27 +315,12 @@ void application::start()
 	//scene.instantiateObject(scene.bluePrints[2], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 1.0f));
 	//cars.push_back(car{ static_cast<int>(scene.gameObjects.size() - 1), 0, paths[1] });
 
-=======
-    //scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-
-    //scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.3f, 0.3f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
-
-   // scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.1f)), glm::vec3(1.0f, 1.0f, 1.0f));
-
-    //scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.4f, 0.4f, 1.2f)), glm::vec3(1.5f, 0.5f, 0.5f));
-
-    scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, -0.4f, 0.0f)), glm::vec3(0.6f));
-    //scene.instantiateObject(scene.bluePrints[0], glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.4f, 0.0f)), glm::vec3(0.6f));
->>>>>>> feature/raycastdynamic
 }
 
 void application::cleanup()
 {
 }
 
-<<<<<<< HEAD
-void application::updateTest(const double currentFrameTime)
-=======
 Mesh application::loadModel(char* path) {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -420,9 +376,7 @@ Mesh application::loadModel(char* path) {
 }
 
 
-
-/*void application::updateTest()
->>>>>>> feature/raycastdynamic
+void application::updateTest(const double currentFrameTime)
 {
 	if (carcount < maxinstances && 0.1 < (currentFrameTime - lastSpawnTime))
 	{

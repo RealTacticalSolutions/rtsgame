@@ -1816,7 +1816,7 @@ void renderer::updateTransformBuffer()
     // TODO: really light flickering of black 
     std::vector<RenderObject::RenderProps> props(renderObjects.size());
 
-<<<<<<< HEAD
+
     for (size_t i = 0; i < renderObjects.size(); i++)
     {
         renderObjects[i].instanceCount = 0;
@@ -1824,15 +1824,7 @@ void renderer::updateTransformBuffer()
 
     for (auto& gameObject : gameObjects) {
         gameObject->renderObject->addInstance(gameObject->properties.transform, glm::vec4(gameObject->properties.color, 1.0f));
-=======
-	for (size_t i = 0; i < renderObjects.size(); i++) 
-    { 
-        renderObjects[i].instanceCount = 0; 
-    } 
 
-    for (auto& gameObject : gameObjects) {
-        gameObject.renderObject->addInstance(gameObject.properties.transform, glm::vec4(gameObject.properties.color, 1.0f));
->>>>>>> feature/raycastdynamic
     }
 
     for (size_t i = 0; i < renderObjects.size(); i++)
