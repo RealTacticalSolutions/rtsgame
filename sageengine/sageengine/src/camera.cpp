@@ -27,6 +27,7 @@ void Camera::rotateAround(float yawAngle, float pitchAngle, const glm::vec3& up)
     glm::vec4 rotatedToTarget2 = glm::vec4(newToTarget, 1.0f) * pitchRotationMatrix;
     glm::vec3 newToTarget2 = glm::vec3(rotatedToTarget2);
 
+    std::cout << getUpVector().x << getUpVector().y << getUpVector().z;
     // Update the camera's position to maintain the same distance to the look-at position
     position = lookPosition - distance * glm::normalize(newToTarget2);
 }
@@ -45,6 +46,7 @@ void Camera::moveLookAt(glm::vec2 cursorDelta, float sensitivity)
     // Update look at position
     glm::vec3 front = glm::normalize(lookPosition - position);
     lookPosition = position + front;
+    upPosition = glm::normalize(glm::cross(getRightVector(), getDirection()));
 }
 
 glm::vec3 Camera::getPosition() { return position; }
@@ -60,5 +62,5 @@ glm::vec3 Camera::getDirection()
 
 glm::vec3 Camera::getRightVector()
 {
-    return glm::normalize(glm::cross(getDirection(), glm::vec3(0.0f, 1.0f, 0.0f)));
+    return glm::normalize(glm::cross(getDirection(), upPosition));
 }
