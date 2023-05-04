@@ -19,18 +19,15 @@ public:
 
 	void setPosition(glm::vec3 pos) {
 		position = pos;
-
-		glm::vec3 up = glm::normalize(glm::cross(getRightVector(), getDirection()));
-
-		upPosition = up;
+		lookPosition += position;
 	}
 
 	glm::vec3 getDirection();
 	glm::vec3 getRightVector();
 
-	void setLookPosition(glm::vec3 pos) {
-		lookPosition = pos;
-		upPosition = glm::cross(position, lookPosition);
+	void setLookPosition(glm::vec3 pos, glm::vec3 upPos) {
+		lookPosition = glm::normalize(pos - position);
+		upPosition = upPos;
 	}
 
 	void rotateCamera(float degrees) {

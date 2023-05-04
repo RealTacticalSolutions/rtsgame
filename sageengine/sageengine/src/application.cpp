@@ -79,21 +79,6 @@ void application::mainLoop()
 
         glm::vec2 cursorDelta = cursorPos - lastCursorPos;
         lastCursorPos = cursorPos;
-        if (isRotating) {
-            
-            // Calculate rotation angles based on deltaX and deltaY
-           
-            float yaw = cursorDelta.x * sensitivity;
-            float pitch = cursorDelta.y * sensitivity;
-
-            // Get camera position, look position and up vector
-            glm::vec3 position = camera.getPosition();
-            glm::vec3 lookPosition = camera.getLookPosition();
-            glm::vec3 upVector = camera.getUpVector();
-
-            // Update camera orientation
-            camera.rotateAround(-yaw, pitch, upVector);
-        }
 
         if (isLookingAt)
         {
@@ -157,12 +142,14 @@ void application::initWindow()
     start();
     int objectCount = scene.bluePrints.size();
     camera.setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
+    camera.setLookPosition(glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(0.0f,1.0f,0.0f));
     //camera.rotateCamera(180.0f);
 	vulkanrenderer = std::make_unique<renderer>(camera, objectCount, scene.renderObjects, scene.gameObjects);
 	windowObject = std::make_unique<window>(WIDTH, HEIGHT, vulkanrenderer.get());
 
 	vulkanrenderer->initVulkan(std::move(windowObject));
     scene.renderer = std::move(vulkanrenderer);
+
 }
 
 void application::start()
