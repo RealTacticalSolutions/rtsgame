@@ -14,7 +14,7 @@ private:
 	const glm::vec3 DEFAULT_CAM_UP_POS = glm::vec3(0.0f, 0.0f, 1.0f);
 	const float DEFAULT_FOV = glm::radians(45.0f);
 	const float DEFAULT_NEAR_CLIPPING_PLANE = 0.1f;
-	const float DEFAULT_FAR_CLIPPING_PLANE = 10.0f;
+	const float DEFAULT_FAR_CLIPPING_PLANE = 1000.0f;
 
 	int indexOffset = 0;
 	

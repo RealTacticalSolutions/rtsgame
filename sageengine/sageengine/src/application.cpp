@@ -13,6 +13,11 @@ void application::mainLoop()
     char windowTitle[256];
     Input input = Input(windowObject.get()->getWindow());
 
+    float cameraSpeed = 2.0f;
+    float sensitivity = 0.1f;
+    glm::vec2 centerPos = glm::vec2(WIDTH, HEIGHT) / 2.0f;
+    glm::vec2 lastCursorPos = centerPos;
+    
     while (!windowObject->shouldClose())
     {
         double currentFrameTime = glfwGetTime();
@@ -25,10 +30,35 @@ void application::mainLoop()
 
         glm::vec2 cursorPos = input.getCursorPos();
         bool spacePressed = input.keyDown(GLFW_KEY_SPACE);
-        bool dPressed = input.keyDown(GLFW_KEY_D);
+        bool ePressed = input.keyDown(GLFW_KEY_E);
+        bool isRotating = input.mouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
+        bool isLookingAt = input.mouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+
+        bool w = input.keyPressed(GLFW_KEY_W);
+        bool a = input.keyPressed(GLFW_KEY_A);
+        bool s = input.keyPressed(GLFW_KEY_S);
+        bool d = input.keyPressed(GLFW_KEY_D);
 
         input.updateInput();
         //camera.rotateCamera(0.005f);
+
+        // Move camera position using WASD keys
+        if (w)
+        {
+            camera.moveForward(delta, cameraSpeed);
+        }
+        if (a)
+        {
+            camera.moveLeft(delta, cameraSpeed );
+        }
+        if (s)
+        {
+            camera.moveBackward(delta, cameraSpeed );
+        }
+        if (d)
+        {
+            camera.moveRight(delta, cameraSpeed );
+        }
 
         if (spacePressed) {
             int width = 0, height = 0;
@@ -41,11 +71,35 @@ void application::mainLoop()
             
         }
 
-        if (dPressed) {
+        if (ePressed) {
             glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.1f, -0.5f, 0.0f));
             scene.instantiateObject(scene.bluePrints[0], matrix, glm::vec3(0.6f));
             scene.renderer.get()->addInstance(matrix);
         }
+
+        glm::vec2 cursorDelta = cursorPos - lastCursorPos;
+        lastCursorPos = cursorPos;
+        if (isRotating) {
+            
+            // Calculate rotation angles based on deltaX and deltaY
+           
+            float yaw = cursorDelta.x * sensitivity;
+            float pitch = cursorDelta.y * sensitivity;
+
+            // Get camera position, look position and up vector
+            glm::vec3 position = camera.getPosition();
+            glm::vec3 lookPosition = camera.getLookPosition();
+            glm::vec3 upVector = camera.getUpVector();
+
+            // Update camera orientation
+            camera.rotateAround(-yaw, pitch, upVector);
+        }
+
+        if (isLookingAt)
+        {
+            camera.moveLookAt(cursorDelta, sensitivity);
+        }
+
 
         fps++;
         if (currentFrameTime - lastSecondTime >= 1.0)
@@ -182,6 +236,8 @@ Mesh application::loadModel(char* path) {
         vertices, indices
     });
 }
+
+
 
 /*void application::updateTest()
 {

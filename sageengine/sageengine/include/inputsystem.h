@@ -43,6 +43,8 @@ public:
 	void updateInput();
 
 
+	bool Input::mouseButtonPressed(int button);
+
 	/*
 	*	@brief a function that gets the cursor position in relation to the window
 	*
