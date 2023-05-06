@@ -76,9 +76,6 @@ void client::startClient()
         for (size_t i = 0; i < lights.size(); i++)
         {
             messageclient.push_back(trafficStatusObject{ std::stod(lights[i].id), lights[i].weight});
-
-            //Randomize weight propbably remove this later
-            lights[i].weight = distrclient(genclient);
         }
         nlohmann::json dataclient;
         client::to_json_traffic(dataclient, messageclient);
@@ -123,20 +120,22 @@ void client::startClient()
         {
              nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
             for (const auto& obj : dataserver) {
-                double id = obj["id"];
+                std::string id_str = obj["id"]; // read the id as a string
+                double id = std::stod(id_str);  // convert the id string to a double
+                //double id = obj["id"];
                 std::stringstream ss;
                 ss << std::fixed << std::setprecision(1) << id;
-                std::string id_str = ss.str();
-                message.push_back({id_str, obj["status"]});
+                 id_str = ss.str(); // convert the id double back to a string with one decimal point
+                message.push_back({ id_str, obj["status"] });
                 // Print the received data to the console   
-                std::cout << "Received struct from server: id = " << obj["id"] << ", color = " << obj["status"] << std::endl;
+                //std::cout << "Received struct from server: id = " << id << ", color = " << obj["status"] << std::endl;
             }
             messagereadable = true;
             std::cout << "send message / data" << std::endl;
         }
 		catch (const std::exception e)
 		{
-			std::cout << "error parsing json" << std::endl;
+			std::cout << "error parsing json client" << std::endl;
 		}
 		
 

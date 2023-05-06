@@ -1,28 +1,28 @@
 #include "pch.h"
-#include "car.h"
+#include "bike.h"
 #include "waypoints.h"
 
-int Car::getWayPointSize()
+int Bike::getWayPointSize()
 {
 	return this->waypoints->getSize();
 }
 
-WayPoints* Car::getWayPoints()
+WayPoints* Bike::getWayPoints()
 {
 	return this->waypoints;
 }
 
-int Car::getCurrentWayPoint()
+int Bike::getCurrentWayPoint()
 {
 	return this->currentwaypoint;
 }
 
-void Car::setCurrentWayPoint(int waypoint)
+void Bike::setCurrentWayPoint(int waypoint)
 {
 	this->currentwaypoint = waypoint;
 }
 
-void Car::setWayPoint(WayPoints* newwaypoints)
+void Bike::setWayPoint(WayPoints* newwaypoints)
 {
 	this->waypoints = newwaypoints;
 	this->currentwaypoint = 0;

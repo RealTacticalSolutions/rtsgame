@@ -1,0 +1,38 @@
+#version 460
+#extension GL_EXT_ray_query : require
+#extension GL_EXT_debug_printf : enable
+
+rayQueryEXT rq;
+
+layout(push_constant) uniform Push {
+	vec3 origin;
+	vec3 direction;
+} push;
+
+layout(binding = 0) uniform accelerationStructureEXT topLevelAS;
+
+layout(binding = 1, std430) writeonly buffer isHitOut {
+	bool hit[1];
+	vec3 intersectionpoint[1];
+} rayResult;
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+void main() {
+
+	vec3 D = normalize(push.direction);
+
+	//debugPrintfEXT("hello");
+
+	rayQueryInitializeEXT(rq, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, push.origin, 0.01, D, 100);
+	rayQueryProceedEXT(rq);
+	if (rayQueryGetIntersectionTypeEXT(rq, true) == gl_RayQueryCommittedIntersectionTriangleEXT) {
+		rayResult.hit[0] = true;
+		float distance = rayQueryGetIntersectionTEXT(rq, true);
+		rayResult.intersectionpoint[0] = push.origin + (D * distance);
+	}
+	else {
+		rayResult.hit[0] = false;
+		rayResult.intersectionpoint[0] = vec3(1,1,1);
+	}
+}

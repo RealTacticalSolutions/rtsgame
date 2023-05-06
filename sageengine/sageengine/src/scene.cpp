@@ -26,7 +26,7 @@ void Scene::instantiateObject(BluePrint bluePrint, glm::mat4 transform, glm::vec
 	bluePrint.renderObject.renderprops.color[instanceId] = glm::vec4(color, 1.0f);
 	bluePrint.renderObject.renderprops.instances[instanceId] = transform;
 }
-void Scene::instantiateCar(BluePrint bluePrint, glm::mat4 transform, glm::vec3 color, WayPoints& path)
+void Scene::instantiateCar(BluePrint bluePrint, glm::mat4 transform, glm::vec3 color, WayPoints* path)
 {
 	bluePrint.renderObject.instanceCount += 1;
 	int instanceId = bluePrint.renderObject.instanceCount - 1;
@@ -37,10 +37,22 @@ void Scene::instantiateCar(BluePrint bluePrint, glm::mat4 transform, glm::vec3 c
 	bluePrint.renderObject.renderprops.instances[instanceId] = transform;
 }
 
+void Scene::instantiateBike(BluePrint bluePrint, glm::mat4 transform, glm::vec3 color, WayPoints* path)
+{
+	bluePrint.renderObject.instanceCount += 1;
+	int instanceId = bluePrint.renderObject.instanceCount - 1;
+	std::unique_ptr<Bike> bike = std::make_unique<Bike>(&bluePrint.renderObject, transform, color, instanceId, path, 0);
+	gameObjects.push_back(std::move(bike));
+
+	bluePrint.renderObject.renderprops.color[instanceId] = glm::vec4(color, 1.0f);
+	bluePrint.renderObject.renderprops.instances[instanceId] = transform;
+}
+
 void Scene::removeObject(int index)
 {
 	if (gameObjects.size() > index) {
 		//gameObjects[index]->renderObject->instanceCount -= 1;
+
 		gameObjects.erase(gameObjects.begin() + index);
 	}
 

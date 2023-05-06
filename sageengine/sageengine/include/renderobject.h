@@ -5,8 +5,8 @@ private:
 public:
 	struct RenderProps
 	{
-		glm::mat4 instances[30];
-		glm::vec4 color[30];
+		glm::mat4 instances[200];
+		glm::vec4 color[200];
 	};
 
 	Mesh mesh;
