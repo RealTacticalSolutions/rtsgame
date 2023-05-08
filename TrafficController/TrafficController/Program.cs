@@ -23,6 +23,8 @@ public class Program {
     static Socket socket;
     static TrafficLight[] trafficLights;
 
+    static bool enableTimer = false;
+
 
     //Setups declaration
 
@@ -128,7 +130,25 @@ public class Program {
                     trafficlightStatusses[i].status = trafficLights[i].status;
                 }
 
-                string message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightStatusses);
+                string message;
+
+                if (enableTimer)
+                {
+                    Timer timer = new();
+                    timer.id = 69.0;
+                    timer.status = 0;
+                    timer.remainingTime = 0;
+
+                    ControllerInfo controllerInfo = new ControllerInfo();
+                    controllerInfo.trafficLights = trafficlightStatusses;
+
+                    message = JsonSerializer.Serialize<ControllerInfo>(controllerInfo);
+                }
+                else
+                {
+                    message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightStatusses);
+                }
+               
                 message += '\n';
                 message = message.Insert(message.IndexOf("22") + 2,".0");
                 message = message.Insert(message.IndexOf("42") + 2, ".0");
@@ -294,6 +314,12 @@ public class Program {
         setups.Add(setup5);
         setups.Add(setup6);
 
+        Console.Write("do you want to enable timer? y/n");
+        string result = Console.ReadLine();
+        if (result.ToLower() == "y")
+        {
+            enableTimer = true;
+        }
         InitSocket();
         Console.WriteLine("connection succeeded");
 
@@ -319,6 +345,21 @@ public class Program {
 
 
     }
+}
+
+public class ControllerInfo {
+    public TrafficlightInfo[] trafficLights { get; set; }
+
+    public Timer timer { get; set; }
+}
+
+public class Timer
+{
+    public double id { get; set; }
+
+    public lightstatus status { get; set; }
+
+    public int remainingTime { get; set; }
 }
 
 public class TrafficInfo
