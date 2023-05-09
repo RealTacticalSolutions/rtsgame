@@ -2057,11 +2057,11 @@ bool renderer::checkDeviceExtensionSupport(VkPhysicalDevice device)
 
     enabledExtensions.insert(enabledExtensions.end(), deviceExtensions.begin(), deviceExtensions.end());
 
-    /*if (requiredRayTracingExtensions.empty())
+    if (requiredRayTracingExtensions.empty())
     {
         enableRaytracing = true;
         enabledExtensions.insert(enabledExtensions.end(), rayTracingExtensions.begin(), rayTracingExtensions.end());
-    }*/
+    }
 
     return requiredExtensions.empty();
 }
