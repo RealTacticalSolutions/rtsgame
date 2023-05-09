@@ -16,6 +16,7 @@ private:
 
 	const int MAX_FRAMES_IN_FLIGHT = 1;
 	int objectCount;
+	bool enableRaytracing = false;
 
 	uint32_t currentFrame = 0;
 
@@ -29,15 +30,20 @@ private:
 		"VK_LAYER_KHRONOS_validation"
 	};
 
-	const std::vector<const char*> deviceExtensions = {
+	std::vector<char*> deviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
 		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+		VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
+	};
+
+	std::vector<char*> rayTracingExtensions = {
+		VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
 		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
 		VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
 		VK_KHR_RAY_QUERY_EXTENSION_NAME,
-		VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
 	};
+
+	std::vector<char*> enabledExtensions;
 
 	std::vector<RenderObject>& renderObjects;
 	std::vector<GameObject>& gameObjects;
