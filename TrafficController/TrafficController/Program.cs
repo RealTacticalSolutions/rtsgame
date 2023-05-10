@@ -22,9 +22,10 @@ public class Program {
     static Socket listener;
     static Socket socket;
     static TrafficLight[] trafficLights;
+    static Stopwatch bikeTimer = new Stopwatch();
 
     static bool enableTimer = false;
-
+    static int maxTime = 120;
 
     //Setups declaration
 
@@ -35,7 +36,7 @@ public class Program {
     static double[] setup5 = { 6.1, 7.1, 22.0, 28.1, 31.1, 31.2, 32.1, 32.2, 37.1, 37.2, 38.1, 38.2, 88.1};
     static double[] setup6 = { 7.1, 8.1, 28.1, 37.1 ,37.2, 38.1, 38.2, 42.0, 88.1 };
 
-    static double[] trainSetup1 = { };
+    static double[] trainSetup1 = { 1.1 ,12.1 ,26.1, 35.1, 35.2, 36.1, 36.2, 86.1};
 
     static List<double[]> setups = new();
 
@@ -68,6 +69,35 @@ public class Program {
 
             light.status = lightstatus;
         }
+
+        if (setupIndex == 6)
+        {
+            bikeTimer.Restart();
+        }
+    }
+
+    public static int getBestSetup()
+    {
+        int maxWeight = 0;
+        if ((int)bikeTimer.Elapsed.TotalSeconds > maxTime)
+        {
+            return 6;
+        }
+
+        for (int i = 0; i < setups.Count; i++)
+        {
+            int totalWeight = 0;
+            for (int j = 0; j < setups[i].Length; j++)
+            {
+                totalWeight += trafficLights.First(light => light.id == setups[i][j]).weight;
+            }
+            if (totalWeight >= maxWeight)
+            {
+                maxWeight = totalWeight;
+                return  i;
+            }
+        }
+        return 0;
     }
 
     public static void Tick()
@@ -75,13 +105,19 @@ public class Program {
         int currentSetup = -1;
         Stopwatch sw = Stopwatch.StartNew();
         Stopwatch trainStopWatch = new Stopwatch();
-
+        bikeTimer.Start();
         bool trainPassed = false;
         bool reset = true;
 
+        double activeTrainlightId = 0;
         int trafficLightCount = trafficLights.Length;
 
         TrafficlightInfo[] trafficlightStatusses = new TrafficlightInfo[trafficLights.Length];
+
+        Timer timer = new();
+        timer.id = 69.0;
+        timer.status = lightstatus.green;
+        timer.remainingTime = maxTime;
 
         for (int i = 0; i < trafficLights.Length; i++)
         {
@@ -124,6 +160,8 @@ public class Program {
             }
             try
             {
+                timer.remainingTime = maxTime - (int)bikeTimer.Elapsed.TotalSeconds;
+
                 //sends the trafficlight data
                 for(int i = 0; i < trafficLightCount; i++)
                 {
@@ -134,15 +172,13 @@ public class Program {
 
                 if (enableTimer)
                 {
-                    Timer timer = new();
-                    timer.id = 69.0;
-                    timer.status = 0;
-                    timer.remainingTime = 0;
 
                     ControllerInfo controllerInfo = new ControllerInfo();
                     controllerInfo.trafficLights = trafficlightStatusses;
+                    controllerInfo.timer = timer;
 
                     message = JsonSerializer.Serialize<ControllerInfo>(controllerInfo);
+                    message = message.Insert(message.IndexOf("69") + 2, ".0");
                 }
                 else
                 {
@@ -152,6 +188,10 @@ public class Program {
                 message += '\n';
                 message = message.Insert(message.IndexOf("22") + 2,".0");
                 message = message.Insert(message.IndexOf("42") + 2, ".0");
+                message = message.Insert(message.IndexOf("99") + 2, ".0");
+                message = message.Insert(message.IndexOf("152") + 3, ".0");
+                message = message.Insert(message.IndexOf("154") + 3, ".0");
+                message = message.Insert(message.IndexOf("160") + 3, ".0");
                 byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
                 if (socket.Connected)
                 {
@@ -173,23 +213,19 @@ public class Program {
             //if all trafficlights are clear generate new setup
             if (currentSetup == -1)
             {
-                int maxWeight = 0;
+                getBestSetup();
 
-                for (int i = 0; i < setups.Count; i++)
+                if (currentSetup == 5)
                 {
-                    int totalWeight = 0;
-                    for (int j = 0; j < setups[i].Length; j++)
-                    {
-                        totalWeight += trafficLights.First(light => light.id == setups[i][j]).weight;
-                    }
-                    if (totalWeight >= maxWeight)
-                    {
-                        maxWeight = totalWeight;
-                        currentSetup = i;
-                    }
+                    bikeTimer.Stop();
+                    timer.status = lightstatus.orange;
+                }
+                else
+                {
+                    timer.status = lightstatus.green;
+                    bikeTimer.Start();
                 }
             }
-            double activeTrainlightId = 0;
 
             //check for active trainLights
             if(trafficLights.First(light => light.id == 152).weight > 0)
@@ -205,11 +241,11 @@ public class Program {
                 activeTrainlightId = 160;
             }
 
-            TrafficLight activeTrainLight = trafficLights.First(light => light.id == activeTrainlightId);
-
             //train logic
             if (activeTrainlightId > 0 || trainPassed)
             {
+                TrafficLight activeTrainLight = trafficLights.First(light => light.id == activeTrainlightId);
+
                 if (!trainStopWatch.IsRunning)
                 {
                     trainStopWatch.Start();
@@ -232,11 +268,11 @@ public class Program {
                             activeTrainLight.status = lightstatus.red;
                             break;
                         case < 17000:
-                            setLights(7, lightstatus.orange);
+                            setLights(6, lightstatus.orange);
                             railWayLight.status = lightstatus.orange;
                             break;
                         case > 17000:
-                            setLights(7, lightstatus.red);
+                            setLights(6, lightstatus.red);
                             railWayLight.status &= lightstatus.green;
                             trainStopWatch.Reset();
                             trainPassed = false;
@@ -255,7 +291,7 @@ public class Program {
                             setLights(currentSetup, lightstatus.red);
                             break;
                         case < 10000:
-                            setLights(7, lightstatus.green);
+                            setLights(6, lightstatus.green);
                             railWayLight.status = lightstatus.orange;
                             break;
                         case < 15000:
@@ -296,7 +332,7 @@ public class Program {
 
     public static void Main()
     {
-        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0 };
+        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0, 99.0, 152.0, 154.0, 160.0 };
         trafficLights = new TrafficLight[lightIds.Length];
 
         for(int i = 0; i < lightIds.Length; i++)
@@ -313,6 +349,7 @@ public class Program {
         setups.Add(setup4);
         setups.Add(setup5);
         setups.Add(setup6);
+        setups.Add(trainSetup1);
 
         Console.Write("do you want to enable timer? y/n");
         string result = Console.ReadLine();
@@ -330,17 +367,12 @@ public class Program {
         while (true)
         {
             Console.WriteLine("Connection has been closed do you want to reconnect?   Y/N");
-            string retry = Console.ReadLine();
-            if (retry == "y" || retry == "Y")
-            {
-                listener.Listen(10);
-                socket = listener.Accept();
-                Tick();
-            }
-            else
-            {
-                break;
-            }
+            //string retry = Console.ReadLine();
+
+            Thread.Sleep(500);
+            listener.Listen(10);
+            socket = listener.Accept();
+            Tick();
         }
 
 
