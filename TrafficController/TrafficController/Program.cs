@@ -36,9 +36,10 @@ public class Program {
     static double[] setup5 = { 6.1, 7.1, 22.0, 28.1, 31.1, 31.2, 32.1, 32.2, 37.1, 37.2, 38.1, 38.2, 88.1};
     static double[] setup6 = { 7.1, 8.1, 28.1, 37.1 ,37.2, 38.1, 38.2, 42.0, 88.1 };
 
-    static double[] trainSetup1 = { 1.1 ,12.1 ,26.1, 35.1, 35.2, 36.1, 36.2, 86.1};
+    static double[] trainSetup1 = { 22.0 ,26.1, 28.1, 31.1, 31.2, 32.1, 32.2, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 86.1, 88.1};
 
     static List<double[]> setups = new();
+    static int oldSetup = -1;
 
     public static void InitSocket()
     {
@@ -61,6 +62,11 @@ public class Program {
 
     }
 
+    public static void sendTrafficLightInfo()
+    {
+
+    }
+
     public static void setLights(int setupIndex, lightstatus lightstatus)
     {
         for (int i = 0; i < setups[setupIndex].Length; i++)
@@ -78,10 +84,16 @@ public class Program {
 
     public static int getBestSetup()
     {
+        int bestSetup = 0;
         int maxWeight = 0;
         if ((int)bikeTimer.Elapsed.TotalSeconds > maxTime)
         {
             return 6;
+        }
+
+        if (trafficLights.First(light => light.id == 42).weight >= 1)
+        {
+            return 5;
         }
 
         for (int i = 0; i < setups.Count; i++)
@@ -91,13 +103,17 @@ public class Program {
             {
                 totalWeight += trafficLights.First(light => light.id == setups[i][j]).weight;
             }
+            if (i == 6)
+            {
+                totalWeight = totalWeight / 2;
+            }
             if (totalWeight >= maxWeight)
             {
                 maxWeight = totalWeight;
-                return  i;
+                bestSetup = i;
             }
         }
-        return 0;
+        return bestSetup;
     }
 
     public static void Tick()
@@ -136,6 +152,7 @@ public class Program {
 
         while (socket.Connected)
         {
+            //try receiving data from simulator
             try
             {
 
@@ -158,9 +175,13 @@ public class Program {
             {
                 Console.WriteLine($"receiving failed error: {e}");
             }
+            //try sending data to simulator
             try
             {
-                timer.remainingTime = maxTime - (int)bikeTimer.Elapsed.TotalSeconds;
+                if (!((int)bikeTimer.Elapsed.TotalSeconds > maxTime))
+                {
+                    timer.remainingTime = maxTime - (int)bikeTimer.Elapsed.TotalSeconds;
+                }        
 
                 //sends the trafficlight data
                 for(int i = 0; i < trafficLightCount; i++)
@@ -213,7 +234,7 @@ public class Program {
             //if all trafficlights are clear generate new setup
             if (currentSetup == -1)
             {
-                getBestSetup();
+                currentSetup = getBestSetup();
 
                 if (currentSetup == 5)
                 {
@@ -253,7 +274,6 @@ public class Program {
 
                 TrafficLight railWayLight = trafficLights.First(light => light.id == 99);
 
-
                 if (trainPassed)
                 {
                     if (reset)
@@ -276,6 +296,7 @@ public class Program {
                             railWayLight.status &= lightstatus.green;
                             trainStopWatch.Reset();
                             trainPassed = false;
+                            activeTrainlightId = 0;
                             break;
                     }
 
@@ -300,28 +321,37 @@ public class Program {
                         case < 27000:
                             activeTrainLight.status = lightstatus.green;
                             break;
+                        case > 27000:
+                            trainPassed = true;
+                            break;
+
                     };
                     reset = true;
                 }
             }
-
-            //set trafficlight statusses to correct status using the elapsed time
-
-            if (sw.ElapsedMilliseconds > 9000)
-            {
-                setLights(currentSetup, lightstatus.red);
-                Console.Clear();
-                sw.Restart();
-                currentSetup = -1;
-            }
-            else if (sw.ElapsedMilliseconds > 6000)
-            {
-                setLights(currentSetup, lightstatus.orange);
-            }
             else
             {
-                setLights(currentSetup, lightstatus.green);
+                //set trafficlight statusses to correct status using the elapsed time
+                if (sw.ElapsedMilliseconds > 13000)
+                {
+                    Console.Clear();
+                    sw.Restart();
+                    currentSetup = -1;
+                }
+                else if (sw.ElapsedMilliseconds > 10000)
+                {
+                    setLights(currentSetup, lightstatus.red);
+                }
+                else if (sw.ElapsedMilliseconds > 6000)
+                {
+                    setLights(currentSetup, lightstatus.orange);
+                }
+                else
+                {
+                    setLights(currentSetup, lightstatus.green);
+                }
             }
+
 
             Thread.Sleep(500);
 
@@ -332,7 +362,7 @@ public class Program {
 
     public static void Main()
     {
-        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0, 99.0, 152.0, 154.0, 160.0 };
+        double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0, 152.0, 154.0, 160.0, 99.0 };
         trafficLights = new TrafficLight[lightIds.Length];
 
         for(int i = 0; i < lightIds.Length; i++)
