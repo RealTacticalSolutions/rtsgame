@@ -23,9 +23,14 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
-    createComputeDescriptorSetLayout();
+
+    if (enableRaytracing)
+    {
+        createComputeDescriptorSetLayout();
+        createComputePipeline();
+    }
+
     createGraphicsPipeline();
-    createComputePipeline();
     createDepthResources();
     createFramebuffers();
     createCommandPool();
@@ -37,15 +42,20 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
         createObject(renderObjects[i]);
     }
 
-    createTransformBuffer();
-    createAccelerationStructures();
     createUniformBuffers();
-    createComputeShaderBuffers();
+    createTransformBuffer();
     createDescriptorPool();
+
+    if (enableRaytracing)
+    {
+        createAccelerationStructures();
+        createComputeShaderBuffers();
+        createComputeCommandBuffers();
+        createComputeDescriptorSets();
+    }
+    
     createDescriptorSets();
-    createComputeDescriptorSets();
     createCommandBuffers();
-    createComputeCommandBuffers();
     createSyncObjects();
     
 }
@@ -303,12 +313,16 @@ void renderer::createLogicalDevice() {
 
     //Binding all features in a pNext chain
     createInfo.pEnabledFeatures = &deviceFeatures;
-    createInfo.pNext = (VkPhysicalDeviceAccelerationStructureFeaturesKHR*) &accelerationStructureFeatures;
-    accelerationStructureFeatures.pNext = (VkPhysicalDeviceRayQueryFeaturesKHR*) &rayQueryFeatures;
-    rayQueryFeatures.pNext = (VkPhysicalDeviceBufferDeviceAddressFeatures*)&bufferDeviceAddressFeatures;
+   
+    if (enableRaytracing)
+    {
+        createInfo.pNext = (VkPhysicalDeviceAccelerationStructureFeaturesKHR*)&accelerationStructureFeatures;
+        accelerationStructureFeatures.pNext = (VkPhysicalDeviceRayQueryFeaturesKHR*)&rayQueryFeatures;
+        rayQueryFeatures.pNext = (VkPhysicalDeviceBufferDeviceAddressFeatures*)&bufferDeviceAddressFeatures;
+    }
     
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+    createInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
     if (enableValidationLayers) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -1275,7 +1289,7 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue& que
     std::cout << "help";
 }
 
-void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
+RayResult renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
 {
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &raycastInFlightFences[currentFrame]);
@@ -1298,7 +1312,7 @@ void renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
     RayResult res{};
     memcpy(&res, computeShaderBuffers[currentFrame].handle, sizeof(RayResult));
 
-    std::cout << "intersectionPoint:" << res.intersectionPoint.x << "," << res.intersectionPoint.y << "," << res.intersectionPoint.z << std::endl;
+    return res;
 }
 
 void renderer::addInstance(glm::mat4 transform)
@@ -2033,9 +2047,22 @@ bool renderer::checkDeviceExtensionSupport(VkPhysicalDevice device)
     VK_CHECK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()));
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+    std::set<std::string> requiredRayTracingExtensions(rayTracingExtensions.begin(), rayTracingExtensions.end());
 
     for (const auto& extension : availableExtensions) {
         requiredExtensions.erase(extension.extensionName);
+    }
+
+    for (const auto& extension : availableExtensions) {
+        requiredRayTracingExtensions.erase(extension.extensionName);
+    }
+
+    enabledExtensions.insert(enabledExtensions.end(), deviceExtensions.begin(), deviceExtensions.end());
+
+    if (requiredRayTracingExtensions.empty())
+    {
+        enableRaytracing = true;
+        enabledExtensions.insert(enabledExtensions.end(), rayTracingExtensions.begin(), rayTracingExtensions.end());
     }
 
     return requiredExtensions.empty();
