@@ -27,9 +27,11 @@ private:
 	Scene scene;
 	Camera camera;
 	std::vector<messageObject> message;
+	TimerObject timer;
 
 	std::vector<WayPoints*> paths;
 	std::vector<WayPoints*> bikepaths;
+	std::vector<WayPoints*> trainpaths;
 
 	glm::vec3 spawnpoint = glm::vec3(0.34f,-1.0f,1.0f);
 
@@ -66,7 +68,10 @@ private:
 	glm::vec3(2.408f, 0.826f,z),//31.2
 	glm::vec3(2.420f, -1.513f,z),//32.1
 	glm::vec3(2.212f, -0.138f,z),//32.2
-
+	glm::vec3(5.194f, -2.646f,z), //160
+	glm::vec3(-1.136f, -2.623f,z), //152
+	glm::vec3(-1.1312f, -2.89195f,z ), //154
+	glm::vec3(1.020f, -2.750f,z) //99.0
 	};
 
 	void updateColor(int index, glm::vec3 color);
@@ -74,6 +79,7 @@ private:
 	bool approxEqual(glm::vec3 a, glm::vec3 b, float epsilon);
 	void updateWayPoints(double delta);
 	void updateWayPointsBikes(double delta);
+	void updateWayPointsTrain(double delta);
 	void updateWayPointsPeople(double delta);
 	void initWayPoints();
 	void addTrafficLight(std::string id, int index, int weight, int status);

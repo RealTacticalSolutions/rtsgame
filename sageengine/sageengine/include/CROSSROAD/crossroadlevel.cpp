@@ -11,7 +11,7 @@ std::condition_variable g_conditionVariable;
 
 bool messagereadable = false;
 
-bool g_serverReady = false;
+bool g_serverReady = true;
 
 bool server_running = true;
 bool client_running = true;
@@ -19,15 +19,15 @@ bool client_running = true;
 
 void CrossRoadLevel::init()
 {
-    IP = "127.0.0.1";
+    IP = "86.94.105.219";
     
     PORT = "11000";
     SERVER_PORT = "11000";
 
-    myClient = new client(IP, PORT, message_ref, lights);
-    myServer = new server(SERVER_PORT, lights);
+    myClient = new client(IP, PORT, message_ref, timer_ref, lights);
+    //myServer = new server(SERVER_PORT, lights);
 
-    serverThread = std::thread(&server::startServer, *myServer);
+    //serverThread = std::thread(&server::startServer, *myServer);
     clientThread = std::thread(&client::startClient, *myClient);
 }
 
@@ -82,7 +82,7 @@ void CrossRoadLevel::cleanup()
 {
     server_running = false;
     client_running = false;
-    serverThread.join();
+    //serverThread.join();
     clientThread.join();
     //delete myClient;
     //delete myServer;

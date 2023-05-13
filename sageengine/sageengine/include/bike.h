@@ -16,6 +16,7 @@ public:
 	void setCurrentWayPoint(int waypoint);
 	WayPointType getEnum();
 	void setWayPoint(WayPoints* newwaypoints);
+	bool weightadded = false;
 private:
 	WayPoints* waypoints;
 	int currentwaypoint;

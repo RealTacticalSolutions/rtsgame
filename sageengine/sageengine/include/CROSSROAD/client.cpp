@@ -1,3 +1,4 @@
+#include "timerObject.h"
 #include "pchroads.h"
 #include "client.h"
 
@@ -76,6 +77,7 @@ void client::startClient()
         for (size_t i = 0; i < lights.size(); i++)
         {
             messageclient.push_back(trafficStatusObject{ std::stod(lights[i].id), lights[i].weight});
+            //std::cout << "Light ID: " << lights[i].id << " Light Weight : " << lights[i].weight << std::endl;
         }
         nlohmann::json dataclient;
         client::to_json_traffic(dataclient, messageclient);
@@ -100,6 +102,7 @@ void client::startClient()
             WSACleanup();
             return;
         }
+
         std::cout << "message received" << std::endl;
         // Add null terminator to received data
         recvBuf[bytesReceived] = '\0';
@@ -108,6 +111,7 @@ void client::startClient()
         if (strlen(recvBuf) == 0) {
             continue; // If the message is empty, wait for the next one
         }
+
 
         // Todo:: temporary we need a buffer for messages, otherwise it overwrites and crashes
         while (!message.empty())
@@ -119,17 +123,27 @@ void client::startClient()
         try
         {
              nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
-            for (const auto& obj : dataserver) {
-                std::string id_str = obj["id"]; // read the id as a string
-                double id = std::stod(id_str);  // convert the id string to a double
-                //double id = obj["id"];
+            for (const auto& obj : dataserver["trafficLights"]) {
+                //std::string id_str = obj["id"]; // read the id as a string
+                //double id = std::stod(id_str);  // convert the id string to a double
+                double id = obj["id"];
                 std::stringstream ss;
                 ss << std::fixed << std::setprecision(1) << id;
-                 id_str = ss.str(); // convert the id double back to a string with one decimal point
+                std::string id_str = ss.str(); // convert the id double back to a string with one decimal point
                 message.push_back({ id_str, obj["status"] });
                 // Print the received data to the console   
                 //std::cout << "Received struct from server: id = " << id << ", color = " << obj["status"] << std::endl;
+                
             }
+
+            timer.id = dataserver["timer"]["id"];
+            timer.status = dataserver["timer"]["status"];
+            timer.remainingTime = dataserver["timer"]["remainingTime"];
+            
+
+            std::cout << "timer ID: " << timer.id << " timer status: " << timer.status << " remainingtime: " << timer.remainingTime << std::endl;
+
+
             messagereadable = true;
             std::cout << "send message / data" << std::endl;
         }

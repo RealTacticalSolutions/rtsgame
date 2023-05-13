@@ -5,16 +5,22 @@
 #include "CROSSROAD/crossroadlevel.h"
 
 #include <random>
-static double lastSpawnTime = 0.0;
+static double lastSpawnTimeCar = 0.0;
+static double lastSpawnTimeBike = 0.0;
+static double lastSpawnTimeTrain = 0.0;
+static double lastSpawnTimeBus = 0.0;
 const int maxinstances = 200;
 static int carcount = 2;
 static int bikecount = 0;
+static int traincount = 0;
+static int buscount = 0;
 
 std::random_device rd; // obtain a random number from hardware
 std::mt19937 gen(rd()); // seed the generator
 
-std::uniform_int_distribution<> dicar(0, 11); // define the range
+std::uniform_int_distribution<> dicar(0, 10); // define the range
 std::uniform_int_distribution<> dibike(0, 1); // define the range
+std::uniform_int_distribution<> ditrain(0, 2); // define the range
 std::uniform_int_distribution<> displit(0, 1); // define the range
 
 
@@ -23,7 +29,7 @@ std::uniform_int_distribution<> displit(0, 1); // define the range
 
 void application::mainLoop()
 {
-	CrossRoadLevel level(message, scene.gameObjects, lights);
+	CrossRoadLevel level(message, timer, scene.gameObjects, lights);
 
     float cameraSpeed = 2.0f;
     float sensitivity = 0.1f;
@@ -51,6 +57,7 @@ void application::mainLoop()
 		updateTest(currentFrameTime);
 		updateWayPoints(delta);
 		updateWayPointsBikes(delta);
+		updateWayPointsTrain(delta);
 		updateLightWeights();
 		drawFrame();
 
@@ -183,6 +190,8 @@ void application::constructGameobjects()
 	scene.blueprintObject(ShapeTool::createSquare(0.05f), "../../../textures/bike.jpg");
 
 	scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
+
+	scene.blueprintObject(loadModel("../../../models/train.obj"));
 	
 
 	/* glm::vec4 gridStart = glm::vec4(scene.gameObjects[0].mesh.vertices[0].pos, 1.0f) * scene.gameObjects[0].properties.transform;
@@ -298,7 +307,25 @@ void application::start()
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[27]), glm::vec3(1.0f, 0.0f, 0.0f)); //32.2
 	addTrafficLight("32.2", scene.gameObjects.size() - 1, 0, 0);
 
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[28]), glm::vec3(1.0f, 0.0f, 0.0f)); //160.2
+	addTrafficLight("160.0", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[29]), glm::vec3(1.0f, 0.0f, 0.0f)); //152.2
+	addTrafficLight("152.0", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[30]), glm::vec3(1.0f, 0.0f, 0.0f)); //154.2
+	addTrafficLight("154.0", scene.gameObjects.size() - 1, 0, 0);
+
+	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), lightspos[31]), glm::vec3(1.0f, 0.0f, 0.0f)); //99.0
+	addTrafficLight("99.0", scene.gameObjects.size() - 1, 0, 0);
+
+
 	scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,2.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+
+	spawnpoint = trainpaths[1]->getWayPointPosition(0);
+	scene.instantiateTrain(scene.bluePrints[5], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), trainpaths[1]);
+	traincount += 1;
 
 	////spawnpoint = paths[1].getWayPointPosition(0);
 	//spawnpoint = glm::vec3(1.0f, 0.0f, 1.0f);
@@ -368,26 +395,49 @@ Mesh application::loadModel(char* path) {
 
 void application::updateTest(const double currentFrameTime)
 {
-	if (carcount < 10 && 0.1 < (currentFrameTime - lastSpawnTime))
+	if (carcount < 60 && 0.1 < (currentFrameTime - lastSpawnTimeCar))
 	{
 		int pathindex = dicar(gen);
-		spawnpoint = paths[pathindex]->getWayPointPosition(0);
-		addWeight(paths[pathindex]->getTrafficLightId());
-		//scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.005f, 0.005f, 0.005f)), spawnpoint * glm::vec3(100.0f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
-		scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f),spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+		if (pathindex == 2)
+		{
+			if (buscount < 1 && 60 < (currentFrameTime - lastSpawnTimeBus))
+			{
+				spawnpoint = paths[pathindex]->getWayPointPosition(0);
+				scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
 
-		lastSpawnTime = currentFrameTime;
-		carcount += 1;
+				lastSpawnTimeBus = currentFrameTime;
+				buscount += 1;
+			}
+		}
+		else
+		{
+			spawnpoint = paths[pathindex]->getWayPointPosition(0);
+			//scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.005f, 0.005f, 0.005f)), spawnpoint * glm::vec3(100.0f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+			scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+
+			lastSpawnTimeCar = currentFrameTime;
+			carcount += 1;
+		}
+		
 	}
 
-	if (bikecount < 5 && 0.1 < (currentFrameTime - lastSpawnTime))
+	if (bikecount < 50 && 0.1 < (currentFrameTime - lastSpawnTimeBike))
 	{
 		int pathindex = dibike(gen);
 		//pathindex = 1;
 		spawnpoint = bikepaths[pathindex]->getWayPointPosition(0);
 		scene.instantiateBike(scene.bluePrints[3], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), bikepaths[pathindex]);
-		lastSpawnTime = currentFrameTime;
+		lastSpawnTimeBike = currentFrameTime;
 		bikecount += 1;
+	}
+
+	if (traincount < 1 && 60 < (currentFrameTime - lastSpawnTimeTrain))
+	{
+		int pathindex = ditrain(gen);
+		spawnpoint = trainpaths[pathindex]->getWayPointPosition(0);
+		scene.instantiateTrain(scene.bluePrints[5], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), trainpaths[pathindex]);
+		lastSpawnTimeTrain = currentFrameTime;
+		traincount += 1;
 	}
 
 
@@ -463,7 +513,7 @@ void application::updateWayPoints(double delta)
 		WayPoints* waypoints = car->getWayPoints();
 
 
-		glm::vec3 target(waypoints->getWayPointPosition(currentpoint));
+		glm::vec3 target(waypoints->getWayPointPosition(currentpoint).x, waypoints->getWayPointPosition(currentpoint).y, 0.0f);
 
 		// Get the current position of the object
 		glm::vec3 position = glm::vec3(car->properties.transform[3]);
@@ -511,8 +561,14 @@ void application::updateWayPoints(double delta)
 				car->setWayPoint(test.getNewPath(nextindex));
 				break;
 			case TrafficPoint:
-				//todo:: also remove from weight
 				lightid = waypoints->getLightId(currentpoint);
+				if (!car->weightadded)
+				{
+					addWeight(lightid);
+					car->weightadded = true;
+				}
+				//todo:: also remove from weight
+				
 				if (!(lightid == "-1"))
 				{
 					if (scene.gameObjects[getId(lights, lightid)]->properties.color == getColor(RED))
@@ -523,6 +579,7 @@ void application::updateWayPoints(double delta)
 					{
 						removeWeight(lightid);
 						car->setCurrentWayPoint(currentpoint + 1);
+						car->weightadded = false;
 					}
 				}
 				break;
@@ -545,6 +602,128 @@ void application::updateWayPoints(double delta)
 
 }
 
+
+// Updates Train waypoints
+void application::updateWayPointsTrain(double delta)
+{
+	if (scene.gameObjects.empty())
+	{
+		return;
+	}
+
+	std::vector<std::pair<size_t, Train*>> trains;
+	for (size_t i = 0; i < scene.gameObjects.size(); i++)
+	{
+		if (Train* train = dynamic_cast<Train*>(scene.gameObjects[i].get()))
+		{
+			trains.emplace_back(i, train);
+		}
+	}
+
+	std::vector<int> trainstoremove;
+	for (auto& [index, train] : trains)
+	{
+
+		if (train->getWayPointSize() < 1)
+		{
+			throw std::runtime_error("Waypoint index must be not < 1");
+		}
+		// Get current waypoint (target)
+		int currentpoint = train->getCurrentWayPoint();
+
+		// Set the target position
+		WayPoints* waypoints = train->getWayPoints();
+
+
+		glm::vec3 target(waypoints->getWayPointPosition(currentpoint).x, waypoints->getWayPointPosition(currentpoint).y, 0.0f);
+
+		// Get the current position of the object
+		glm::vec3 position = glm::vec3(train->properties.transform[3]);
+
+		// Calculate the direction from the current position to the target position
+		glm::vec3 direction;
+		if (glm::length(position - target) != 0.0f) {
+			direction = glm::normalize(target - position);
+		}
+		else {
+			// Handle the case where position and target are the same vector
+			direction = glm::vec3(0.000001f); // set direction to a default value
+			// Todo:: causes some bugs when reaching endpoint removing alot of once for exmaple
+		}
+
+		// Set the velocity
+		float velocity = 50.0f * (delta / 60);
+
+		// Calculate the new position based on the direction and velocity
+		glm::vec3 new_pos = position + direction * velocity;
+
+
+		bool removed = false;
+		if (approxEqual(position, target, 0.00005f))
+		{
+
+			WayPointType pointType = waypoints->getEnum(currentpoint);
+
+			std::string lightid;
+			int nextwaypoint;
+			WayPoint test = waypoints->getWayPoint(currentpoint);
+			int nextindex = displit(rd);
+
+
+			switch (pointType)
+			{
+			case General:
+				train->setCurrentWayPoint(currentpoint + 1);
+				break;
+			case EndPoint:
+				removeWeight(lightid);
+				trainstoremove.push_back(index);
+				removed = true;
+				break;
+			case SplitPoint:
+				train->setWayPoint(test.getNewPath(nextindex));
+				break;
+			case TrafficPoint:
+				lightid = waypoints->getLightId(currentpoint);
+				if (!train->weightadded)
+				{
+					addWeight(lightid);
+					train->weightadded = true;
+				}
+				//todo:: also remove from weight
+				
+				if (!(lightid == "-1"))
+				{
+					if (scene.gameObjects[getId(lights, lightid)]->properties.color == getColor(RED))
+					{
+						continue;
+					}
+					else
+					{
+						train->setCurrentWayPoint(currentpoint + 1);
+						removeWeight(lightid);
+						train->weightadded = false;
+					}
+				}
+				break;
+			default:
+				//scene.gameObjects[index].properties.transform = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+				break;
+			}
+		}
+		if (!removed)
+		{
+			scene.gameObjects[index]->properties.transform = glm::scale(glm::translate(glm::mat4(1.0f), new_pos), glm::vec3(0.005f, 0.005f, 0.005f));
+		}
+	}
+
+	for (size_t i = 0; i < trainstoremove.size(); i++)
+	{
+		scene.removeObject(trainstoremove[i]);
+		traincount -= 1;
+	}
+
+}
 // Updates bike waypoints
 void application::updateWayPointsBikes(double delta)
 {
@@ -577,7 +756,7 @@ void application::updateWayPointsBikes(double delta)
 		WayPoints* waypoints = bike->getWayPoints();
 
 
-		glm::vec3 target(waypoints->getWayPointPosition(currentpoint));
+		glm::vec3 target(waypoints->getWayPointPosition(currentpoint).x, waypoints->getWayPointPosition(currentpoint).y, 0.1f);
 
 		// Get the current position of the object
 		glm::vec3 position = glm::vec3(bike->properties.transform[3]);
@@ -625,8 +804,14 @@ void application::updateWayPointsBikes(double delta)
 				bike->setWayPoint(test.getNewPath(nextindex));
 				break;
 			case TrafficPoint:
-				//todo:: also remove from weight
 				lightid = waypoints->getLightId(currentpoint);
+				if (!bike->weightadded)
+				{
+					addWeight(lightid);
+					bike->weightadded = true;
+				}
+				//todo:: also remove from weight
+				
 				if (!(lightid == "-1"))
 				{
 					if (scene.gameObjects[getId(lights, lightid)]->properties.color == getColor(RED))
@@ -636,6 +821,8 @@ void application::updateWayPointsBikes(double delta)
 					else
 					{
 						bike->setCurrentWayPoint(currentpoint + 1);
+						removeWeight(lightid);
+						bike->weightadded = false;
 					}
 				}
 				break;
@@ -758,7 +945,7 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(-0.411610035793, 0.2086450894768, z)),
 		WayPoint(glm::vec3(-0.1365356998153, -0.4790407504676, z)),
 		WayPoint(glm::vec3(0.1179080609641, -1.2286183160069, z)),
-		WayPoint(glm::vec3(0.2829526625507, -1.8956735807528, z)),/* stoplicht alarm trein*/
+		WayPoint(glm::vec3(0.2829526625507, -1.8956735807528, z), TrafficPoint , "99.0"),/* stoplicht alarm trein*/
 		WayPoint(glm::vec3(0.4891385172183, -3.2306959961184, z)),
 		WayPoint(glm::vec3(0.5995569026235, -4.136126756441, z)),
 		WayPoint(glm::vec3(0.6731691595603, -4.8354431973405, z), EndPoint),
@@ -857,11 +1044,8 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(-8.6539814206188, 2.7802355590692, z), EndPoint),
 	};
 
-	/*5.1*/std::vector<WayPoint> waypoints10 = {
-		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,z)),
-		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,z)),
-		WayPoint(lightspos[10],TrafficPoint, "5.1"),
-		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588,z)),
+	WayPoints* splitbottomstraight51 = new WayPoints
+	({
 		WayPoint(glm::vec3(1.0165189064083, -1.1373448322266,z)),
 		WayPoint(glm::vec3(0.9059514575216, -0.4729394361205,z)),
 		WayPoint(glm::vec3(0.8963982678125, 0.2362759914028,z)),
@@ -873,13 +1057,9 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(1.3874079450464, 4.0524340471241, z)),
 		WayPoint(glm::vec3(1.5, 4.5, z)),
 		WayPoint(glm::vec3(1.6476071514173, 4.9148711321509, z), EndPoint),
-	};
-
-	/*5.1 Right turn*/std::vector<WayPoint> waypoints11 = {
-		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,z)),
-		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,z)),
-		WayPoint(lightspos[10],TrafficPoint, "5.1"),
-		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588, z)),
+		});
+	WayPoints* splitbottomright51 = new WayPoints
+	({	
 		WayPoint(glm::vec3(1.5812641907014, -1.4308044560153, z)),
 		WayPoint(glm::vec3(2.3360846157252, -1.0728039115754, z)),
 		WayPoint(glm::vec3(2.8887496340606, -1.1692631299271, z)),
@@ -888,6 +1068,14 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(6.2353914982127, -1.6954067884867, z)),
 		WayPoint(glm::vec3(7.4997180666451, -1.7690467585517, z)),
 		WayPoint(glm::vec3(8.8874737812391, -1.856144397543, z), EndPoint),
+		});
+
+	/*5.1*/std::vector<WayPoint> waypoints10 = {
+		WayPoint(glm::vec3(1.8317933679565, -5.0394228135905,z)),
+		WayPoint(glm::vec3(1.6493525516954, -4.324862949901,z)),
+		WayPoint(lightspos[10],TrafficPoint, "5.1"),
+		WayPoint(glm::vec3(1.2655508561342, -2.2651794953588,z), SplitPoint, "-1", std::vector<WayPoints*>{splitbottomstraight51,splitbottomright51}),
+		
 	};
 
 	
@@ -902,7 +1090,9 @@ void application::initWayPoints()
 	paths.push_back(new WayPoints(waypoints8,"7.1"));
 	paths.push_back(new WayPoints(waypoints9,"6.1"));
 	paths.push_back(new WayPoints(waypoints10,"5.1"));
-	paths.push_back(new WayPoints(waypoints11,"5.1"));
+
+
+	//bike
 
 	WayPoints* splitbottomlefteast = new WayPoints
 	({
@@ -1007,7 +1197,7 @@ void application::initWayPoints()
 	std::vector<WayPoint> bikewaypoints0 = {
 		WayPoint(glm::vec3(2.3649879308739, -4.964727604776, z)),
 		WayPoint(glm::vec3(2.1376245552665, -4.0227936201166, z)),
-		WayPoint(glm::vec3(2.0206948192398, -3.3212152039565, z)), /*train 99.0*/
+		WayPoint(glm::vec3(2.0206948192398, -3.3212152039565, z), TrafficPoint, "99.0"), /*train 99.0*/
 		WayPoint(glm::vec3(1.8712846009835, -2.3013280619459, z)),
 		WayPoint(glm::vec3(2.3000269664146, -1.7686481533799, z)),
 		WayPoint(lightspos[23],TrafficPoint, "22.0"),
@@ -1036,6 +1226,47 @@ void application::initWayPoints()
 	};
 
 	bikepaths.push_back(new WayPoints(bikewaypoints1));
+
+
+	//Train
+	WayPoints* splittrain1 = new WayPoints
+	({
+		WayPoint(glm::vec3(3.8355656098394, -2.6390335567997, z)),
+		WayPoint(glm::vec3(-8.9574269985002, -2.6361722130225,z), EndPoint),
+	});
+	WayPoints* splittrain2 = new WayPoints
+	({
+		WayPoint(glm::vec3(3.8353918822043, -2.895685941053, z)),
+		WayPoint(glm::vec3(-8.9574269985002, -2.9018107689424, z),EndPoint),
+	});
+
+	WayPoints* splittrain3 = new WayPoints
+	({
+		WayPoint(glm::vec3(5.1943877825627, -2.6458779943563,z)),
+		WayPoint(glm::vec3(8.911639828274, -2.6338971541956,z), EndPoint),
+		});
+
+	std::vector<WayPoint> trainpoints1 = {
+		WayPoint(glm::vec3(8.912f, -2.634f, z),TrafficPoint, "160.0"),
+		WayPoint(glm::vec3(5.1943877825627, -2.6458779943563, z),SplitPoint, "-1", std::vector<WayPoints*>{ splittrain1,splittrain2 }) //split),
+	};
+
+	std::vector<WayPoint> trainpoints2 = {
+		WayPoint(glm::vec3(-8.9574269985002, -2.6361722130225, z)),
+		WayPoint(glm::vec3(-1.1360919527864, -2.6231885826518,z),TrafficPoint, "152.0"),//light
+		WayPoint(glm::vec3(3.8355656098394, -2.6390335567997, z),SplitPoint, "-1", std::vector<WayPoints*>{ splittrain3,splittrain3 }) //split),
+	};
+
+	std::vector<WayPoint> trainpoints3 = {
+		WayPoint(glm::vec3(-8.9574269985002, -2.9018107689424, z)),
+		WayPoint(glm::vec3(-1.1312054528269, -2.8919460804226,z), TrafficPoint, "154.0"), //light
+		WayPoint(glm::vec3(3.8353918822043, -2.895685941053, z),SplitPoint, "-1", std::vector<WayPoints*>{ splittrain3,splittrain3 }) //split),
+	};
+
+	trainpaths.push_back(new WayPoints(trainpoints1, "160.0"));
+	trainpaths.push_back(new WayPoints(trainpoints2, "152.0"));
+	trainpaths.push_back(new WayPoints(trainpoints3, "154.0"));
+
 }
 
 // Todo: use inheritance from gameObject class instead of its own vector

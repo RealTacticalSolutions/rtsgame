@@ -27,7 +27,7 @@ void Camera::rotateAround(float yawAngle, float pitchAngle, const glm::vec3& up)
     glm::vec4 rotatedToTarget2 = glm::vec4(newToTarget, 1.0f) * pitchRotationMatrix;
     glm::vec3 newToTarget2 = glm::vec3(rotatedToTarget2);
 
-    std::cout << getUpVector().x << getUpVector().y << getUpVector().z;
+    //std::cout << getUpVector().x << getUpVector().y << getUpVector().z;
     // Update the camera's position to maintain the same distance to the look-at position
     position = lookPosition - distance * glm::normalize(newToTarget2);
 }
