@@ -15,6 +15,9 @@ static int bikecount = 0;
 static int traincount = 0;
 static int buscount = 0;
 
+const float EPSILON = 0.005f;
+const float VELOCITY = 50.0f;
+
 std::random_device rd; // obtain a random number from hardware
 std::mt19937 gen(rd()); // seed the generator
 
@@ -403,7 +406,7 @@ void application::updateTest(const double currentFrameTime)
 			if (buscount < 1 && 60 < (currentFrameTime - lastSpawnTimeBus))
 			{
 				spawnpoint = paths[pathindex]->getWayPointPosition(0);
-				scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+				scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex], glm::vec3(0.005f, 0.005f, 0.005f));
 
 				lastSpawnTimeBus = currentFrameTime;
 				buscount += 1;
@@ -413,7 +416,7 @@ void application::updateTest(const double currentFrameTime)
 		{
 			spawnpoint = paths[pathindex]->getWayPointPosition(0);
 			//scene.instantiateCar(scene.bluePrints[2], glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.005f, 0.005f, 0.005f)), spawnpoint * glm::vec3(100.0f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
-			scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex]);
+			scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex], glm::vec3(0.005f, 0.005f, 0.005f));
 
 			lastSpawnTimeCar = currentFrameTime;
 			carcount += 1;
@@ -530,14 +533,19 @@ void application::updateWayPoints(double delta)
 		}
 
 		// Set the velocity
-		float velocity = 50.0f * (delta / 60);
+		float velocity = VELOCITY * (delta / 60);
 
 		// Calculate the new position based on the direction and velocity
 		glm::vec3 new_pos = position + direction * velocity;
 
+		// Calculate the rotation angle based on the direction
+		float rotation_angle = atan2(direction.y, direction.x);
+
+		rotation_angle += glm::radians(-90.0f); // Rotate by 90 degrees around the Z-axis
+
 
 		bool removed = false;
-		if (approxEqual(position, target, 0.00005f))
+		if (approxEqual(position, target, EPSILON))
 		{
 
 			WayPointType pointType = waypoints->getEnum(currentpoint);
@@ -590,7 +598,14 @@ void application::updateWayPoints(double delta)
 		}
 		if (!removed)
 		{
-			scene.gameObjects[index]->properties.transform = glm::scale(glm::translate(glm::mat4(1.0f), new_pos), glm::vec3(0.005f, 0.005f, 0.005f));
+			//scene.gameObjects[index]->properties.transform = glm::scale(glm::translate(glm::mat4(1.0f), new_pos), glm::vec3(0.005f, 0.005f, 0.005f));
+			//car->properties.transform = glm::scale(glm::translate(glm::mat4(1.0f), new_pos), glm::vec3(0.005f, 0.005f, 0.005f));
+
+			car->properties.transform = glm::translate(glm::mat4(1.0f), new_pos);
+			car->properties.transform = glm::rotate(car->properties.transform, rotation_angle, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotate around Z-axis
+			car->properties.transform = glm::scale(car->properties.transform, car->scale);
+			car->SetUpVector(glm::vec3(0.0f, 1.0f, 0.0f)); // Set the up vector
+			car->SetRightVector(glm::vec3(1.0f, 0.0f, 0.0f)); // Set the right vector
 		}
 	}
 
@@ -652,14 +667,14 @@ void application::updateWayPointsTrain(double delta)
 		}
 
 		// Set the velocity
-		float velocity = 50.0f * (delta / 60);
+		float velocity = VELOCITY * (delta / 60);
 
 		// Calculate the new position based on the direction and velocity
 		glm::vec3 new_pos = position + direction * velocity;
 
 
 		bool removed = false;
-		if (approxEqual(position, target, 0.00005f))
+		if (approxEqual(position, target, EPSILON))
 		{
 
 			WayPointType pointType = waypoints->getEnum(currentpoint);
@@ -773,14 +788,14 @@ void application::updateWayPointsBikes(double delta)
 		}
 
 		// Set the velocity
-		float velocity = 50.0f * (delta / 60);
+		float velocity = VELOCITY * (delta / 60);
 
 		// Calculate the new position based on the direction and velocity
 		glm::vec3 new_pos = position + direction * velocity;
 		
 
 		bool removed = false;
-		if (approxEqual(position, target, 0.00005f))
+		if (approxEqual(position, target, EPSILON))
 		{
 
 			WayPointType pointType = waypoints->getEnum(currentpoint);
