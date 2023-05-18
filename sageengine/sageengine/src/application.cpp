@@ -15,8 +15,8 @@ static int bikecount = 0;
 static int traincount = 0;
 static int buscount = 0;
 
-const float EPSILON = 0.005f;
-const float VELOCITY = 50.0f;
+const float EPSILON = 0.05f;
+const float VELOCITY = 80.0f;
 
 std::random_device rd; // obtain a random number from hardware
 std::mt19937 gen(rd()); // seed the generator

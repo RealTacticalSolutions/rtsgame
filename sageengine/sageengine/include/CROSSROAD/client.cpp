@@ -123,7 +123,7 @@ void client::startClient()
         try
         {
              nlohmann::json dataserver = nlohmann::json::parse(recvBuf);
-            for (const auto& obj : dataserver["trafficLights"]) {
+            for (const auto& obj : dataserver["trafficlights"]) {
                 //std::string id_str = obj["id"]; // read the id as a string
                 //double id = std::stod(id_str);  // convert the id string to a double
                 double id = obj["id"];
