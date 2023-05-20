@@ -22,7 +22,7 @@ std::random_device rd; // obtain a random number from hardware
 std::mt19937 gen(rd()); // seed the generator
 
 std::uniform_int_distribution<> dicar(0, 10); // define the range
-std::uniform_int_distribution<> dibike(0, 1); // define the range
+std::uniform_int_distribution<> dibike(0, 4); // define the range
 std::uniform_int_distribution<> ditrain(0, 2); // define the range
 std::uniform_int_distribution<> displit(0, 1); // define the range
 
@@ -427,7 +427,7 @@ void application::updateTest(const double currentFrameTime)
 	if (bikecount < 50 && 0.1 < (currentFrameTime - lastSpawnTimeBike))
 	{
 		int pathindex = dibike(gen);
-		//pathindex = 1;
+		//pathindex = 4;
 		spawnpoint = bikepaths[pathindex]->getWayPointPosition(0);
 		scene.instantiateBike(scene.bluePrints[3], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), bikepaths[pathindex]);
 		lastSpawnTimeBike = currentFrameTime;
@@ -1199,6 +1199,7 @@ void application::initWayPoints()
 	({
 	/*std::vector<WayPoint> splittoprighteast =
 	{*/
+		WayPoint(glm::vec3(1.92396216694, 1.103253546383,z)),
 		WayPoint(glm::vec3(2.8760401888494, 0.834518921357,z)),
 		WayPoint(glm::vec3(4.038781641347, 0.6220950021507,z)),
 		WayPoint(glm::vec3(5.4215626090726, 0.3515345179165,z)),
@@ -1243,6 +1244,95 @@ void application::initWayPoints()
 	bikepaths.push_back(new WayPoints(bikewaypoints1));
 
 
+	WayPoints* splittoprightnorthfromsouth = new WayPoints
+	({
+		WayPoint(glm::vec3(2.4413863820367, 3.196796226526, z)),
+		WayPoint(glm::vec3(2.6933648161051, 3.8882719293183, z)),
+		WayPoint(glm::vec3(2.8984635415096, 4.5211479962809, z)),
+		WayPoint(glm::vec3(3.1094222304971, 5.0602646459156, z), EndPoint),
+		});
+
+	std::vector<WayPoint> bikewaypoints2 =
+	{
+		WayPoint(glm::vec3(8.8294356458248, 0.2264926653515, z)),
+		WayPoint(glm::vec3(8.0334487890244, 0.2373742630185, z)),
+		WayPoint(glm::vec3(6.9766043146292, 0.2745512566254, z)),
+		WayPoint(glm::vec3(5.5810453488946, 0.5118478549802, z)),
+		WayPoint(glm::vec3(3.9829266386036, 0.8275493468957, z)),
+		WayPoint(glm::vec3(2.6151863377684, 1.083636892584, z)),
+		WayPoint(glm::vec3(2.0622700459414, 1.223321008414, z)),
+		WayPoint(glm::vec3(1.8873375557905, 1.5937680758903, z)),
+		WayPoint(glm::vec3(1.9333394029771, 2.0537865477567, z)),
+		WayPoint(glm::vec3(2.0629809723213, 2.3005237281214, z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprightwest,splittoprightnorthfromsouth }) // split
+	};
+
+	bikepaths.push_back(new WayPoints(bikewaypoints2));
+
+	WayPoints* splittoplefttoeast = new WayPoints
+	({
+		WayPoint(glm::vec3(-1.7997498786026, 3.2342909368346,z)),
+		WayPoint(glm::vec3(-1.4452713817529, 3.1355754060663,z)),
+		WayPoint(glm::vec3(-1.1132282328051, 3.0862176406822,z)),
+		WayPoint(glm::vec3(0.6, 2.6,z)),
+		WayPoint(glm::vec3(1.3475429244315, 2.4197846273787,z)),
+		WayPoint(glm::vec3(1.7587163839669, 2.2812370486222,z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprighteast,splittoprightnorth }) // split
+		});
+
+	std::vector<WayPoint> bikewaypoints3 =
+	{
+		WayPoint(glm::vec3(-1.335556172347, 5.0681626068624, z)),
+		WayPoint(glm::vec3(-1.4994133176024, 4.7188881656602, z)),
+		WayPoint(glm::vec3(-1.680518583411, 4.2919971819685, z)),
+		WayPoint(glm::vec3(-1.883183999911, 3.9082264996598, z)),
+		WayPoint(glm::vec3(-2.1548418986239, 3.3649107022341,z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoplefttoeast,splittopleftsouth }) // split
+	};
+
+	bikepaths.push_back(new WayPoints(bikewaypoints3));
+
+	WayPoints* splitbottomlefttonorth = new WayPoints
+	({
+		WayPoint(lightspos[15],TrafficPoint, "86.1"),
+		WayPoint(glm::vec3(-2.7468467739785, 0.9611287749123,z)),
+		WayPoint(glm::vec3(-2.2839845163212, 2.1666052041956,z)),
+		WayPoint(glm::vec3(-2.0155116725734, 2.7943148065189,z)),
+		WayPoint(glm::vec3(-1.8, 3.2,z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoplefttoeast,splittopleftnorth}) // split
+		});
+	WayPoints* splitbottomlefttoeast = new WayPoints
+	({
+		WayPoint(glm::vec3(-2.5453347301148, 0.3654626223297,z)),
+		WayPoint(glm::vec3(-2.1990211019621, 0.0978566369389,z)),
+		WayPoint(glm::vec3(-1.8527074738093, -0.138266291347,z)),
+		WayPoint(glm::vec3(-1.4355569671707, -0.4609676266712,z)),
+		WayPoint(glm::vec3(-1.16795098178, -0.7364443763382,z)),
+		WayPoint(glm::vec3(-0.9003449963892, -1.1299825901481,z)),
+		WayPoint(glm::vec3(-0.6878343609318, -1.6258407395487,z)),
+		WayPoint(glm::vec3(-0.5697728967888, -2.0980865961206,z)),
+		WayPoint(glm::vec3(-0.4831944897506, -2.4365294599972,z), TrafficPoint, "99.0"),//99
+		WayPoint(glm::vec3(-0.4280991398172, -3.0110952521598,z)),
+		WayPoint(glm::vec3(-0.4123576112648, -3.3810211731411,z)),
+		WayPoint(glm::vec3(-0.3966160827124, -3.9555869653037,z)),
+		WayPoint(glm::vec3(-0.4517114326458, -4.3569959433898,z)),
+		WayPoint(glm::vec3(-0.4438406683696, -4.6088604002282,z), EndPoint),
+		});
+
+	std::vector<WayPoint> bikewaypoints4 =
+	{
+		WayPoint(glm::vec3(-8.8768488818595, 1.5529291064841,z)),
+		WayPoint(glm::vec3(-8.3331502497011, 1.534180877789,z)),
+		WayPoint(glm::vec3(-7.8331974844979, 1.5279314682239,z)),
+		WayPoint(glm::vec3(-7.2457529853843, 1.5154326490939,z)),
+		WayPoint(glm::vec3(-6.8020449062665, 1.4841856012687,z)),
+		WayPoint(glm::vec3(-6.3458380080187, 1.4466891438784,z)),
+		WayPoint(glm::vec3(-5.8021393758603, 1.4029432769231,z)),
+		WayPoint(glm::vec3(-5.2396925150067, 1.3092021334476,z)),
+		WayPoint(glm::vec3(-4.6210009680679, 1.1717151230167,z)),
+		WayPoint(glm::vec3(-4.1085493837347, 1.0467269317159,z)),
+		WayPoint(glm::vec3(-3.6023472089665, 0.8592446447648,z)),
+		WayPoint(glm::vec3(-3.2273826350642, 0.734256453464,z)),
+		WayPoint(glm::vec3(-2.914631778998, 0.5949303096318,z), SplitPoint, "-1", std::vector<WayPoints*>{splitbottomlefttoeast,splitbottomlefttonorth})//split
+	};
+	bikepaths.push_back(new WayPoints(bikewaypoints4));
+
 	//Train
 	WayPoints* splittrain1 = new WayPoints
 	({
@@ -1281,6 +1371,10 @@ void application::initWayPoints()
 	trainpaths.push_back(new WayPoints(trainpoints1, "160.0"));
 	trainpaths.push_back(new WayPoints(trainpoints2, "152.0"));
 	trainpaths.push_back(new WayPoints(trainpoints3, "154.0"));
+
+
+	//People
+
 
 }
 
