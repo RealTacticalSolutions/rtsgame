@@ -32,6 +32,7 @@ private:
 	std::vector<WayPoints*> paths;
 	std::vector<WayPoints*> bikepaths;
 	std::vector<WayPoints*> trainpaths;
+	std::vector<WayPoints*> peoplepaths;
 
 	glm::vec3 spawnpoint = glm::vec3(0.34f,-1.0f,1.0f);
 

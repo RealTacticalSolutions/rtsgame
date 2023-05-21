@@ -1286,7 +1286,7 @@ void renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue& que
 
     vkFreeCommandBuffers(device, pool, 1, &commandBuffer);
 
-    std::cout << "help";
+    //std::cout << "help";
 }
 
 RayResult renderer::initRaycast(glm::vec3 origin, glm::vec3 direction)
