@@ -17,8 +17,8 @@ static int traincount = 0;
 static int buscount = 0;
 static int peoplecount = 0;
 
-const float EPSILON = 0.05f;
-const float VELOCITY = 80.0f;
+const float EPSILON = 0.1f;
+const float VELOCITY = 120.0f;
 
 std::random_device rd; // obtain a random number from hardware
 std::mt19937 gen(rd()); // seed the generator
@@ -407,7 +407,7 @@ void application::updateTest(const double currentFrameTime)
 		int pathindex = dicar(gen);
 		if (pathindex == 2)
 		{
-			if (buscount < 1 && 60 < (currentFrameTime - lastSpawnTimeBus))
+			if (buscount < 1 && 120 < (currentFrameTime - lastSpawnTimeBus))
 			{
 				spawnpoint = paths[pathindex]->getWayPointPosition(0);
 				scene.instantiateCar(scene.bluePrints[2], glm::scale(glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(0.005f, 0.005f, 0.005f)), glm::vec3(1.0f, 1.0f, 0.0f), paths[pathindex], glm::vec3(0.005f, 0.005f, 0.005f));
@@ -428,17 +428,17 @@ void application::updateTest(const double currentFrameTime)
 		
 	}
 
-	if (bikecount < 50 && 0.1 < (currentFrameTime - lastSpawnTimeBike))
+	if (bikecount < 100 && 0.1 < (currentFrameTime - lastSpawnTimeBike))
 	{
 		int pathindex = dibike(gen);
-		//pathindex = 4;
+		//pathindex = 3;
 		spawnpoint = bikepaths[pathindex]->getWayPointPosition(0);
 		scene.instantiateBike(scene.bluePrints[3], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), bikepaths[pathindex]);
 		lastSpawnTimeBike = currentFrameTime;
 		bikecount += 1;
 	}
 
-	if (traincount < 1 && 60 < (currentFrameTime - lastSpawnTimeTrain))
+	if (traincount < 1 && 180 < (currentFrameTime - lastSpawnTimeTrain))
 	{
 		int pathindex = ditrain(gen);
 		spawnpoint = trainpaths[pathindex]->getWayPointPosition(0);
@@ -447,13 +447,13 @@ void application::updateTest(const double currentFrameTime)
 		traincount += 1;
 	}
 
-	if (peoplecount < 200 && 0.5 < (currentFrameTime - lastSpawnTimePeople))
+	if (peoplecount < 130 && 0.5 < (currentFrameTime - lastSpawnTimePeople))
 	{
 		int pathindex = dipeople(gen);
 		spawnpoint = peoplepaths[pathindex]->getWayPointPosition(0);
 		scene.instantiateBike(scene.bluePrints[6], glm::translate(glm::mat4(1.0f), spawnpoint), glm::vec3(1.0f, 1.0f, 0.0f), peoplepaths[pathindex]);
 		lastSpawnTimePeople = currentFrameTime;
-		peoplecount += 1;
+		bikecount += 1;
 	}
 
 }
@@ -539,7 +539,7 @@ void application::updateWayPoints(double delta)
 			switch (pointType)
 			{
 			case General:
-				car->setCurrentWayPoint(currentpoint + 1);
+					car->setCurrentWayPoint(currentpoint + 1);
 				break;
 			case EndPoint:
 				carstoremove.push_back(index);
@@ -668,8 +668,8 @@ void application::updateWayPointsTrain(double delta)
 			switch (pointType)
 			{
 			case General:
-				train->setCurrentWayPoint(currentpoint + 1);
-				break;
+					train->setCurrentWayPoint(currentpoint + 1);
+					break;
 			case EndPoint:
 				removeWeight(lightid);
 				trainstoremove.push_back(index);
@@ -695,6 +695,7 @@ void application::updateWayPointsTrain(double delta)
 					}
 					else
 					{
+
 						train->setCurrentWayPoint(currentpoint + 1);
 						removeWeight(lightid);
 						train->weightadded = false;
@@ -789,7 +790,7 @@ void application::updateWayPointsBikes(double delta)
 			switch (pointType)
 			{
 			case General:
-				bike->setCurrentWayPoint(currentpoint + 1);
+					bike->setCurrentWayPoint(currentpoint + 1);
 				break;
 			case EndPoint:
 				bikestoremove.push_back(index);
@@ -1097,7 +1098,7 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(-1.6657122747641, -0.2796958075151, z)),
 		WayPoint(glm::vec3(-1.0972404482609, -0.825638718659, z)),
 		WayPoint(glm::vec3(-0.6318822333853, -1.5689015030759, z)),
-		WayPoint(glm::vec3(-0.4861123584039, -2.2304724741452, z)),// trein stoplicht
+		WayPoint(glm::vec3(-0.4861123584039, -2.2304724741452, z),TrafficPoint, "99.0"),// trein stoplicht
 		WayPoint(glm::vec3(-0.4069809685429, -3.2807699599339, z)),
 		WayPoint(glm::vec3(-0.4474318935296, -4.3324940095897, z)),
 		WayPoint(glm::vec3(-0.4474318935296, -4.7673414531974, z), EndPoint),
@@ -1252,7 +1253,7 @@ void application::initWayPoints()
 	({
 		WayPoint(glm::vec3(-1.7997498786026, 3.2342909368346,z)),
 		WayPoint(glm::vec3(-1.4452713817529, 3.1355754060663,z)),
-		WayPoint(glm::vec3(-1.1132282328051, 3.0862176406822,z)),
+		WayPoint(glm::vec3(-1.1132282328051, 3.0862176406822,z), TrafficPoint, "88.1"),
 		WayPoint(glm::vec3(0.6, 2.6,z)),
 		WayPoint(glm::vec3(1.3475429244315, 2.4197846273787,z)),
 		WayPoint(glm::vec3(1.7587163839669, 2.2812370486222,z), SplitPoint, "-1", std::vector<WayPoints*>{ splittoprighteast,splittoprightnorth }) // split
@@ -1380,7 +1381,7 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(3.0235720827523, 4.19758083385,z)),
 		WayPoint(glm::vec3(3.1175799548321, 4.4868358248649,z)),
 		WayPoint(glm::vec3(3.2405133260135, 4.739933942003,z)),
-		WayPoint(glm::vec3(3.3489839476441, 5.0147261834672,z)) //endpoint
+		WayPoint(glm::vec3(3.3489839476441, 5.0147261834672,z), EndPoint) //endpoint
 	});
 
 	WayPoints* toplefttowest = new WayPoints
@@ -1394,7 +1395,7 @@ void application::initWayPoints()
 		WayPoint(glm::vec3(-6.6378111446728, 3.3584210113928,z)),
 		WayPoint(glm::vec3(-7.4963179612768, 3.2610645682728,z)),
 		WayPoint(glm::vec3(-8.1512613059025, 3.1991104681055,z)),
-		WayPoint(glm::vec3(-8.7088482074082, 3.1548575394145,z)), // endpoint
+		WayPoint(glm::vec3(-8.7088482074082, 3.1548575394145,z), EndPoint), // endpoint
 		});
 
 	WayPoints* bottomlefttowest = new WayPoints

@@ -19,7 +19,7 @@ bool client_running = true;
 
 void CrossRoadLevel::init()
 {
-    IP = "86.94.105.219";
+    IP = "172.20.10.3";
     
     PORT = "11000";
     SERVER_PORT = "11000";
