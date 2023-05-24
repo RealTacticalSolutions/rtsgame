@@ -277,6 +277,7 @@ private:
 
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
+	void initImgui(GLFWwindow* window);
 public:
 
 	renderer(Camera& mainCamera, int objectCount, std::vector<RenderObject>& renderObjects, std::vector<std::unique_ptr<GameObject>>& gameObjects) : camera(mainCamera), objectCount(objectCount), renderObjects(renderObjects), gameObjects(gameObjects)

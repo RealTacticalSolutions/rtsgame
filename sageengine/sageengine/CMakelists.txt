@@ -9,14 +9,16 @@ find_library(LIBS NAMES glfw3 PATHS libs)
 find_package(Vulkan REQUIRED)
 
 file(GLOB subdir_sources src/*.cpp)
+file(GLOB imgui_sources "include/IMGUI/*.cpp" "include/IMGUI/imgui-docking/backends/imgui_impl_vulkan.cpp" "include/IMGUI/imgui-docking/backends/imgui_impl_glfw.cpp" )
 
 
-add_executable(SageEngine ${subdir_sources} "include/pch.h" "include/application.h" "include/window.h" "src/window.cpp" "src/application.cpp" "include/renderer.h" "src/renderer.cpp" "src/camera.cpp" "include/camera.h" "include/STB/stb_image.h" "src/gameObject.cpp" "include/gameObject.h" "src/vertex.cpp" "include/vertex.h" "src/shapeTool.cpp" "include/shapeTool.h"  "include/properties.h"  "include/collisionType.h" "include/intersection.h" "src/intersection.cpp"   "include/buffermanager.h" "include/mesh.h" "include/intersection.h" "src/intersection.cpp"  "include/inputsystem.h" "src/inputsystem.cpp"   "src/gamemath.cpp" "include/gamemath.h" "include/renderobject.h" "include/scene.h" "src/scene.cpp" "include/blueprint.h" "src/blueprint.cpp"      "include/accelerationstructure.h" "include/raycast.h"      )
+add_executable(SageEngine ${subdir_sources} ${imgui_sources}  "include/pch.h" "include/application.h" "include/window.h" "src/window.cpp" "src/application.cpp" "include/renderer.h" "src/renderer.cpp" "src/camera.cpp" "include/camera.h" "include/STB/stb_image.h" "src/gameObject.cpp" "include/gameObject.h" "src/vertex.cpp" "include/vertex.h" "src/shapeTool.cpp" "include/shapeTool.h"  "include/properties.h"  "include/collisionType.h" "include/intersection.h" "src/intersection.cpp"   "include/buffermanager.h" "include/mesh.h" "include/intersection.h" "src/intersection.cpp"  "include/inputsystem.h" "src/inputsystem.cpp"   "src/gamemath.cpp" "include/gamemath.h" "include/renderobject.h" "include/scene.h" "src/scene.cpp" "include/blueprint.h" "src/blueprint.cpp"      "include/accelerationstructure.h" "include/raycast.h"      )
 
-
-
+target_link_libraries(SageEngine PUBLIC imgui)
 target_link_libraries(SageEngine PUBLIC ${LIBS})
 target_link_libraries(SageEngine PUBLIC ${Vulkan_LIBRARIES})
 target_link_libraries(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include/IMGUI")
+target_include_directories(SageEngine PUBLIC "${PROJECT_SOURCE_DIR}/include/IMGUI/imgui-docking/backends")
 target_include_directories(SageEngine PUBLIC ${Vulkan_INCLUDE_DIRS})
