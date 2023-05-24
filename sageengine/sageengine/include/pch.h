@@ -24,11 +24,7 @@
 #include <map>
 #include <unordered_map>
 
-#include "trafficlight.h"
-#include "messageObject.h"
-#include "timerObject.h"
-#include "waypoint.h"
-#include "waypoints.h"
+
 #include "vertex.h"
 #include "mesh.h"
 #include "renderobject.h"
@@ -38,9 +34,6 @@
 #include "properties.h"
 #include "collisionType.h"
 #include "gameObject.h"
-#include "car.h"
-#include "train.h"
-#include "bike.h"
 #include "shapetool.h"
 #include "intersection.h"
 #include "camera.h"
