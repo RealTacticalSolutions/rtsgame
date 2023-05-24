@@ -12,10 +12,11 @@ void window::initWindow(int width, int height)
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+
 	mainWindow = glfwCreateWindow(width, height, "Vulkan window", nullptr, nullptr);
 	glfwSetWindowUserPointer(mainWindow, m_vulkanrenderer);
 	glfwSetFramebufferSizeCallback(mainWindow, framebufferResizeCallback);
- 
+
 }
 
 void window::cleanupGLFW()

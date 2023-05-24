@@ -14,6 +14,7 @@ private:
 	void initWindow(int width, int height);
 
 	void cleanupGLFW();
+
 public:
 	window(int width, int height, renderer* vulkanrenderer) : WIDTH(width), HEIGHT(height), m_vulkanrenderer(vulkanrenderer)
 	{

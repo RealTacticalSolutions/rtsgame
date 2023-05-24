@@ -25,11 +25,6 @@
 #include <unordered_map>
 
 
-#include <IMGUI/imgui-docking/imgui.h>
-#include <IMGUI/imgui-docking/backends/imgui_impl_glfw.h>
-#include <IMGUI/imgui-docking/backends/imgui_impl_vulkan.h>
-#include <vulkan/vulkan.h>
-
 #include "vertex.h"
 #include "mesh.h"
 #include "renderobject.h"
