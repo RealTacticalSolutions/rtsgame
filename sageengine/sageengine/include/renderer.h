@@ -281,6 +281,8 @@ private:
 
 	void initImgui(GLFWwindow* window);
 	void updateImGui(GLFWwindow* window, VkCommandBuffer commandBuffer);
+
+	int imGuiDescriptorSetCount = 1;
 public:
 
 	renderer(Camera& mainCamera, int objectCount, std::vector<RenderObject>& renderObjects, std::vector<std::unique_ptr<GameObject>>& gameObjects) : camera(mainCamera), objectCount(objectCount), renderObjects(renderObjects), gameObjects(gameObjects)

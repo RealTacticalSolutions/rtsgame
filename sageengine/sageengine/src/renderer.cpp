@@ -1499,7 +1499,7 @@ void renderer::createDescriptorPool()
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT);
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * objectCount + MAX_FRAMES_IN_FLIGHT + imGuiDescriptorSetCount);
 
     VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool));
 }
@@ -2178,6 +2178,11 @@ VkDevice renderer::getDevice()
     return device;
 }
 
+void checkResult(VkResult result)
+{
+    VK_CHECK(result);
+}
+
 void renderer::initImgui(GLFWwindow* window)
 {
     // Initialize ImGui
@@ -2201,7 +2206,7 @@ void renderer::initImgui(GLFWwindow* window)
     init_info.Allocator = nullptr;
     init_info.MinImageCount = 2;  // Set the minimum number of swapchain images here
     init_info.ImageCount = static_cast<uint32_t>(swapChainImages.size());  // Set the actual number of swapchain images here
-    init_info.CheckVkResultFn = nullptr;
+    init_info.CheckVkResultFn = checkResult;
     ImGui_ImplVulkan_Init(&init_info, renderPass);
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool);
