@@ -14,12 +14,13 @@ if(result != VK_SUCCESS)                                \
 
 void renderer::initVulkan(std::unique_ptr<window>& windowObject)
 {
+    currentWindow = windowObject->getWindow();
     createInstance();
     setupDebugMessenger();
-    createSurface(windowObject->getWindow());
+    createSurface(currentWindow);
     pickPhysicalDevice();
     createLogicalDevice();
-    createSwapChain(windowObject->getWindow());
+    createSwapChain(currentWindow);
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
@@ -57,11 +58,16 @@ void renderer::initVulkan(std::unique_ptr<window>& windowObject)
     createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
-    
+    initImgui(currentWindow);
 }
 
 void renderer::cleanupVulkan()
 {
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+
     cleanupSwapChain();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -1762,6 +1768,7 @@ void renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 
         vkCmdDrawIndexed(commandBuffer, indexCount, renderObjects[i].instanceCount, 0, 0, 0);
     }
+    updateImGui(currentWindow, commandBuffer);
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -2169,4 +2176,63 @@ void renderer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMe
 VkDevice renderer::getDevice()
 {
     return device;
+}
+
+void renderer::initImgui(GLFWwindow* window)
+{
+    // Initialize ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+
+    // Setup ImGui GLFW bindings
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+    // Setup ImGui Vulkan bindings
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = instance;  // Set your Vulkan instance here
+    init_info.PhysicalDevice = physicalDevice;  // Set your Vulkan physical device here
+    init_info.Device = device;  // Set your Vulkan logical device here
+    init_info.QueueFamily = queueFamilyIndices.graphicsFamily.value();  // Set your Vulkan queue family index here
+    init_info.Queue = graphicsQueue;  // Set your Vulkan queue here
+    init_info.PipelineCache = nullptr;  // Set your Vulkan pipeline cache here
+    init_info.DescriptorPool = descriptorPool;  // Set your Vulkan descriptor pool here
+    init_info.Allocator = nullptr;
+    init_info.MinImageCount = 2;  // Set the minimum number of swapchain images here
+    init_info.ImageCount = static_cast<uint32_t>(swapChainImages.size());  // Set the actual number of swapchain images here
+    init_info.CheckVkResultFn = nullptr;
+    ImGui_ImplVulkan_Init(&init_info, renderPass);
+
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool);
+    ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+    // Submit the command buffer and wait for it to finish
+    endSingleTimeCommands(commandBuffer,graphicsQueue,commandPool);
+
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+}
+
+void renderer::updateImGui(GLFWwindow* window, VkCommandBuffer commandBuffer)
+{
+    // Update input state (e.g., mouse position, key states, etc.)
+    ImGuiIO& io = ImGui::GetIO();
+    io.DisplaySize = ImVec2(800, 600);
+    double mouseX, mouseY;
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+    io.MousePos = ImVec2(static_cast<float>(mouseX), static_cast<float>(mouseY));
+    io.MouseDown[0] = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    io.MouseDown[1] = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    // ...
+
+    // Start new ImGui frame
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // Build ImGui UI
+    // ...
+    ImGui::ShowDemoWindow();
+    // Render ImGui commands
+    ImGui::Render();
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
