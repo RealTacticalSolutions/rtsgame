@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net;
@@ -21,7 +21,7 @@ public class Program {
     static IPEndPoint ipEndPoint;
     static Socket listener;
     static Socket socket;
-    static TrafficLight[] trafficLights;
+    static TrafficLight[] trafficlights;
     static Stopwatch bikeTimer = new Stopwatch();
 
     static bool enableTimer = false;
@@ -31,7 +31,7 @@ public class Program {
 
     static double[] setup1 = { 1.1, 2.1, 32.2, 35.2, 36.1, 37.1, 37.2 };
     static double[] setup2 = { 5.1, 6.1, 31.1, 31.2, 35.1, 35.2, 37.1, 37.2};
-    static double[] setup3 = { 7.1, 8.1, 9.1, 10.1, 31.1, 31.2};
+    static double[] setup3 = { 7.1, 8.1, 9.1, 10.1,  31.2};
     static double[] setup4 = { 11.1, 12.1, 26.1, 31.1,31.2, 35.1, 35.2, 36.1, 36.2, 38.1, 38.2, 86.1};
     static double[] setup5 = { 6.1, 7.1, 22.0, 28.1, 31.1, 31.2, 32.1, 32.2, 37.1, 37.2, 38.1, 38.2, 88.1};
     static double[] setup6 = { 7.1, 8.1, 28.1, 37.1 ,37.2, 38.1, 38.2, 42.0, 88.1 };
@@ -43,7 +43,7 @@ public class Program {
 
     public static void InitSocket()
     {
-       ipAddress = (Dns.Resolve(IPAddress.Any.ToString())).AddressList[3];
+       ipAddress = (Dns.Resolve(IPAddress.Any.ToString())).AddressList[2];
        ipEndPoint = new(ipAddress, 11000);
        listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
@@ -62,58 +62,58 @@ public class Program {
 
     }
 
-    public static void sendTrafficLightInfo()
-    {
-
+    public static void sendTrafficLightInfo()
+    {
+
     }
 
-    public static void setLights(int setupIndex, lightstatus lightstatus)
-    {
-        for (int i = 0; i < setups[setupIndex].Length; i++)
-        {
-            TrafficLight light = trafficLights.First(light => light.id == setups[setupIndex][i]);
-
-            light.status = lightstatus;
-        }
-
-        if (setupIndex == 6)
-        {
-            bikeTimer.Restart();
-        }
+    public static void setLights(int setupIndex, lightstatus lightstatus)
+    {
+        for (int i = 0; i < setups[setupIndex].Length; i++)
+        {
+            TrafficLight light = trafficlights.First(light => light.id == setups[setupIndex][i]);
+
+            light.status = lightstatus;
+        }
+
+        if (setupIndex == 6)
+        {
+            bikeTimer.Restart();
+        }
     }
 
-    public static int getBestSetup()
-    {
-        int bestSetup = 0;
-        int maxWeight = 0;
-        if ((int)bikeTimer.Elapsed.TotalSeconds > maxTime)
-        {
-            return 6;
-        }
-
-        if (trafficLights.First(light => light.id == 42).weight >= 1)
-        {
-            return 5;
-        }
-
-        for (int i = 0; i < setups.Count; i++)
-        {
-            int totalWeight = 0;
-            for (int j = 0; j < setups[i].Length; j++)
-            {
-                totalWeight += trafficLights.First(light => light.id == setups[i][j]).weight;
-            }
+    public static int getBestSetup()
+    {
+        int bestSetup = 0;
+        int maxWeight = 0;
+        if ((int)bikeTimer.Elapsed.TotalSeconds > maxTime)
+        {
+            return 6;
+        }
+
+        if (trafficlights.First(light => light.id == 42).weight >= 1)
+        {
+            return 5;
+        }
+
+        for (int i = 0; i < setups.Count; i++)
+        {
+            int totalWeight = 0;
+            for (int j = 0; j < setups[i].Length; j++)
+            {
+                totalWeight += trafficlights.First(light => light.id == setups[i][j]).weight;
+            }
             if (i == 6)
-            {
+            {
                 totalWeight = totalWeight / 2;
-            }
-            if (totalWeight >= maxWeight)
-            {
-                maxWeight = totalWeight;
-                bestSetup = i;
-            }
-        }
-        return bestSetup;
+            }
+            if (totalWeight >= maxWeight)
+            {
+                maxWeight = totalWeight;
+                bestSetup = i;
+            }
+        }
+        return bestSetup;
     }
 
     public static void Tick()
@@ -126,20 +126,20 @@ public class Program {
         bool reset = true;
 
         double activeTrainlightId = 0;
-        int trafficLightCount = trafficLights.Length;
+        int trafficLightCount = trafficlights.Length;
 
-        TrafficlightInfo[] trafficlightStatusses = new TrafficlightInfo[trafficLights.Length];
-
-        Timer timer = new();
-        timer.id = 69.0;
-        timer.status = lightstatus.green;
+        TrafficlightInfo[] trafficlightStatusses = new TrafficlightInfo[trafficlights.Length];
+
+        Timer timer = new();
+        timer.id = 69.0;
+        timer.status = lightstatus.green;
         timer.remainingTime = maxTime;
 
-        for (int i = 0; i < trafficLights.Length; i++)
+        for (int i = 0; i < trafficlights.Length; i++)
         {
             trafficlightStatusses[i] = new TrafficlightInfo()
             {
-                id = trafficLights[i].id,
+                id = trafficlights[i].id,
                 status = lightstatus.red
             };
         }
@@ -148,11 +148,11 @@ public class Program {
         int receiveResult;
 
         string response;
-
+        trafficlights.First(light => light.id == 99).status = lightstatus.green;
 
         while (socket.Connected)
-        {
-            //try receiving data from simulator
+        {
+            //try receiving data from simulator
             try
             {
 
@@ -167,7 +167,7 @@ public class Program {
 
                 for (int i = 0; i < trafficLightCount; i++)
                 {
-                    trafficLights[i].weight = JsonResponse.First(light => light.id == trafficLights[i].id).weight;
+                    trafficlights[i].weight = JsonResponse.First(light => light.id == trafficlights[i].id).weight;
                     Console.WriteLine($"LightId: {JsonResponse[i].id} Weight: {JsonResponse[i].weight} ");
                 }
             }
@@ -178,32 +178,32 @@ public class Program {
             //try sending data to simulator
             try
             {
-                if (!((int)bikeTimer.Elapsed.TotalSeconds > maxTime))
-                {
-                    timer.remainingTime = maxTime - (int)bikeTimer.Elapsed.TotalSeconds;
+                if (!((int)bikeTimer.Elapsed.TotalSeconds > maxTime))
+                {
+                    timer.remainingTime = maxTime - (int)bikeTimer.Elapsed.TotalSeconds;
                 }        
 
                 //sends the trafficlight data
-                for(int i = 0; i < trafficLightCount; i++)
-                {
-                    trafficlightStatusses[i].status = trafficLights[i].status;
+                for(int i = 0; i < trafficLightCount; i++)
+                {
+                    trafficlightStatusses[i].status = trafficlights[i].status;
                 }
 
                 string message;
 
-                if (enableTimer)
-                {
-
-                    ControllerInfo controllerInfo = new ControllerInfo();
-                    controllerInfo.trafficLights = trafficlightStatusses;
-                    controllerInfo.timer = timer;
-
-                    message = JsonSerializer.Serialize<ControllerInfo>(controllerInfo);
-                    message = message.Insert(message.IndexOf("69") + 2, ".0");
+                if (enableTimer)
+                {
+
+                    ControllerInfo controllerInfo = new ControllerInfo();
+                    controllerInfo.trafficlights = trafficlightStatusses;
+                    controllerInfo.timer = timer;
+
+                    message = JsonSerializer.Serialize<ControllerInfo>(controllerInfo);
+                    message = message.Insert(message.IndexOf("69") + 2, ".0");
                 }
-                else
-                {
-                    message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightStatusses);
+                else
+                {
+                    message = JsonSerializer.Serialize<TrafficlightInfo[]>(trafficlightStatusses);
                 }
                
                 message += '\n';
@@ -229,128 +229,128 @@ public class Program {
                 }
                 Console.WriteLine("Sending failed");
                 Console.WriteLine("ERROR: " + e);
-            }
-
-            //if all trafficlights are clear generate new setup
-            if (currentSetup == -1)
-            {
-                currentSetup = getBestSetup();
-
-                if (currentSetup == 5)
-                {
-                    bikeTimer.Stop();
-                    timer.status = lightstatus.orange;
-                }
-                else
-                {
-                    timer.status = lightstatus.green;
-                    bikeTimer.Start();
-                }
-            }
-
-            //check for active trainLights
-            if(trafficLights.First(light => light.id == 152).weight > 0)
-            {
-                activeTrainlightId = 152;
-            }
-            else if (trafficLights.First(light => light.id == 154).weight > 0)
-            {
-                activeTrainlightId = 154;
-            }
-            else if (trafficLights.First(light => light.id == 160).weight > 0)
-            {
-                activeTrainlightId = 160;
-            }
-
-            //train logic
-            if (activeTrainlightId > 0 || trainPassed)
-            {
-                TrafficLight activeTrainLight = trafficLights.First(light => light.id == activeTrainlightId);
-
-                if (!trainStopWatch.IsRunning)
-                {
-                    trainStopWatch.Start();
-                }
-
-                TrafficLight railWayLight = trafficLights.First(light => light.id == 99);
-
-                if (trainPassed)
-                {
-                    if (reset)
-                    {
-                        trainStopWatch.Restart();
-                        reset = false;
-                    }
-
-                    switch (trainStopWatch.ElapsedMilliseconds)
-                    {
-                        case < 12000:
-                            activeTrainLight.status = lightstatus.red;
-                            break;
-                        case < 17000:
-                            setLights(6, lightstatus.orange);
-                            railWayLight.status = lightstatus.orange;
-                            break;
-                        case > 17000:
-                            setLights(6, lightstatus.red);
-                            railWayLight.status &= lightstatus.green;
-                            trainStopWatch.Reset();
-                            trainPassed = false;
-                            activeTrainlightId = 0;
-                            break;
-                    }
-
-                }
-                else
-                {
-                    switch (trainStopWatch.ElapsedMilliseconds)
-                    {
-                        case < 3000:
-                            setLights(currentSetup, lightstatus.orange);
-                            break;
-                        case < 6000:
-                            setLights(currentSetup, lightstatus.red);
-                            break;
-                        case < 10000:
-                            setLights(6, lightstatus.green);
-                            railWayLight.status = lightstatus.orange;
-                            break;
-                        case < 15000:
-                            railWayLight.status = lightstatus.red;
-                            break;
-                        case < 27000:
-                            activeTrainLight.status = lightstatus.green;
-                            break;
-                        case > 27000:
-                            trainPassed = true;
-                            break;
-
-                    };
-                    reset = true;
-                }
-            }
-            else
-            {
-                //set trafficlight statusses to correct status using the elapsed time
-                if (sw.ElapsedMilliseconds > 13000)
-                {
-                    Console.Clear();
-                    sw.Restart();
-                    currentSetup = -1;
-                }
-                else if (sw.ElapsedMilliseconds > 10000)
-                {
-                    setLights(currentSetup, lightstatus.red);
-                }
-                else if (sw.ElapsedMilliseconds > 6000)
-                {
-                    setLights(currentSetup, lightstatus.orange);
-                }
-                else
-                {
-                    setLights(currentSetup, lightstatus.green);
-                }
-            }
+            }
+
+            //if all trafficlights are clear generate new setup
+            if (currentSetup == -1)
+            {
+                currentSetup = getBestSetup();
+
+                if (currentSetup == 5)
+                {
+                    bikeTimer.Stop();
+                    timer.status = lightstatus.orange;
+                }
+                else
+                {
+                    timer.status = lightstatus.green;
+                    bikeTimer.Start();
+                }
+            }
+
+            //check for active trainLights
+            if(trafficlights.First(light => light.id == 152).weight > 0)
+            {
+                activeTrainlightId = 152;
+            }
+            else if (trafficlights.First(light => light.id == 154).weight > 0)
+            {
+                activeTrainlightId = 154;
+            }
+            else if (trafficlights.First(light => light.id == 160).weight > 0)
+            {
+                activeTrainlightId = 160;
+            }
+
+            //train logic
+            if (activeTrainlightId > 0 || trainPassed)
+            {
+                TrafficLight activeTrainLight = trafficlights.First(light => light.id == activeTrainlightId);
+
+                if (!trainStopWatch.IsRunning)
+                {
+                    trainStopWatch.Start();
+                }
+
+                TrafficLight railWayLight = trafficlights.First(light => light.id == 99);
+
+                if (trainPassed)
+                {
+                    if (reset)
+                    {
+                        trainStopWatch.Restart();
+                        reset = false;
+                    }
+
+                    switch (trainStopWatch.ElapsedMilliseconds)
+                    {
+                        case < 12000:
+                            activeTrainLight.status = lightstatus.red;
+                            break;
+                        case < 17000:
+                            setLights(6, lightstatus.orange);
+                            railWayLight.status = lightstatus.orange;
+                            break;
+                        case > 17000:
+                            setLights(6, lightstatus.red);
+                            railWayLight.status = lightstatus.green;
+                            trainStopWatch.Reset();
+                            trainPassed = false;
+                            activeTrainlightId = 0;
+                            break;
+                    }
+
+                }
+                else
+                {
+                    switch (trainStopWatch.ElapsedMilliseconds)
+                    {
+                        case < 3000:
+                            setLights(currentSetup, lightstatus.orange);
+                            break;
+                        case < 6000:
+                            setLights(currentSetup, lightstatus.red);
+                            break;
+                        case < 10000:
+                            setLights(6, lightstatus.green);
+                            railWayLight.status = lightstatus.orange;
+                            break;
+                        case < 15000:
+                            railWayLight.status = lightstatus.red;
+                            break;
+                        case < 27000:
+                            activeTrainLight.status = lightstatus.green;
+                            break;
+                        case > 27000:
+                            trainPassed = true;
+                            break;
+
+                    };
+                    reset = true;
+                }
+            }
+            else
+            {
+                //set trafficlight statusses to correct status using the elapsed time
+                if (sw.ElapsedMilliseconds > 13000)
+                {                    setLights(currentSetup, lightstatus.red);
+                    Console.Clear();
+                    sw.Restart();
+                    currentSetup = -1;
+                }
+                else if (sw.ElapsedMilliseconds > 10000)
+                {
+                    setLights(currentSetup, lightstatus.red);
+                }
+                else if (sw.ElapsedMilliseconds > 6000)
+                {
+                    setLights(currentSetup, lightstatus.orange);
+                }
+                else
+                {
+                    setLights(currentSetup, lightstatus.green);
+                }
+            }
 
 
             Thread.Sleep(500);
@@ -363,29 +363,29 @@ public class Program {
     public static void Main()
     {
         double[] lightIds = { 1.1, 2.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 35.1, 35.2, 36.1, 36.2, 37.1, 37.2, 38.1, 38.2, 31.1, 31.2, 32.1, 32.2, 86.1, 26.1, 88.1, 28.1, 22.0, 42.0, 152.0, 154.0, 160.0, 99.0 };
-        trafficLights = new TrafficLight[lightIds.Length];
+        trafficlights = new TrafficLight[lightIds.Length];
 
-        for(int i = 0; i < lightIds.Length; i++)
-        {
-            trafficLights[i] = new TrafficLight();
-            trafficLights[i].id = lightIds[i];
-            trafficLights[i].weight = 0;
-            trafficLights[i].status = lightstatus.red;
-        }
-
+        for(int i = 0; i < lightIds.Length; i++)
+        {
+            trafficlights[i] = new TrafficLight();
+            trafficlights[i].id = lightIds[i];
+            trafficlights[i].weight = 0;
+            trafficlights[i].status = lightstatus.red;
+        }
+
         setups.Add(setup1);
         setups.Add(setup2);
         setups.Add(setup3);
         setups.Add(setup4);
         setups.Add(setup5);
-        setups.Add(setup6);
+        setups.Add(setup6);
         setups.Add(trainSetup1);
 
         Console.Write("do you want to enable timer? y/n");
         string result = Console.ReadLine();
-        if (result.ToLower() == "y")
-        {
-            enableTimer = true;
+        if (result.ToLower() == "y")
+        {
+            enableTimer = true;
         }
         InitSocket();
         Console.WriteLine("connection succeeded");
@@ -410,18 +410,18 @@ public class Program {
 }
 
 public class ControllerInfo {
-    public TrafficlightInfo[] trafficLights { get; set; }
+    public TrafficlightInfo[] trafficlights { get; set; }
 
     public Timer timer { get; set; }
 }
 
-public class Timer
-{
-    public double id { get; set; }
-
-    public lightstatus status { get; set; }
-
-    public int remainingTime { get; set; }
+public class Timer
+{
+    public double id { get; set; }
+
+    public lightstatus status { get; set; }
+
+    public int remainingTime { get; set; }
 }
 
 public class TrafficInfo
@@ -438,12 +438,12 @@ public class TrafficlightInfo
     public lightstatus status { get; set; }
 }
 
-public class TrafficLight
-{
-    public double id { get; set; }
-
-    public int weight { get; set; }
-
-    public lightstatus status { get; set; }
+public class TrafficLight
+{
+    public double id { get; set; }
+
+    public int weight { get; set; }
+
+    public lightstatus status { get; set; }
 }
 
