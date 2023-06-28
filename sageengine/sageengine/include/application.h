@@ -28,12 +28,15 @@ private:
 	Camera camera;
 
 	int lastLevel = 0;
+	bool rotateZ = true;
 
 	void checkLevel();
 	void loadLevel(int level);
 
 	void Level1();
 	void Level2();
+	void Level3();
+	void Level4();
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()

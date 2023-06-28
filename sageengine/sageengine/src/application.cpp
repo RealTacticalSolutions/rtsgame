@@ -25,19 +25,40 @@ void application::mainLoop()
 	//level.init();
 	while (!windowObject->shouldClose())
 	{
-        checkLevel();
+        
 		double currentFrameTime = glfwGetTime();
 		double delta = currentFrameTime - lastFrameTime;
 		lastFrameTime = currentFrameTime;
-		
+
+        if (!(lastLevel == currentLevel))
+        {
+            checkLevel();
+        }
+
+        if (currentLevel == 3)
+        {
+            float rotationSpeed = 1.0f; // Example rotation speed
+
+            // Inside your update loop
+            float angle = rotationSpeed * delta;
+            if (rotateZ)
+            {
+                glm::vec3 axis(0.0f, 0.0f, 1.0f); // Example rotation axis (Z-axis)
+                scene.gameObjects[0].get()->Rotate(angle, axis);
+            }
+            else
+            {
+                glm::vec3 axis(0.0f, 1.0f, 0.0f); // Example rotation axis (Y-axis)
+                scene.gameObjects[0].get()->Rotate(angle, axis);
+            }
+
+        }
 		
 		//updateColorAddition(0, glm::vec3(0.0001f, 0.0001f, 0.0001f));
 		glfwPollEvents();
 
 		//level.mainLoop();
 		drawFrame();
-
-		
 
 
 		fps++;
@@ -83,6 +104,7 @@ void application::mainLoop()
         }
 
         if (spacePressed) {
+            rotateZ = !rotateZ;
             /*int width = 0, height = 0;
             glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
             glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
@@ -182,15 +204,11 @@ void application::cleanup()
 
 void application::checkLevel()
 {
-    int templevel = currentLevel;
 
-    if (!(lastLevel == templevel))
-    {
-    
-        lastLevel = templevel;
+        lastLevel = currentLevel;
 
-        loadLevel(templevel);
-    }
+        loadLevel(currentLevel);
+
 }
 
 void application::loadLevel(int level)
@@ -203,6 +221,15 @@ void application::loadLevel(int level)
     if (level == 2)
     {
         Level2();
+    }
+    if (level == 3)
+    {
+        Level3();
+    }
+
+    if (level == 4)
+    {
+        Level4();
     }
 }
 
@@ -228,17 +255,20 @@ void application::Level2()
         }
     }
 
+}
 
-        
-        
-
-        
-
-        glm::mat4 translationMatrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.3f, 0.0f));
-        scene.instantiateObject(scene.bluePrints[3], scaleMatrix * translationMatrix2, glm::vec3(1.0f, 1.0f, 1.0f));
+void application::Level3()
+{
+    scene.instantiateObject(scene.bluePrints[2], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
 
 }
+
+void application::Level4()
+{
+
+}
+
 Mesh application::loadModel(char* path) {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -287,6 +317,8 @@ Mesh application::loadModel(char* path) {
             indices.push_back(uniqueVertices[vertex]);
         }
     }
+
+
 
     return Mesh({
         vertices, indices

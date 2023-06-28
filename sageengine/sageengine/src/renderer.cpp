@@ -2262,6 +2262,18 @@ void renderer::buildImgui()
             {
                 currentLevel = 2;
             }
+
+            if (ImGui::MenuItem("level 3"))
+            {
+                currentLevel = 3;
+            }
+
+            if (ImGui::MenuItem("level 4"))
+            {
+                currentLevel = 4;
+            }
+
+
             ImGui::EndMenu();
         }
 
