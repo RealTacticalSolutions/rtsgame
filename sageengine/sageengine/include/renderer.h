@@ -281,6 +281,8 @@ private:
 
 	void initImgui(GLFWwindow* window);
 	void updateImGui(GLFWwindow* window, VkCommandBuffer commandBuffer);
+	void buildImgui();
+
 
 	int imGuiDescriptorSetCount = 1;
 public:

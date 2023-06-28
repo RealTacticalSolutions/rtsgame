@@ -51,3 +51,4 @@
 #include "application.h"
 #include "inputsystem.h"
 
+extern int currentLevel;

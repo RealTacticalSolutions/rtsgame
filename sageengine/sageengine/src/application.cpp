@@ -25,6 +25,7 @@ void application::mainLoop()
 	//level.init();
 	while (!windowObject->shouldClose())
 	{
+        checkLevel();
 		double currentFrameTime = glfwGetTime();
 		double delta = currentFrameTime - lastFrameTime;
 		lastFrameTime = currentFrameTime;
@@ -82,19 +83,19 @@ void application::mainLoop()
         }
 
         if (spacePressed) {
-            int width = 0, height = 0;
+            /*int width = 0, height = 0;
             glfwGetFramebufferSize(windowObject.get()->getWindow(), &width, &height);
             glm::vec3 worldpos = GameMath::windowToWorldPos(cursorPos, glm::vec2(width, height), camera);
 
             glm::vec3 direction = worldpos - camera.position;
             
-            scene.renderer.get()->initRaycast(camera.position, direction);
+            scene.renderer.get()->initRaycast(camera.position, direction);*/
             
         }
 
         if (ePressed) {
             glm::mat4 matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.1f, -0.5f, 0.0f));
-            scene.instantiateObject(scene.bluePrints[4], matrix, glm::vec3(0.6f));
+            scene.instantiateObject(scene.bluePrints[2], matrix, glm::vec3(0.6f));
             scene.renderer.get()->addInstance(matrix);
         }
 
@@ -146,6 +147,8 @@ void application::constructGameobjects()
 
 	scene.blueprintObject(loadModel("../../../models/room.obj"), "../../../textures/room.png");
 
+    scene.blueprintObject(ShapeTool::createSquare(0.10f), "../../../textures/1.jpg");
+
 
 }
 
@@ -167,7 +170,7 @@ void application::initWindow()
 
 void application::start()
 {
-	scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+	//scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
 	//scene.instantiateObject(scene.bluePrints[1], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,2.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -177,6 +180,65 @@ void application::cleanup()
 {
 }
 
+void application::checkLevel()
+{
+    int templevel = currentLevel;
+
+    if (!(lastLevel == templevel))
+    {
+    
+        lastLevel = templevel;
+
+        loadLevel(templevel);
+    }
+}
+
+void application::loadLevel(int level)
+{
+    scene.gameObjects.clear();
+    if (level == 1)
+    {
+        Level1();
+    }
+    if (level == 2)
+    {
+        Level2();
+    }
+}
+
+void application::Level1()
+{
+    scene.instantiateObject(scene.bluePrints[0], glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 3.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+
+}
+
+
+void application::Level2()
+{
+    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(7.0f, 7.0f, 7.0f));
+    int rows = 5;
+    int collums = 5;
+    for (size_t i = 0; i < rows; i++)
+    {
+        for (size_t y = 0; y < collums; y++)
+        {
+
+            glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-0.6f + (y * 0.3f), -0.6f + (i * 0.3f), 0.0f));
+            scene.instantiateObject(scene.bluePrints[3], scaleMatrix * translationMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+        }
+    }
+
+
+        
+        
+
+        
+
+        glm::mat4 translationMatrix2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.3f, 0.0f));
+        scene.instantiateObject(scene.bluePrints[3], scaleMatrix * translationMatrix2, glm::vec3(1.0f, 1.0f, 1.0f));
+
+
+}
 Mesh application::loadModel(char* path) {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;

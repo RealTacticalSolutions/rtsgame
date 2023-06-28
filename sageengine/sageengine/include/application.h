@@ -27,6 +27,13 @@ private:
 	Scene scene;
 	Camera camera;
 
+	int lastLevel = 0;
+
+	void checkLevel();
+	void loadLevel(int level);
+
+	void Level1();
+	void Level2();
 public:
 	
 	application() : camera(DEFAULT_CAM_POS, DEFAULT_CAM_LOOK_POS, DEFAULT_CAM_UP_POS, DEFAULT_FOV, DEFAULT_NEAR_CLIPPING_PLANE, DEFAULT_FAR_CLIPPING_PLANE), scene()

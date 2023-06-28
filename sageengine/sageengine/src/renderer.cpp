@@ -2215,6 +2215,8 @@ void renderer::initImgui(GLFWwindow* window)
     endSingleTimeCommands(commandBuffer,graphicsQueue,commandPool);
 
     ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+    
 }
 
 void renderer::updateImGui(GLFWwindow* window, VkCommandBuffer commandBuffer)
@@ -2236,8 +2238,33 @@ void renderer::updateImGui(GLFWwindow* window, VkCommandBuffer commandBuffer)
 
     // Build ImGui UI
     // ...
-    ImGui::ShowDemoWindow();
+    buildImgui();
+    //ImGui::ShowDemoWindow();
     // Render ImGui commands
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+}
+
+
+void renderer::buildImgui()
+{
+
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("Levels"))
+        {
+            if (ImGui::MenuItem("level 1"))
+            {
+               currentLevel = 1;
+            }
+
+            if (ImGui::MenuItem("level 2"))
+            {
+                currentLevel = 2;
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
 }
