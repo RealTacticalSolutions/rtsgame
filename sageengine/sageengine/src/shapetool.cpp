@@ -2,7 +2,7 @@
 #include "shapeTool.h"
 
 
-std::vector<uint16_t> ShapeTool::GenerateGridIndices(uint32_t xCells, uint32_t yCells, uint32_t Offset)
+std::vector<uint16_t> ShapeTool::generateGridIndices(uint32_t xCells, uint32_t yCells, uint32_t Offset)
 {
     std::vector<uint16_t> indices;
     for (uint32_t y = 0; y < yCells; y++)
@@ -24,7 +24,7 @@ std::vector<uint16_t> ShapeTool::GenerateGridIndices(uint32_t xCells, uint32_t y
     return indices;
 }
 
-std::vector<Vertex> ShapeTool::GenerateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize, float xOffset, float yOffset, float zOffset, glm::vec3 color)
+std::vector<Vertex> ShapeTool::generateGridVertices(uint32_t xCells, uint32_t yCells, float cellSize, float xOffset, float yOffset, float zOffset, glm::vec3 color)
 {
     std::vector<Vertex> vertices;
     for (uint32_t y = 0; y <= yCells; y++)
@@ -123,7 +123,7 @@ std::vector<Vertex> ShapeTool::generateSquareVertices(float width)
     return vertices;
 }
 
-std::vector<uint32_t> ShapeTool::generateSquareIndicies() 
+std::vector<uint32_t> ShapeTool::generateSquareIndices() 
 {
     std::vector<uint32_t> indices;
 
@@ -165,7 +165,7 @@ Mesh ShapeTool::createSquare(float width)
 
     Mesh mesh({
         generateSquareVertices(width),
-        generateSquareIndicies()
+        generateSquareIndices()
         });
       
 
@@ -177,7 +177,7 @@ Mesh ShapeTool::createRectangle(float width,float height)
 
     Mesh mesh({
         generateRectangleVertices(width, height),
-        generateSquareIndicies(),
+        generateSquareIndices(),
         });
 
     return mesh;

@@ -1,5 +1,22 @@
 #include "pch.h"
 
+void Camera::setPosition(glm::vec3 pos)
+{
+    position = pos;
+    lookPosition += position;
+}
+
+void Camera::setLookPosition(glm::vec3 pos, glm::vec3 upPos) {
+    lookPosition = glm::normalize(pos - position);
+    upPosition = upPos;
+}
+
+void Camera::rotateCamera(float degrees) {
+    glm::vec3 direction = glm::normalize(lookPosition - position);
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), direction);
+    upPosition = glm::vec3(glm::vec4(upPosition, 0.0f) * rotationMatrix);
+}
+
 glm::mat4 Camera::getView() {
 	return glm::lookAt(position, lookPosition, upPosition);
 }
@@ -55,6 +72,8 @@ glm::vec3 Camera::getLookPosition() { return lookPosition; }
 
 glm::vec3 Camera::getUpVector() { return upPosition; }
 
+glm::vec3 Camera::getForwardVector() {  return glm::normalize(lookPosition - position); }
+
 glm::vec3 Camera::getDirection()
 {
     return glm::normalize(lookPosition - position);
@@ -63,4 +82,28 @@ glm::vec3 Camera::getDirection()
 glm::vec3 Camera::getRightVector()
 {
     return glm::normalize(glm::cross(getDirection(), upPosition));
+}
+
+void Camera::moveForward(float deltaTime, float speed)
+{
+    position += speed * deltaTime * getForwardVector();
+}
+
+void Camera::moveBackward(float deltaTime, float speed)
+{
+    position -= speed * deltaTime * getForwardVector();
+}
+
+void Camera::moveLeft(float deltaTime, float speed)
+{
+    glm::vec3 right = getRightVector();
+    position -= speed * deltaTime * right;
+    lookPosition -= speed * deltaTime * right;
+}
+
+void Camera::moveRight(float deltaTime, float speed)
+{
+    glm::vec3 right = getRightVector();
+    position += speed * deltaTime * right;
+    lookPosition += speed * deltaTime * right;
 }

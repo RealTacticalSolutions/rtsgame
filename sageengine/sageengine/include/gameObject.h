@@ -20,47 +20,48 @@ public:
 	{
 	}
 
-	// Function to rotate the object around a specified axis
-	void Rotate(float angle, const glm::vec3& axis)
-	{
-		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, axis);
-		properties.transform = rotation * properties.transform;
-		upVector = glm::mat3(rotation) * upVector;
-		rightVector = glm::mat3(rotation) * rightVector;
-	}
+	/*
+	* @brief Rotates the game object around a specified axis.
+	 *
+	* @param angle The angle of rotation in degrees.
+	* @param axis  The axis of rotation specified as a glm::vec3.
+	*/
+	void Rotate(float angle, const glm::vec3& axis);
 
-	// Function to scale the object uniformly
-	void Scale(float scaleFactor)
-	{
-		scale *= scaleFactor;
-	}
+	/*
+	 * @brief Scales the game object by a specified factor.
+	 *
+	 * @param scaleFactor The scaling factor to apply to the game object.
+	 */
+	void Scale(float scaleFactor);
 
-	// Function to set the up vector
-	void SetUpVector(const glm::vec3& upVec)
-	{
-		upVector = glm::normalize(upVec);
-		rightVector = glm::normalize(glm::cross(glm::vec3(properties.transform[0]), upVector));
-	}
+	/*
+	 * @brief Sets the up vector of the game object.
+	 *
+	 * @param upVec The new up vector to set for the game object.
+	 */
+	void SetUpVector(const glm::vec3& upVec);
 
-	// Function to set the right vector
-	void SetRightVector(const glm::vec3& rightVec)
-	{
-		rightVector = glm::normalize(rightVec);
-		upVector = glm::normalize(glm::cross(rightVector, glm::vec3(properties.transform[2])));
-	}
+	/*
+	 * @brief Sets the right vector of the game object.
+	 *
+	 * @param rightVec The new right vector to set for the game object.
+	 */
+	void SetRightVector(const glm::vec3& rightVec);
 
-	// Function to set the scale
-	void SetScale(const glm::vec3& newScale)
-	{
-		scale = newScale;
-	}
+	/*
+	 * @brief Sets the scale of the game object.
+	 *
+	 * @param newScale The new scale to set for the game object.
+	 */
+	void SetScale(const glm::vec3& newScale);
 
-	// Function to get the forward vector
-	glm::vec3 GetForwardVector() const
-	{
-		return -glm::vec3(properties.transform[2]);
-	}
-	
+	/*
+	 * @brief Returns the forward vector of the game object.
+	 *
+	 * @return The forward vector of the game object.
+	 */
+	glm::vec3 GetForwardVector() const;
 	
 private:
 

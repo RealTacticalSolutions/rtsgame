@@ -47,13 +47,42 @@ public:
 	};
 
 	
+	/*
+	 * @brief Constructs game objects for the application.
+	 */
 	void constructGameobjects();
+
+	/*
+	 * @brief Initializes the window for the application.
+	 */
 	void initWindow();
+
+	/*
+	 * @brief Starts the application.
+	 */
 	void start();
+
+	/*
+	 * @brief The main loop of the application.
+	 */
 	void mainLoop();
+
+	/*
+	 * @brief Draws a frame of the application.
+	 */
 	void drawFrame();
+
+	/*
+	 * @brief Cleans up resources and performs cleanup tasks.
+	 */
 	void cleanup();
 
+	/*
+	 * @brief Loads a model from a specified path.
+	 *
+	 * @param path The path to the model file.
+	 * @return The loaded model as a Mesh object.
+	 */
 	Mesh loadModel(char* path);
 
 };

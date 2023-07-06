@@ -1,12 +1,12 @@
 #pragma once
 
-class Camera{
+class Camera {
 
 public:
 	glm::vec3 position;
 	glm::vec3 lookPosition;
 	glm::vec3 upPosition;
-	
+
 	float fov;
 	float aspectRatio;
 	float nearClippingPlane;
@@ -17,69 +17,109 @@ public:
 		aspectRatio = 3.0f;
 	};
 
-	void setPosition(glm::vec3 pos) {
-		position = pos;
-		lookPosition += position;
-	}
+	/*
+	 * @brief Sets the position of a Camera instance.
+	 *
+	 * @param pos The position to set the camera to.
+	 */
+	void setPosition(glm::vec3 pos);
 
+	/*
+	 * @brief Returns the direction vector of the camera.
+	 *
+	 * @return The direction vector of the camera.
+	 */
 	glm::vec3 getDirection();
+
+	/*
+	 * @brief Returns the right vector of the camera.
+	 *
+	 * @return The right vector of the camera.
+	 */
 	glm::vec3 getRightVector();
 
-	void setLookPosition(glm::vec3 pos, glm::vec3 upPos) {
-		lookPosition = glm::normalize(pos - position);
-		upPosition = upPos;
-	}
+	/*
+	 * @brief Sets the position and up position of the camera to look at a specified point.
+	 *
+	 * @param pos    The position to look at.
+	 * @param upPos  The up position of the camera.
+	 */
+	void setLookPosition(glm::vec3 pos, glm::vec3 upPos);
 
-	void rotateCamera(float degrees) {
-		glm::vec3 direction = glm::normalize(lookPosition - position);
-		glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(degrees), direction);
-		upPosition = glm::vec3(glm::vec4(upPosition, 0.0f) * rotationMatrix);
-	}
+	/*
+	 * @brief Rotates the camera around its current position.
+	 *
+	 * @param degrees The angle to rotate the camera in degrees.
+	 */
+	void rotateCamera(float degrees);
 
+	/*
+	 * @brief Returns the view matrix of the camera.
+	 *
+	 * @return The view matrix of the camera.
+	 */
 	glm::mat4 getView();
 
+	/*
+	 * @brief Returns the projection matrix of the camera.
+	 *
+	 * @return The projection matrix of the camera.
+	 */
 	glm::mat4 getProjection();
 
+	/*
+	 * @brief Rotates the camera around a specified point.
+	 *
+	 * @param yawAngle   The yaw angle to rotate the camera in degrees.
+	 * @param pitchAngle The pitch angle to rotate the camera in degrees.
+	 * @param up         The up vector of the camera.
+	 */
 	void rotateAround(float yawAngle, float pitchAngle, const glm::vec3& up);
-	
+
+	/*
+	 * @brief Moves the camera's look-at position based on cursor movement.
+	 *
+	 * @param cursorDelta  The change in cursor position.
+	 * @param sensitivity  The sensitivity of the camera movement.
+	 */
 	void moveLookAt(glm::vec2 cursorDelta, float sensitivity);
 
+	/*
+	 * @brief Returns the position of the camera.
+	 *
+	 * @return The position of the camera.
+	 */
 	glm::vec3 getPosition();
 
+	/*
+	 * @brief Returns the look-at position of the camera.
+	 *
+	 * @return The look-at position of the camera.
+	 */
 	glm::vec3 getLookPosition();
 
+	/*
+	 * @brief Returns the up vector of the camera.
+	 *
+	 * @return The up vector of the camera.
+	 */
 	glm::vec3 getUpVector();
 
-	glm::vec3 getForwardVector() {
-		return glm::normalize(lookPosition - position);
-	}
+	/*
+	 * @brief Returns the forward vector of the camera.
+	 *
+	 * @return The forward vector of the camera.
+	 */
+	glm::vec3 getForwardVector();
 
-	// Move the camera forward
-	void moveForward(float deltaTime, float speed)
-	{
-		position += speed * deltaTime * getForwardVector();
-	}
-
-	// Move the camera backward
-	void moveBackward(float deltaTime, float speed)
-	{
-		position -= speed * deltaTime * getForwardVector();
-	}
-
-	// Move the camera left
-	void Camera::moveLeft(float deltaTime, float speed)
-	{
-		glm::vec3 right = getRightVector();
-		position -= speed * deltaTime * right;
-		lookPosition -= speed * deltaTime * right;
-	}
-
-	// Move the camera right
-	void Camera::moveRight(float deltaTime, float speed)
-	{
-		glm::vec3 right = getRightVector();
-		position += speed * deltaTime * right;
-		lookPosition += speed * deltaTime * right;
-	}
-
+	/*
+	 * @brief Moves the camera in a specified direction in its local space.
+	 *
+	 * @param deltaTime The time since the last frame update.
+	 * @param speed     The movement speed of the camera.
+	 */
+	void moveForward(float deltaTime, float speed);
+	void moveBackward(float deltaTime, float speed);
+	void moveLeft(float deltaTime, float speed);
+	void moveRight(float deltaTime, float speed);
 };

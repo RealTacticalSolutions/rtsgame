@@ -11,8 +11,17 @@ private:
 	GLFWwindow* mainWindow;
 	renderer* m_vulkanrenderer;
 
+	/*
+	 * @brief Initializes the GLFW window with a specified width and height.
+	 *
+	 * @param width  The width of the window.
+	 * @param height The height of the window.
+	 */
 	void initWindow(int width, int height);
 
+	/*
+	 * @brief Cleans up the GLFW resources.
+	 */
 	void cleanupGLFW();
 
 public:
@@ -25,8 +34,18 @@ public:
 		cleanupGLFW();
 	};
 
-	bool shouldClose() { return glfwWindowShouldClose(mainWindow); };
+	/*
+	 * @brief Checks if the GLFW window should close.
+	 *
+	 * @return True if the window should close, false otherwise.
+	 */
+	bool shouldClose() { return glfwWindowShouldClose(mainWindow); }
 
+	/*
+	 * @brief Retrieves the GLFW window.
+	 *
+	 * @return The GLFW window.
+	 */
 	GLFWwindow* getWindow();
 
 };
